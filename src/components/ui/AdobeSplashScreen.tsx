@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { X, Minus, Loader2 } from 'lucide-react';
 import type { SplashSettings } from '../../data/splash.data';
 
 interface AdobeSplashScreenProps {
@@ -7,6 +7,7 @@ interface AdobeSplashScreenProps {
   isOpen: boolean;
   onComplete: () => void;
   isPreview?: boolean;
+  isBootScreen?: boolean;
 }
 
 const initializationSteps = [
@@ -24,6 +25,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
   isOpen,
   onComplete,
   isPreview = false,
+  isBootScreen = false,
 }) => {
   const [progress, setProgress] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -74,10 +76,28 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
 
   if (!isOpen) return null;
 
+  const handleMinimize = () => {
+    (window as any).electronAPI?.minimizeWindow();
+  };
+
+  const handleClose = () => {
+    if (isBootScreen) {
+      (window as any).electronAPI?.closeWindow();
+    } else {
+      onComplete();
+    }
+  };
+
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 transition-opacity duration-350 select-none ${
-        isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      className={`fixed inset-0 z-[9999] flex items-center justify-center transition-all duration-350 select-none ${
+        isBootScreen
+          ? 'bg-[#0E0E11]'
+          : 'bg-black/80 backdrop-blur-md p-4'
+      } ${
+        isFadingOut
+          ? 'opacity-0 scale-[0.98] pointer-events-none'
+          : 'opacity-100 scale-100'
       }`}
       onClick={(e) => {
         // Dismiss preview on background click
@@ -86,11 +106,39 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
         }
       }}
     >
-      {/* Adobe Splash Window Container */}
+      {/* Frameless Drag Handle Bar for Boot Screen */}
+      {isBootScreen && (
+        <div
+          className="absolute top-0 left-0 right-0 h-10 flex items-center justify-end px-3 z-50 select-none"
+          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+        >
+          <div
+            className="flex items-center gap-1"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            <button
+              onClick={handleMinimize}
+              className="w-8 h-8 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Minimize"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="w-8 h-8 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-colors"
+              title="Close"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Adobe Splash Window Container (The Box) */}
       <div
-        className="w-full max-w-[720px] rounded-2xl overflow-hidden bg-[#18181B] border border-[#27272A] shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col relative transition-transform duration-300 animate-fadeIn"
+        className="w-full max-w-[720px] rounded-2xl overflow-hidden bg-[#18181B] border border-[#27272A] shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col relative transition-transform duration-300 animate-fadeIn mx-4"
         style={{
-          boxShadow: '0 25px 70px -10px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 25px 80px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08)',
         }}
       >
         {/* Top Header & Artwork Canvas */}
@@ -101,7 +149,6 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
             alt="Splash Artwork"
             className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.92] contrast-[1.05]"
             onError={(e) => {
-              // Fallback to default unsplash if broken URL
               (e.target as HTMLImageElement).src =
                 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85';
             }}
@@ -139,22 +186,24 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
             </div>
 
             {/* Skip / Close preview button */}
-            {isPreview ? (
-              <button
-                onClick={onComplete}
-                className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center transition-colors backdrop-blur-md"
-                title="Close Preview"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={onComplete}
-                className="text-[11px] font-mono text-white/50 hover:text-white px-2.5 py-1 rounded-md bg-black/30 hover:bg-black/60 border border-white/10 transition-colors backdrop-blur-md"
-              >
-                Skip ➔
-              </button>
-            )}
+            <div style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              {isPreview ? (
+                <button
+                  onClick={onComplete}
+                  className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 text-white flex items-center justify-center transition-colors backdrop-blur-md"
+                  title="Close Preview"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={onComplete}
+                  className="text-[11px] font-mono text-white/50 hover:text-white px-2.5 py-1 rounded-md bg-black/30 hover:bg-black/60 border border-white/10 transition-colors backdrop-blur-md"
+                >
+                  Skip ➔
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Bottom Right of Artwork: Artist Credit Capsule (Adobe Signature Style) */}

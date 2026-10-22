@@ -14,7 +14,8 @@ export function App() {
   const [currentPage, setCurrentPage] = useState<NavigationPage>('apps');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [splashSettings, setSplashSettings] = useState<SplashSettings>(() => loadSplashSettings());
-  const [showSplash, setShowSplash] = useState<boolean>(() => splashSettings.enabled);
+  const [isBooting, setIsBooting] = useState<boolean>(() => splashSettings.enabled);
+  const [previewSplash, setPreviewSplash] = useState<SplashSettings | null>(null);
 
   // Persistent Catalog Apps Registry
   const [apps, setApps] = useState<CatalogApp[]>(() => {
@@ -592,8 +593,7 @@ export function App() {
         return (
           <SettingsPage
             onPreviewSplash={(customSettings) => {
-              setSplashSettings(customSettings);
-              setShowSplash(true);
+              setPreviewSplash(customSettings);
             }}
           />
         );
@@ -602,13 +602,29 @@ export function App() {
     }
   };
 
-  return (
-    <>
+  // 1. Initial Startup / Cold Boot: ONLY the Adobe Loader Box appears on screen
+  if (isBooting) {
+    return (
       <AdobeSplashScreen
         settings={splashSettings}
-        isOpen={showSplash}
-        onComplete={() => setShowSplash(false)}
+        isOpen={true}
+        onComplete={() => setIsBooting(false)}
+        isBootScreen={true}
       />
+    );
+  }
+
+  // 2. Main Applications Hub: Revealed smoothly after loader finishes
+  return (
+    <div className="w-full h-full animate-fadeIn">
+      {previewSplash && (
+        <AdobeSplashScreen
+          settings={previewSplash}
+          isOpen={true}
+          onComplete={() => setPreviewSplash(null)}
+          isPreview={true}
+        />
+      )}
       <AppLayout
         currentPage={currentPage}
         onNavigate={(page) => {
@@ -621,7 +637,7 @@ export function App() {
       >
         {renderActivePage()}
       </AppLayout>
-    </>
+    </div>
   );
 }
 
