@@ -42,6 +42,9 @@ export interface ElectronAPI {
   showNotification: (data: { title: string; body: string; appId?: string }) => Promise<any>;
   onNotificationClicked: (callback: (data: any) => void) => () => void;
 
+  // Splash Screen Lifecycle
+  splashDone?: () => Promise<boolean>;
+
   // Windows 11 Controls
   minimizeWindow: () => Promise<boolean>;
   maximizeWindow: () => Promise<boolean>;

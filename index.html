@@ -19,6 +19,17 @@
         height: 100%;
         overflow: hidden;
       }
+      /* Standalone Splash mode: 100% transparent desktop background */
+      html.splash-mode, body.splash-mode, .splash-mode #root {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+      .splash-mode #root:empty {
+        background: transparent !important;
+      }
+      .splash-mode #root:empty::after {
+        display: none !important;
+      }
       #root:empty {
         display: flex;
         align-items: center;
@@ -39,6 +50,13 @@
         to { transform: rotate(360deg); }
       }
     </style>
+    <script>
+      if (window.location.search.includes('view=splash')) {
+        document.documentElement.classList.add('splash-mode');
+        document.documentElement.style.backgroundColor = 'transparent';
+        document.documentElement.style.background = 'transparent';
+      }
+    </script>
   </head>
   <body class="bg-slate-950 text-white selection:bg-cyan-500/30 selection:text-cyan-200">
     <div id="root"></div>

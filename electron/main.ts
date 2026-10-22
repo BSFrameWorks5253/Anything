@@ -299,8 +299,11 @@ async function downloadAssetWithProgress(
   });
 }
 
+let mainWindow: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     title: 'Anything',
     width: 1280,
     height: 840,
@@ -314,8 +317,63 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    show: true,
+    show: false, // Hidden on startup: ONLY the loader box appears first!
   });
+
+  const win = mainWindow;
+
+  // Standalone Adobe Splash Window: Centered, frameless, 100% transparent desktop background
+  splashWindow = new BrowserWindow({
+    width: 740,
+    height: 480,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    resizable: false,
+    center: true,
+    alwaysOnTop: true,
+    show: true, // Only the loader box appears on the screen
+    hasShadow: true,
+    skipTaskbar: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  splashWindow.on('closed', () => {
+    splashWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  // Splash lifecycle: when the loader finishes, dismiss splash and reveal the main apps window
+  ipcMain.handle('splash:done', () => {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.destroy();
+      splashWindow = null;
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    return true;
+  });
+
+  // Fallback safety timeout (6 seconds) to guarantee the main window appears
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.destroy();
+        splashWindow = null;
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }, 6000);
 
   // Track window state changes for seamless Maximize / Restore icon updates
   win.on('maximize', () => {
@@ -894,6 +952,10 @@ function createWindow() {
 
   if (isDev) {
     const devUrl = 'http://127.0.0.1:5173';
+    // Load splash in standalone transparent splashWindow
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.loadURL(`${devUrl}?view=splash`).catch(() => {});
+    }
     const loadDev = (retries = 8) => {
       win.loadURL(devUrl).catch(() => {
         if (retries > 0) setTimeout(() => loadDev(retries - 1), 250);
@@ -902,6 +964,10 @@ function createWindow() {
     };
     loadDev();
   } else {
+    // Production build loading
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { view: 'splash' } }).catch(() => {});
+    }
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 }

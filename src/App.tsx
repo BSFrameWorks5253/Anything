@@ -11,11 +11,27 @@ import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
 
 export function App() {
+  const isSplashWindow =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('view') === 'splash';
+
+  const isElectron = Boolean(typeof window !== 'undefined' && (window as any).electronAPI);
+
   const [currentPage, setCurrentPage] = useState<NavigationPage>('apps');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [splashSettings, setSplashSettings] = useState<SplashSettings>(() => loadSplashSettings());
-  const [isBooting, setIsBooting] = useState<boolean>(() => splashSettings.enabled);
+  const [isBooting, setIsBooting] = useState<boolean>(() => !isElectron && splashSettings.enabled);
   const [previewSplash, setPreviewSplash] = useState<SplashSettings | null>(null);
+
+  // Apply zero-background transparency if this instance is the standalone splash window
+  useEffect(() => {
+    if (isSplashWindow) {
+      document.documentElement.style.background = 'transparent';
+      document.documentElement.style.backgroundColor = 'transparent';
+      document.body.style.background = 'transparent';
+      document.body.style.backgroundColor = 'transparent';
+    }
+  }, [isSplashWindow]);
 
   // Persistent Catalog Apps Registry
   const [apps, setApps] = useState<CatalogApp[]>(() => {
@@ -602,7 +618,23 @@ export function App() {
     }
   };
 
-  // 1. Initial Startup / Cold Boot: ONLY the Adobe Loader Box appears on screen
+  // 1. Standalone Splash Window: ONLY the loader box appears on the screen (no other background)
+  if (isSplashWindow) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-transparent select-none p-0 m-0 overflow-hidden">
+        <AdobeSplashScreen
+          settings={splashSettings}
+          isOpen={true}
+          onComplete={() => {
+            (window as any).electronAPI?.splashDone?.();
+          }}
+          isStandaloneSplash={true}
+        />
+      </div>
+    );
+  }
+
+  // 2. Web browser fallback: show splash before app
   if (isBooting) {
     return (
       <AdobeSplashScreen

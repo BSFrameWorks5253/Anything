@@ -67,6 +67,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('notification:clicked', subscription);
   },
 
+  // Splash Screen Lifecycle
+  splashDone: () => ipcRenderer.invoke('splash:done'),
+
   // Windows 11 Fluent Window Caption Controls
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
   maximizeWindow: () => ipcRenderer.invoke('window:maximize'),

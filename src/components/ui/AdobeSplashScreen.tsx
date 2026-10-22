@@ -8,6 +8,7 @@ interface AdobeSplashScreenProps {
   onComplete: () => void;
   isPreview?: boolean;
   isBootScreen?: boolean;
+  isStandaloneSplash?: boolean;
 }
 
 const initializationSteps = [
@@ -26,6 +27,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
   onComplete,
   isPreview = false,
   isBootScreen = false,
+  isStandaloneSplash = false,
 }) => {
   const [progress, setProgress] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -76,22 +78,12 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
 
   if (!isOpen) return null;
 
-  const handleMinimize = () => {
-    (window as any).electronAPI?.minimizeWindow();
-  };
-
-  const handleClose = () => {
-    if (isBootScreen) {
-      (window as any).electronAPI?.closeWindow();
-    } else {
-      onComplete();
-    }
-  };
-
   return (
     <div
       className={`fixed inset-0 z-[9999] flex items-center justify-center transition-all duration-350 select-none ${
-        isBootScreen
+        isStandaloneSplash
+          ? 'bg-transparent p-0 m-0'
+          : isBootScreen
           ? 'bg-[#0E0E11]'
           : 'bg-black/80 backdrop-blur-md p-4'
       } ${
@@ -106,43 +98,18 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
         }
       }}
     >
-      {/* Frameless Drag Handle Bar for Boot Screen */}
-      {isBootScreen && (
-        <div
-          className="absolute top-0 left-0 right-0 h-10 flex items-center justify-end px-3 z-50 select-none"
-          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-        >
-          <div
-            className="flex items-center gap-1"
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-          >
-            <button
-              onClick={handleMinimize}
-              className="w-8 h-8 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-              title="Minimize"
-            >
-              <Minus className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={handleClose}
-              className="w-8 h-8 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-colors"
-              title="Close"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Adobe Splash Window Container (The Box) */}
+      {/* Adobe Splash Window Container (The Box Only) */}
       <div
-        className="w-full max-w-[720px] rounded-2xl overflow-hidden bg-[#18181B] border border-[#27272A] shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col relative transition-transform duration-300 animate-fadeIn mx-4"
+        className="w-[720px] max-w-[720px] rounded-2xl overflow-hidden bg-[#18181B] border border-[#27272A] shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col relative transition-transform duration-300 animate-fadeIn"
         style={{
           boxShadow: '0 25px 80px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08)',
         }}
       >
         {/* Top Header & Artwork Canvas */}
-        <div className="relative h-[330px] sm:h-[360px] w-full overflow-hidden bg-zinc-950 flex flex-col justify-between p-6">
+        <div
+          className="relative h-[330px] sm:h-[350px] w-full overflow-hidden bg-zinc-950 flex flex-col justify-between p-6"
+          style={isStandaloneSplash ? ({ WebkitAppRegion: 'drag' } as React.CSSProperties) : undefined}
+        >
           {/* Background Artwork */}
           <img
             src={settings.artworkUrl}
