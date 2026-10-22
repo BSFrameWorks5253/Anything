@@ -12,6 +12,7 @@ import {
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
+import { AnythingBrandEmblem } from '../../../components/ui/AdobeSplashScreen';
 import {
   splashArtworkPresets,
   loadSplashSettings,
@@ -100,9 +101,7 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
         {/* Top Header & Live Preview Button */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-zinc-200 dark:border-white/[0.08]">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md shadow-red-600/25 shrink-0">
-              <img src="/logo.svg" alt="Anything Logo" className="w-full h-full object-contain" />
-            </div>
+            <AnythingBrandEmblem size={48} className="rounded-xl shadow-md shadow-red-600/25" />
 
             <div>
               <div className="flex items-center gap-2">
@@ -143,9 +142,7 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
 
             {/* Overlay badge */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg overflow-hidden shadow-xs">
-                <img src="/logo.svg" alt="Anything Logo" className="w-full h-full object-contain" />
-              </div>
+              <AnythingBrandEmblem size={26} className="rounded-lg shadow-xs" />
               <span className="text-xs font-bold text-white drop-shadow-sm">
                 {settings.productName}
               </span>
