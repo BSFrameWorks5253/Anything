@@ -161,13 +161,9 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
           {/* Top Bar: Adobe-Style Monogram Badge & Title */}
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex items-center gap-3.5">
-              {/* Iconic 2-Letter Adobe Monogram Badge (An) */}
-              <div className="w-13 h-13 rounded-xl p-[1.5px] bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600 shadow-[0_0_20px_rgba(56,189,248,0.35)] shrink-0">
-                <div className="w-full h-full rounded-[10px] bg-[#0A0E1A] flex items-center justify-center font-black text-2xl tracking-tight border border-cyan-400/40">
-                  <span className="bg-gradient-to-br from-white via-cyan-100 to-sky-400 bg-clip-text text-transparent">
-                    An
-                  </span>
-                </div>
+              {/* Official Anything App Logo (logo.svg) */}
+              <div className="w-13 h-13 rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(224,2,1,0.45)] shrink-0 transition-transform hover:scale-105">
+                <img src="/logo.svg" alt="Anything Logo" className="w-full h-full object-contain" />
               </div>
 
               <div>

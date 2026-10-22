@@ -100,10 +100,8 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
         {/* Top Header & Live Preview Button */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-zinc-200 dark:border-white/[0.08]">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl p-[1px] bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600 shadow-md shadow-cyan-500/20 shrink-0">
-              <div className="w-full h-full rounded-[11px] bg-zinc-950 flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400/30">
-                An
-              </div>
+            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-md shadow-red-600/25 shrink-0">
+              <img src="/logo.svg" alt="Anything Logo" className="w-full h-full object-contain" />
             </div>
 
             <div>
@@ -145,8 +143,8 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
 
             {/* Overlay badge */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-black/70 border border-cyan-400/40 text-cyan-400 font-bold text-xs flex items-center justify-center backdrop-blur-md">
-                An
+              <div className="w-7 h-7 rounded-lg overflow-hidden shadow-xs">
+                <img src="/logo.svg" alt="Anything Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xs font-bold text-white drop-shadow-sm">
                 {settings.productName}
