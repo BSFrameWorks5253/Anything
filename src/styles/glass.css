@@ -1,0 +1,166 @@
+/* Clean, Professional Studio Architecture (Adobe CC / macOS Desktop) */
+
+.liquid-glass-panel {
+  background: #18181B;
+  border: 1px solid #27272A;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+.liquid-glass-card {
+  position: relative;
+  background: #1C1C1F;
+  border: 1px solid #27272A;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease-out;
+}
+
+.liquid-glass-card:hover {
+  background: #222226;
+  border-color: #3F3F46;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.45);
+}
+
+.liquid-pill-active {
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.specular-reflection {
+  display: none;
+}
+
+.shimmer-text {
+  color: inherit;
+}
+
+/* ================= CLEAN LIGHT STUDIO MODE ================= */
+
+[data-theme="light"] {
+  color: #18181B;
+}
+
+[data-theme="light"] .liquid-glass-panel {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .liquid-glass-card {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .liquid-glass-card:hover {
+  background: #FFFFFF;
+  border-color: #D4D4D8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .liquid-pill-active {
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  color: #18181B;
+}
+
+/* ================= COMPREHENSIVE LIGHT MODE HIGH-CONTRAST ENGINE ================= */
+
+/* Explicit Button High-Contrast Guarantees */
+button.bg-zinc-900,
+button.bg-black,
+button.bg-red-600,
+[data-theme="light"] button.bg-zinc-900,
+[data-theme="light"] button.bg-black,
+[data-theme="light"] button.bg-red-600 {
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] button.bg-zinc-900 *,
+[data-theme="light"] button.bg-black *,
+[data-theme="light"] button.bg-red-600 * {
+  color: #FFFFFF !important;
+}
+
+/* Rich Chromatic Accent Overrides for Light Mode (eliminates washed-out pastels) */
+[data-theme="light"] .text-cyan-300 {
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .text-cyan-400 {
+  color: #0369a1 !important;
+}
+
+[data-theme="light"] .text-purple-300,
+[data-theme="light"] .text-purple-400 {
+  color: #7e22ce !important;
+}
+
+[data-theme="light"] .text-emerald-300,
+[data-theme="light"] .text-emerald-400 {
+  color: #047857 !important;
+}
+
+[data-theme="light"] .text-amber-300,
+[data-theme="light"] .text-amber-400 {
+  color: #b45309 !important;
+}
+
+[data-theme="light"] .text-rose-300,
+[data-theme="light"] .text-rose-400 {
+  color: #be123c !important;
+}
+
+/* Surface backgrounds in Light Mode */
+[data-theme="light"] .bg-white\/\[0\.02\],
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/\[0\.05\],
+[data-theme="light"] .bg-white\/\[0\.06\] {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .bg-white\/\[0\.08\],
+[data-theme="light"] .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Borders in Light Mode */
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/15,
+[data-theme="light"] .border-white\/20,
+[data-theme="light"] .border-white\/\[0\.06\],
+[data-theme="light"] .border-white\/\[0\.08\] {
+  border-color: rgba(15, 23, 42, 0.09) !important;
+}
+
+/* Input Fields and Select Dropdowns in Light Mode */
+[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]):not([class*="bg-sky"]):not([class*="bg-cyan"]),
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .bg-black\/30,
+[data-theme="light"] .bg-black\/40,
+[data-theme="light"] .bg-black\/50 {
+  background-color: rgba(241, 245, 249, 0.85) !important;
+  color: #0f172a !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+/* Modal Backdrops in Light Mode */
+[data-theme="light"] .fixed.bg-slate-950\/75,
+[data-theme="light"] .fixed.bg-slate-950\/80 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}

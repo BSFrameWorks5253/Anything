@@ -1,0 +1,63 @@
+{
+  "name": "anything",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "electron-dist/main.js",
+  "scripts": {
+    "dev:vite": "vite",
+    "dev:electron": "cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -k \"npm run dev:vite\" \"electron .\"",
+    "build:vite": "vite build",
+    "build:electron": "node -e \"require('fs').mkdirSync('electron-dist',{recursive:true});require('fs').writeFileSync('electron-dist/package.json','{\\\"type\\\":\\\"commonjs\\\"}')\" && tsc -p tsconfig.electron.json",
+    "build": "npm run build:vite && npm run build:electron",
+    "release": "npm run build && electron-builder --publish always",
+    "start": "electron .",
+    "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.burhanuddin.anything",
+    "productName": "Anything",
+    "directories": {
+      "output": "release"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "BSFrameworks5253",
+      "repo": "Anything"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "electron": "^45.0.0",
+    "electron-updater": "^6.3.9",
+    "lucide-react": "^1.16.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "wait-on": "^9.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "autoprefixer": "^10.6.1",
+    "electron-builder": "^26.7.0",
+    "oxlint": "^1.88.0",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4"
+  }
+}
