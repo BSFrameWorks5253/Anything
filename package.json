@@ -23,7 +23,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "BSFrameworks5253",
+      "owner": "BSFrameWorks5253",
       "repo": "Anything"
     },
     "win": {
