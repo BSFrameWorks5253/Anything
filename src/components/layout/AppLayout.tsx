@@ -64,28 +64,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </main>
       </div>
 
-      {/* User Simulation Active Floating Pill */}
-      {viewMode === 'user' && (
-        <div className="fixed bottom-5 right-6 z-40 select-none">
-          <div
-            className={`px-3.5 py-2 rounded-full backdrop-blur-2xl border flex items-center gap-2.5 shadow-xl ${
-              isLight
-                ? 'bg-sky-600/95 text-white border-sky-400/60 shadow-sky-600/25'
-                : 'bg-slate-900/90 text-emerald-300 border-emerald-400/40 shadow-emerald-500/20'
-            }`}
-          >
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-xs font-semibold">👁️ Viewing as End-User</span>
-            <button
-              onClick={() => setViewMode('creator')}
-              className="ml-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono bg-white text-slate-950 hover:bg-slate-100 transition-all active:scale-95 shadow-sm"
-            >
-              Exit to Creator 🛠️
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Global Background Auto-Update Dialog */}
       <UpdateNotificationModal />
     </div>

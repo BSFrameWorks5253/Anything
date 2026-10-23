@@ -13,7 +13,7 @@ const ViewModeContext = createContext<ViewModeContextType | undefined>(undefined
 export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     const saved = localStorage.getItem('creative_hub_view_mode');
-    return (saved === 'user' || saved === 'creator') ? saved : 'creator';
+    return (saved === 'user' || saved === 'creator') ? saved : 'user';
   });
 
   const setViewMode = (mode: ViewMode) => {

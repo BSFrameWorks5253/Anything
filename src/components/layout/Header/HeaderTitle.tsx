@@ -54,18 +54,6 @@ export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page, appName }) => {
           >
             {meta.title}
           </h1>
-
-          {viewMode === 'user' && (
-            <span
-              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${
-                isLight
-                  ? 'bg-zinc-100 border-zinc-200 text-zinc-600'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-300'
-              }`}
-            >
-              User View
-            </span>
-          )}
         </div>
 
         <p

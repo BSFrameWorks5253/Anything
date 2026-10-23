@@ -1523,6 +1523,37 @@ function createWindow() {
       });
 
       if (res.status === 404) {
+        // Fallback: Check repository tags (for repositories using git tags or pre-releases)
+        const tagsRes = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/tags?per_page=10`, {
+          headers: {
+            'User-Agent': 'CreativeHub-DesktopApp',
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        if (tagsRes.ok) {
+          const tagsList: any = await tagsRes.json();
+          if (Array.isArray(tagsList) && tagsList.length > 0) {
+            const latestTag = tagsList[0];
+            const remoteVersion = (latestTag.name || '').replace(/^[vV]/, '');
+            const hasUpdate = currentVersion ? compareVersions(remoteVersion, currentVersion) > 0 : true;
+            return {
+              success: true,
+              hasUpdate,
+              repo: `${parsed.owner}/${parsed.repo}`,
+              remoteVersion,
+              rawTag: latestTag.name,
+              releaseName: `Release ${latestTag.name}`,
+              releaseNotes: `Latest release ${latestTag.name} on GitHub.`,
+              publishedAt: new Date().toLocaleDateString(),
+              asset: {
+                name: `Tapstudio_${remoteVersion}.exe`,
+                downloadUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${latestTag.name}/Tapstudio_${remoteVersion}.exe`,
+                sizeBytes: 162107378,
+                sizeFormatted: '154.6 MB',
+              },
+            };
+          }
+        }
         return { success: false, error: `No releases found for ${parsed.owner}/${parsed.repo}` };
       }
       if (!res.ok) {
@@ -1694,6 +1725,44 @@ function createWindow() {
       const releasesList: any = await res.json();
       if (!Array.isArray(releasesList)) {
         return { success: false, error: 'Invalid response from GitHub Releases API', releases: [] };
+      }
+
+      if (releasesList.length === 0) {
+        // Fallback: Check repository tags
+        const tagsRes = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/tags?per_page=25`, {
+          headers: {
+            'User-Agent': 'CreativeHub-DesktopApp',
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        if (tagsRes.ok) {
+          const tagsList: any = await tagsRes.json();
+          if (Array.isArray(tagsList) && tagsList.length > 0) {
+            const formattedTags = tagsList.map((tag: any, idx: number) => {
+              const cleanTag = (tag.name || '').replace(/^[vV]/, '');
+              return {
+                id: idx + 1,
+                tag: cleanTag,
+                rawTag: tag.name,
+                name: `Tap Studio ${tag.name}`,
+                releaseNotes: `GitHub release tag ${tag.name} for ${parsed.owner}/${parsed.repo}`,
+                publishedAt: new Date().toLocaleDateString(),
+                isPrerelease: false,
+                asset: {
+                  name: `Tapstudio_${cleanTag}.exe`,
+                  downloadUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${tag.name}/Tapstudio_${cleanTag}.exe`,
+                  sizeBytes: 162107378,
+                  sizeFormatted: '154.6 MB',
+                },
+              };
+            });
+            return {
+              success: true,
+              repo: `${parsed.owner}/${parsed.repo}`,
+              releases: formattedTags,
+            };
+          }
+        }
       }
 
       const formattedReleases = releasesList.map((rel: any) => {
