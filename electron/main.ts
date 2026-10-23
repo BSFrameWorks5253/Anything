@@ -207,6 +207,7 @@ function scanAndCollectReleases(): {
           iconValue: manifest.iconValue || '⚡',
           status: 'not-installed',
           githubRepo,
+          endpoints: manifest.endpoints || undefined,
           publishedAt: Date.now(),
           releaseInfo: releaseRecord,
           history,

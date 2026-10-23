@@ -1,0 +1,29 @@
+{
+  "appId": "tap-studio",
+  "appName": "Tap Studio",
+  "version": "1.0.0",
+  "executableName": "Tapstudio_1.0.0.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "major",
+  "tagline": "Official Tap Studio Release for Anything",
+  "summary": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
+  "newFeatures": [
+    "Full integration with Anything ecosystem & auto-release fetcher",
+    "Automated cloud releases linked with BSFrameWorks5253/TapDesk",
+    "Windows Start Menu folder and desktop shortcut setup installer",
+    "Low latency (<1ms) macro trigger engine"
+  ],
+  "improvements": [
+    "Ultra-lightweight background memory footprint (~28MB)",
+    "Sub-second startup speed on NVMe drives"
+  ],
+  "fixes": [
+    "Initial stable release with Windows 11 Fluent dark mode styling"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Tap Studio v1.0.0 is Live: Macro Automation for Anything!",
+    "preview": "Discover all the capabilities of Tap Studio with automated GitHub releases.",
+    "ctaText": "Launch Tap Studio",
+    "heroGradient": "from-cyan-500 via-teal-500 to-emerald-400"
+  }
+}

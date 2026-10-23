@@ -79,6 +79,12 @@ export interface CatalogApp {
   };
   addedByCreator?: boolean;
   githubRepo?: string; // e.g. "owner/repo" or "https://github.com/owner/repo"
+  endpoints?: {
+    repository?: string;
+    releasesDashboard?: string;
+    latestReleaseApi?: string;
+    binaryDownloadPattern?: string;
+  };
   latestRelease?: {
     tag: string;
     name: string;

@@ -1,0 +1,21 @@
+{
+  "id": "tap-studio",
+  "name": "Tap Studio",
+  "shortName": "TS",
+  "version": "1.0.0",
+  "category": "Productivity",
+  "description": "Desktop companion, macro launcher, and hardware automation suite.",
+  "executableName": "Tapstudio_1.0.0.exe",
+  "iconType": "emoji",
+  "iconValue": "🖲️",
+  "gradient": "from-cyan-500 via-teal-500 to-emerald-400",
+  "textColor": "#2dd4bf",
+  "glowColor": "rgba(45, 212, 191, 0.45)",
+  "githubRepo": "BSFrameWorks5253/TapDesk",
+  "endpoints": {
+    "repository": "https://github.com/BSFrameWorks5253/TapDesk",
+    "releasesDashboard": "https://github.com/BSFrameWorks5253/TapDesk/releases",
+    "latestReleaseApi": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
+    "binaryDownloadPattern": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v{version}/Tapstudio_{version}.exe"
+  }
+}

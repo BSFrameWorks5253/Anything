@@ -1,5 +1,98 @@
 [
   {
+    "id": "tap-studio",
+    "name": "Tap Studio",
+    "shortName": "TS",
+    "category": "Productivity",
+    "version": "1.0.0",
+    "description": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
+    "executableName": "Tapstudio_1.0.0.exe",
+    "packageFileName": "Tapstudio_1.0.0.exe",
+    "packageSize": "0 KB",
+    "packageFormat": ".exe",
+    "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe",
+    "gradient": "from-cyan-500 via-teal-500 to-emerald-400",
+    "textColor": "#2dd4bf",
+    "glowColor": "rgba(45, 212, 191, 0.45)",
+    "iconType": "emoji",
+    "iconValue": "🖲️",
+    "status": "not-installed",
+    "githubRepo": "BSFrameWorks5253/TapDesk",
+    "publishedAt": 1792731424308,
+    "releaseInfo": {
+      "version": "1.0.0",
+      "executableName": "Tapstudio_1.0.0.exe",
+      "releaseDate": "2026-10-23",
+      "releaseType": "major",
+      "tagline": "Official Tap Studio Release for Anything",
+      "summary": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
+      "newFeatures": [
+        "Full integration with Anything ecosystem & auto-release fetcher",
+        "Automated cloud releases linked with BSFrameWorks5253/TapDesk",
+        "Windows Start Menu folder and desktop shortcut setup installer",
+        "Low latency (<1ms) macro trigger engine"
+      ],
+      "improvements": [
+        "Ultra-lightweight background memory footprint (~28MB)",
+        "Sub-second startup speed on NVMe drives"
+      ],
+      "fixes": [
+        "Initial stable release with Windows 11 Fluent dark mode styling"
+      ],
+      "emailNotification": {
+        "subject": "🚀 Tap Studio v1.0.0 is Live: Macro Automation for Anything!",
+        "preview": "Discover all the capabilities of Tap Studio with automated GitHub releases.",
+        "ctaText": "Launch Tap Studio",
+        "heroGradient": "from-cyan-500 via-teal-500 to-emerald-400"
+      },
+      "sizeFormatted": "0 KB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe"
+    },
+    "history": [
+      {
+        "version": "1.0.0",
+        "executableName": "Tapstudio_1.0.0.exe",
+        "releaseDate": "2026-10-23",
+        "releaseType": "major",
+        "tagline": "Official Tap Studio Release for Anything",
+        "summary": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
+        "newFeatures": [
+          "Full integration with Anything ecosystem & auto-release fetcher",
+          "Automated cloud releases linked with BSFrameWorks5253/TapDesk",
+          "Windows Start Menu folder and desktop shortcut setup installer",
+          "Low latency (<1ms) macro trigger engine"
+        ],
+        "improvements": [
+          "Ultra-lightweight background memory footprint (~28MB)",
+          "Sub-second startup speed on NVMe drives"
+        ],
+        "fixes": [
+          "Initial stable release with Windows 11 Fluent dark mode styling"
+        ],
+        "emailNotification": {
+          "subject": "🚀 Tap Studio v1.0.0 is Live: Macro Automation for Anything!",
+          "preview": "Discover all the capabilities of Tap Studio with automated GitHub releases.",
+          "ctaText": "Launch Tap Studio",
+          "heroGradient": "from-cyan-500 via-teal-500 to-emerald-400"
+        },
+        "sizeFormatted": "0 KB",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe"
+      }
+    ],
+    "changelog": [
+      "Release v1.0.0 collected from releases/tap-studio",
+      "Package size: 0 KB",
+      "Feature: Full integration with Anything ecosystem & auto-release fetcher",
+      "Feature: Automated cloud releases linked with BSFrameWorks5253/TapDesk",
+      "Feature: Windows Start Menu folder and desktop shortcut setup installer",
+      "Feature: Low latency (<1ms) macro trigger engine",
+      "Improvement: Ultra-lightweight background memory footprint (~28MB)",
+      "Improvement: Sub-second startup speed on NVMe drives",
+      "Fix: Initial stable release with Windows 11 Fluent dark mode styling"
+    ],
+    "addedByCreator": true
+  },
+  {
     "id": "photo-studio",
     "name": "Photo Studio Pro",
     "shortName": "PS",
