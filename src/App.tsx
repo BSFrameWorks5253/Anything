@@ -49,8 +49,9 @@ export function App() {
         if (Array.isArray(parsed)) {
           return parsed.map((a: CatalogApp) => {
             if (
-              (a.id === 'tap-studio' || (a.name && a.name.toLowerCase().includes('tap studio'))) &&
-              (!a.iconValue || a.iconValue === 'app-logo.png' || a.iconValue === '/app-logo.png')
+              a.id === 'tap-studio' ||
+              a.id === 'app-tap-studio' ||
+              (a.name && a.name.toLowerCase().includes('tap studio'))
             ) {
               return { ...a, iconType: 'image' as const, iconValue: '/tap-studio-logo.png' };
             }
