@@ -67,7 +67,12 @@ export function App() {
         if (res.success && res.catalog && res.catalog.length > 0) {
           // Merge with local install state
           const merged = res.catalog.map((remote: any) => {
-            const local = apps.find((a) => a.id === remote.id);
+            const normRemoteId = (remote.id || '').toLowerCase().replace(/^app-/, '');
+            const local = apps.find(
+              (a) =>
+                a.id === remote.id ||
+                (a.id || '').toLowerCase().replace(/^app-/, '') === normRemoteId
+            );
             if (local) {
               return {
                 ...remote,

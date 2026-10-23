@@ -102,18 +102,22 @@ function matchesApp(folderName: string, targetId: string, targetName: string, fo
 function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: string } | null {
   try {
     if (!fs.existsSync(dirPath)) return null;
-    const files = fs.readdirSync(dirPath);
+
     const preferredNames = [
       'app-logo.png',
+      'app_logo.png',
+      'app logo.png',
+      'applogo.png',
       'logo.png',
       'icon.png',
       'app.png',
-      'app_logo.png',
       'logo.svg',
       'icon.svg',
     ];
 
-    let chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase()));
+    // 1. Direct scan in dirPath
+    const files = fs.readdirSync(dirPath);
+    let chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase().trim()));
     if (!chosenFile) {
       chosenFile = files.find((f) => {
         const ext = path.extname(f).toLowerCase();
@@ -136,6 +140,25 @@ function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: stri
         iconType: 'image',
         iconValue: `data:${mime};base64,${base64}`,
       };
+    }
+
+    // 2. Recursive scan in subdirectories (e.g. V-1.0.0, v1.2.0, assets)
+    for (const file of files) {
+      const subPath = path.join(dirPath, file);
+      if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
+        const subFiles = fs.readdirSync(subPath);
+        const subMatch = subFiles.find((f) => preferredNames.includes(f.toLowerCase().trim()));
+        if (subMatch) {
+          const fullPath = path.join(subPath, subMatch);
+          const ext = path.extname(subMatch).toLowerCase().replace('.', '');
+          const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+          const base64 = fs.readFileSync(fullPath).toString('base64');
+          return {
+            iconType: 'image',
+            iconValue: `data:${mime};base64,${base64}`,
+          };
+        }
+      }
     }
   } catch (e) {
     console.error('Failed to parse app logo image:', e);
@@ -414,21 +437,40 @@ function scanAndCollectReleases(): {
           };
 
           const appVersion = latest.version;
-          const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+          const normAppId = appId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+          const existingIndex = catalog.findIndex((a: any) => {
+            const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+            return a.id === appId || aNorm === normAppId;
+          });
+
           if (existingIndex >= 0) {
             const existing = catalog[existingIndex];
             const hasNewer = compareVersions(appVersion, existing.version) > 0;
-            if (hasNewer || isNewFile) {
+            const logoChanged = Boolean(
+              appLogo &&
+              (existing.iconValue !== appLogo.iconValue || existing.iconType !== appLogo.iconType)
+            );
+
+            if (appLogo) {
+              existing.iconType = appLogo.iconType;
+              existing.iconValue = appLogo.iconValue;
+              catalogEntry.iconType = appLogo.iconType;
+              catalogEntry.iconValue = appLogo.iconValue;
+            }
+
+            if (hasNewer || isNewFile || logoChanged) {
               catalog[existingIndex] = {
                 ...existing,
                 ...catalogEntry,
                 status: existing.status === 'ready' ? 'update-available' : existing.status,
               };
               updatedCount++;
-              sendWindowsNotification(
-                `⚡ Update Detected for ${appName}!`,
-                `Version v${appVersion} was collected from releases. Ready to launch!`
-              );
+              if (hasNewer || isNewFile) {
+                sendWindowsNotification(
+                  `⚡ Update Detected for ${appName}!`,
+                  `Version v${appVersion} was collected from releases. Ready to launch!`
+                );
+              }
             }
           } else {
             catalog.unshift(catalogEntry);

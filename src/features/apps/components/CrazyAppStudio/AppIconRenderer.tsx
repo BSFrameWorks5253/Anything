@@ -23,6 +23,27 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
   const textColor = app.textColor || '#38bdf8';
   const glowColor = app.glowColor || 'rgba(56, 189, 248, 0.4)';
 
+  const isTapStudio =
+    app.id === 'tap-studio' ||
+    app.id === 'app-tap-studio' ||
+    Boolean(app.name && app.name.toLowerCase().includes('tap studio'));
+
+  const rawIconValue = app.iconValue;
+  const isImageCandidate =
+    app.iconType === 'image' ||
+    (typeof rawIconValue === 'string' &&
+      (rawIconValue.startsWith('data:image/') ||
+        rawIconValue.startsWith('http://') ||
+        rawIconValue.startsWith('https://') ||
+        rawIconValue.startsWith('/') ||
+        /\.(png|svg|jpg|jpeg|webp)$/i.test(rawIconValue)));
+
+  const resolvedImageSrc = isImageCandidate
+    ? rawIconValue
+    : isTapStudio
+    ? '/tap-studio-logo.png'
+    : null;
+
   return (
     <div
       className={`relative p-[1px] bg-gradient-to-br ${gradient} shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300 ${sizeMap} ${className}`}
@@ -34,9 +55,9 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
         {/* Specular glass reflection */}
         <div className="specular-reflection opacity-80" />
 
-        {app.iconType === 'image' && app.iconValue ? (
+        {resolvedImageSrc ? (
           <img
-            src={app.iconValue}
+            src={resolvedImageSrc}
             alt={app.name || 'App icon'}
             className="w-full h-full object-cover rounded-[inherit]"
           />
