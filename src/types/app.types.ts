@@ -60,7 +60,9 @@ export interface CatalogApp {
   localVersion?: string;
   size: string;
   downloadUrl?: string; // Direct link to .zip, .exe, or GitHub Release
-  executableName: string; // e.g. "blender.exe" or "myapp.exe"
+  releasesUrl?: string; // Direct link to GitHub repository releases page
+  setupExecutableName?: string; // Remote setup asset name (e.g. Tapstudio_1.2.0_Setup.exe)
+  executableName: string; // e.g. "Tap Studio.exe"
   installedPath?: string; // Resolved full path on disk
   gradient: string;
   textColor: string;

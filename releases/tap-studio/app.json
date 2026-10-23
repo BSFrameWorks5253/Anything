@@ -5,7 +5,7 @@
   "version": "1.2.0",
   "category": "Media & Video",
   "description": "Enterprise video title card insertion, multi-track timeline rendering, audio alternation, and media archiving suite.",
-  "executableName": "Tapstudio_1.2.0.exe",
+  "executableName": "Tap Studio.exe",
   "setupExecutableName": "Tapstudio_1.2.0_Setup.exe",
   "iconType": "svg",
   "iconValue": "assets/logo.svg",
@@ -15,5 +15,5 @@
   "githubRepo": "BSFrameWorks5253/TapDesk",
   "releasesUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases",
   "releasesApiUrl": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
-  "downloadUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v1.2.0/Tapstudio_1.2.0.exe"
+  "downloadUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v1.2.0/Tapstudio_1.2.0_Setup.exe"
 }

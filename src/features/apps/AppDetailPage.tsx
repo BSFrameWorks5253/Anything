@@ -20,6 +20,9 @@ import {
   User,
   Pencil,
   Check,
+  Copy,
+  Cloud,
+  Globe,
 } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -67,8 +70,80 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [uninstallModalOpen, setUninstallModalOpen] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
+  const [copiedReleaseUrl, setCopiedReleaseUrl] = useState(false);
+  const [copiedAssetUrl, setCopiedAssetUrl] = useState(false);
+  const [resolvedExePath, setResolvedExePath] = useState<string | undefined>(
+    app.installedPath && !app.installedPath.toLowerCase().includes('setup') ? app.installedPath : undefined
+  );
   const { theme } = useTheme();
   const isLight = theme === 'light';
+
+  // Auto-resolve real installed executable on disk
+  React.useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.resolveInstalledPath) {
+      electronAPI
+        .resolveInstalledPath({
+          appId: app.id,
+          name: app.name,
+          currentPath: app.installedPath,
+          executableName: app.executableName || `${app.name}.exe`,
+        })
+        .then((res: any) => {
+          if (res?.installed && res?.resolvedPath) {
+            setResolvedExePath(res.resolvedPath);
+            app.installedPath = res.resolvedPath;
+            if (app.status === 'not-installed' || app.status === 'path-broken') {
+              app.status = 'installed';
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [app.id, app.installedPath, app.executableName, app.name]);
+
+  const repoReleasesUrl =
+    app.releasesUrl || (app.githubRepo ? `https://github.com/${app.githubRepo}/releases` : '');
+  const latestTag = `v${app.version || '1.2.0'}`;
+  const tagReleasesUrl = app.githubRepo
+    ? `https://github.com/${app.githubRepo}/releases/tag/${latestTag}`
+    : '';
+  const setupExeName =
+    app.setupExecutableName ||
+    (app.packageFileName?.toLowerCase().includes('setup')
+      ? app.packageFileName
+      : `${app.name.replace(/\s+/g, '')}_${app.version}_Setup.exe`);
+  const setupDownloadUrl =
+    app.downloadUrl && app.downloadUrl.startsWith('http')
+      ? app.downloadUrl
+      : app.githubRepo
+      ? `https://github.com/${app.githubRepo}/releases/download/${latestTag}/${setupExeName}`
+      : '';
+
+  const openExternalUrl = (url: string) => {
+    if (!url) return;
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.openExternal) {
+      electronAPI.openExternal(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const copyToClipboard = async (text: string, type: 'release' | 'asset') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'release') {
+        setCopiedReleaseUrl(true);
+        setTimeout(() => setCopiedReleaseUrl(false), 2000);
+      } else {
+        setCopiedAssetUrl(true);
+        setTimeout(() => setCopiedAssetUrl(false), 2000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleSaveRename = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -364,12 +439,126 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             </p>
           </GlassCard>
 
-          {/* Executable Path Info */}
+          {/* GitHub Repository Releases Source (REPO RELEASE LINK) */}
+          {(app.githubRepo || repoReleasesUrl) && (
+            <GlassCard
+              variant="interactive"
+              className="p-6 border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-sky-500/5 to-transparent space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                    <GitBranch className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono uppercase tracking-wider text-cyan-700 dark:text-cyan-300 font-bold">
+                        Repository Release Source (GitHub)
+                      </span>
+                      <GlassBadge variant="cyan" size="sm" className="font-mono text-[10px]">
+                        Cloud Source (Not Computer)
+                      </GlassBadge>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                      Child app binary packages are fetched directly from GitHub cloud releases
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <GlassButton
+                    variant="glass"
+                    size="sm"
+                    icon={<ExternalLink className="w-3.5 h-3.5" />}
+                    onClick={() => openExternalUrl(repoReleasesUrl)}
+                    className="text-xs font-mono font-semibold"
+                  >
+                    Open Releases Page
+                  </GlassButton>
+                </div>
+              </div>
+
+              {/* Official Repository Releases Link Display */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
+                  Official GitHub Repository Releases Link:
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 rounded-xl bg-zinc-100 dark:bg-black/60 border border-cyan-500/30 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold flex items-center justify-between gap-2">
+                    <span className="truncate">{repoReleasesUrl}</span>
+                    <button
+                      onClick={() => copyToClipboard(repoReleasesUrl, 'release')}
+                      title="Copy Repository Release Link"
+                      className="p-1 rounded-lg hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
+                    >
+                      {copiedReleaseUrl ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <GlassButton
+                    variant="glass"
+                    size="sm"
+                    onClick={() => openExternalUrl(tagReleasesUrl || repoReleasesUrl)}
+                    className="font-mono text-xs shrink-0"
+                  >
+                    Tag {latestTag}
+                  </GlassButton>
+                </div>
+              </div>
+
+              {/* Latest Setup Exe Release Asset */}
+              <div className="p-3.5 rounded-xl bg-white/40 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="w-3.5 h-3.5 text-cyan-500" />
+                    <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                      Latest Release Setup Exe:
+                    </span>
+                    <span className="font-mono font-semibold text-cyan-600 dark:text-cyan-400">
+                      {setupExeName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {setupDownloadUrl && (
+                      <button
+                        onClick={() => copyToClipboard(setupDownloadUrl, 'asset')}
+                        className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+                      >
+                        {copiedAssetUrl ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-500" />
+                            <span>URL Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy Asset URL</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed font-mono">
+                  When you click <strong>Download & Install</strong> or <strong>Update</strong>, Anything takes this setup executable directly from GitHub Releases and runs it silently without showing setup dialogs. It does not take files from your computer.
+                </p>
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Executable Disk Location */}
           <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
-                Executable Disk Location
-              </span>
+              <div className="flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
+                  Application Executable (Installed Disk Location)
+                </span>
+              </div>
               <button
                 onClick={() => onFixPath(app)}
                 className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline font-mono flex items-center gap-1 font-semibold"
@@ -380,53 +569,23 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             </div>
 
             <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-black/50 border border-zinc-200 dark:border-white/10 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold">
-              {app.installedPath ||
-                `Will install to: %LOCALAPPDATA%\\Anything\\installed-apps\\${app.id}\\${app.executableName}`}
+              {resolvedExePath ||
+                (app.installedPath && !app.installedPath.toLowerCase().includes('setup')
+                  ? app.installedPath
+                  : `Status: Not installed locally • Click "Download & Install" above to fetch latest setup from GitHub`)}
             </div>
-            <p className="text-[11px] text-zinc-500 font-mono">
-              Executable is managed under Anything's isolated apps sandbox. Click "Change / Locate" to link an external build.
-            </p>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-zinc-500 font-mono">
+              <span>
+                Target Program Binary: <strong>{app.executableName || `${app.name}.exe`}</strong>
+              </span>
+              <span className="text-cyan-600 dark:text-cyan-400">
+                {resolvedExePath || (app.installedPath && !app.installedPath.toLowerCase().includes('setup'))
+                  ? '✓ Verified native installed executable'
+                  : 'Installer is downloaded from GitHub and executed silently'}
+              </span>
+            </div>
           </GlassCard>
-
-          {/* GitHub Auto-Updater Sync */}
-          {app.githubRepo && (
-            <GlassCard
-              variant="interactive"
-              className="p-6 border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 via-sky-500/5 to-transparent space-y-3"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                  <span className="text-xs font-mono uppercase tracking-wider text-cyan-700 dark:text-cyan-300 font-bold">
-                    GitHub Cloud Releases Sync
-                  </span>
-                </div>
-                <a
-                  href={`https://github.com/${app.githubRepo}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const electronAPI = (window as any).electronAPI;
-                    if (electronAPI?.openExternal) {
-                      electronAPI.openExternal(`https://github.com/${app.githubRepo}`);
-                    } else {
-                      window.open(`https://github.com/${app.githubRepo}`, '_blank');
-                    }
-                  }}
-                  className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-mono font-semibold"
-                >
-                  <span>{app.githubRepo}</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-
-              <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
-                This child application continuously tracks official GitHub releases published to{' '}
-                <strong className="text-zinc-900 dark:text-white font-mono">{app.githubRepo}</strong>. When a new executable is released, Anything automatically alerts you with animated release notes.
-              </p>
-            </GlassCard>
-          )}
 
           {/* Path Broken Warning */}
           {app.status === 'path-broken' && (

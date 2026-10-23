@@ -348,34 +348,36 @@ export function App() {
       )
     );
 
-    // 1. Direct GitHub Release Installation or Update
+    // 1. Direct GitHub Release Installation or Update (Takes Setup EXE from GitHub, NOT from computer)
     if (
       electronAPI?.updateAppFromGitHub &&
-      (targetApp.latestRelease?.assetUrl || targetApp.githubRepo)
+      (targetApp.githubRepo || targetApp.latestRelease?.assetUrl || (targetApp.downloadUrl && targetApp.downloadUrl.startsWith('http')))
     ) {
-      let downloadUrl = targetApp.latestRelease?.assetUrl;
-      let assetName = targetApp.latestRelease?.assetName;
+      let downloadUrl = targetApp.latestRelease?.assetUrl || (targetApp.downloadUrl?.startsWith('http') ? targetApp.downloadUrl : undefined);
+      let assetName = targetApp.latestRelease?.assetName || targetApp.setupExecutableName || targetApp.packageFileName;
       let newVersion = targetApp.latestRelease?.tag || targetApp.version;
 
-      if (!downloadUrl && targetApp.githubRepo) {
-        const ghCheck = await electronAPI.checkGitHubRelease(
-          targetApp.githubRepo,
-          targetApp.localVersion || targetApp.version
-        );
+      if (targetApp.githubRepo) {
+        // Query GitHub releases API for latest setup binary
+        const ghCheck = await electronAPI.checkGitHubRelease(targetApp.githubRepo, undefined);
         if (ghCheck.success && ghCheck.asset) {
           downloadUrl = ghCheck.asset.downloadUrl;
           assetName = ghCheck.asset.name;
-          newVersion = ghCheck.remoteVersion || ghCheck.rawTag;
+          newVersion = ghCheck.remoteVersion || ghCheck.rawTag || targetApp.version;
         }
       }
 
-      if (downloadUrl && assetName) {
+      if (downloadUrl) {
+        if (!assetName) {
+          assetName = downloadUrl.split('/').pop() || `${targetApp.id}_Setup.exe`;
+        }
         const result = await electronAPI.updateAppFromGitHub({
           appId: targetApp.id,
           downloadUrl,
           assetName,
           newVersion,
-          executableName: targetApp.executableName,
+          executableName: targetApp.executableName || `${targetApp.name}.exe`,
+          appName: targetApp.name,
         });
 
         if (result.success) {
@@ -408,8 +410,12 @@ export function App() {
       }
     }
 
-    // 2. If app has local package from Publisher Push
-    if (electronAPI?.installPublishedPackage && (targetApp as any).localPackagePath) {
+    // 2. If app has local package from Publisher Push (Only for local offline apps without GitHub repo)
+    if (
+      !targetApp.githubRepo &&
+      electronAPI?.installPublishedPackage &&
+      (targetApp as any).localPackagePath
+    ) {
       setTimeout(async () => {
         const result = await electronAPI.installPublishedPackage(targetApp);
         if (result.success) {

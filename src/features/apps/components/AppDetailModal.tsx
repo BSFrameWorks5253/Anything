@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Play, Download, Trash2, Cpu, HardDrive, Monitor, CheckCircle, Sparkles, AlertTriangle, Wrench, RefreshCw, GitBranch, ExternalLink } from 'lucide-react';
+import { X, Play, Download, Trash2, Cpu, HardDrive, Monitor, CheckCircle, Sparkles, AlertTriangle, Wrench, RefreshCw, GitBranch, ExternalLink, Copy, Check, Cloud } from 'lucide-react';
 import type { CatalogApp } from '../../../types/app.types';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
@@ -207,15 +207,16 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                       : 'bg-black/40 border-white/5 text-cyan-300'
                   }`}
                 >
-                  {app.installedPath ||
-                    `Will install to: %LOCALAPPDATA%\\Anything\\installed-apps\\${app.id}\\${app.executableName}`}
+                  {app.installedPath && !app.installedPath.toLowerCase().includes('setup')
+                    ? app.installedPath
+                    : `Status: Not installed • Click "Download & Install" below to fetch latest setup from GitHub`}
                 </div>
               </div>
 
-              {/* GitHub Releases Integration */}
+              {/* GitHub Repository Releases Source */}
               {app.githubRepo && (
                 <div
-                  className={`p-4 rounded-xl border space-y-2.5 ${
+                  className={`p-4 rounded-xl border space-y-3 ${
                     isLight
                       ? 'bg-cyan-50/80 border-cyan-200'
                       : 'bg-cyan-500/[0.06] border-cyan-400/20'
@@ -224,26 +225,39 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono text-cyan-700 dark:text-cyan-300 flex items-center gap-1.5 font-bold">
                       <GitBranch className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                      <span>GITHUB AUTO-UPDATER SYNC</span>
+                      <span>REPOSITORY RELEASES (GITHUB)</span>
                     </span>
                     <a
-                      href={`https://github.com/${app.githubRepo}`}
+                      href={`https://github.com/${app.githubRepo}/releases`}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => {
                         e.preventDefault();
                         const electronAPI = (window as any).electronAPI;
                         if (electronAPI?.openExternal) {
-                          electronAPI.openExternal(`https://github.com/${app.githubRepo}`);
+                          electronAPI.openExternal(`https://github.com/${app.githubRepo}/releases`);
                         } else {
-                          window.open(`https://github.com/${app.githubRepo}`, '_blank');
+                          window.open(`https://github.com/${app.githubRepo}/releases`, '_blank');
                         }
                       }}
                       className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-mono font-semibold"
                     >
-                      <span>{app.githubRepo}</span>
+                      <span>Releases Page</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-black/20 border border-cyan-500/20 font-mono text-[11px] text-cyan-700 dark:text-cyan-300 break-all select-all flex items-center justify-between gap-2">
+                    <span className="truncate">https://github.com/{app.githubRepo}/releases</span>
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(`https://github.com/${app.githubRepo}/releases`);
+                      }}
+                      title="Copy Release Link"
+                      className="p-1 hover:bg-cyan-500/20 rounded text-cyan-600 dark:text-cyan-400 shrink-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {app.latestRelease ? (

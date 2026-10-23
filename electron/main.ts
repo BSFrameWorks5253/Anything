@@ -314,6 +314,53 @@ function pickReleaseExecutable(files: string[]): string | undefined {
   return files.find((f) => f.toLowerCase().endsWith('.zip'));
 }
 
+// Helper: check if a file is an installer or packaging artifact
+function isLikelyInstaller(filePath: string): boolean {
+  if (!filePath) return false;
+  const lower = filePath.toLowerCase();
+  const baseName = path.basename(lower);
+
+  // If explicitly named uninstaller or setup or installer
+  if (
+    baseName.includes('setup') ||
+    baseName.includes('installer') ||
+    baseName.includes('uninstall') ||
+    baseName.includes('elevate')
+  ) {
+    return true;
+  }
+
+  // If it is inside LocalAppData\Programs or Program Files (and not explicitly named setup/installer/uninstall), it is an installed app, not an installer!
+  if (
+    (lower.includes('\\programs\\') ||
+      lower.includes('\\program files\\') ||
+      lower.includes('\\program files (x86)\\')) &&
+    !baseName.includes('setup') &&
+    !baseName.includes('installer') &&
+    !baseName.includes('uninstall')
+  ) {
+    return false;
+  }
+
+  // Release artifact naming pattern like Tapstudio_1.0.0.exe, TapStudio-V-1.0.0.exe, App_1.2.3.exe
+  if (/^[a-z0-9_-]+[_-]v?\d+(\.\d+)*.*\.exe$/i.test(baseName)) {
+    return true;
+  }
+
+  // Packaging staging or temp directories
+  if (
+    lower.includes('published-apps') ||
+    lower.includes('packages-inbox') ||
+    lower.includes('temp-downloads') ||
+    lower.includes('\\releases\\') ||
+    lower.includes('/releases/')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 async function scanAndCollectReleases(): Promise<{
   success: boolean;
   addedCount: number;
@@ -502,9 +549,15 @@ async function scanAndCollectReleases(): Promise<{
               if (rel === latest) isNewFile = true;
             }
 
+            const relReleasesUrl = githubRepo ? `https://github.com/${githubRepo}/releases` : manifest.releasesUrl;
+            const relDownloadUrl = githubRepo
+              ? `https://github.com/${githubRepo}/releases/download/v${rel.version}/${rel.exeFile}`
+              : (manifest.downloadUrl || destPath);
+
             historyRecords.push({
               version: rel.version,
-              executableName: rel.exeFile,
+              executableName: manifest.executableName || `${appName}.exe`,
+              setupExecutableName: rel.exeFile,
               releaseDate: rel.releaseMeta.releaseDate || new Date().toISOString().slice(0, 10),
               releaseType: rel.releaseMeta.releaseType || 'minor',
               tagline: rel.releaseMeta.tagline || `${appName} v${rel.version} Update`,
@@ -514,7 +567,8 @@ async function scanAndCollectReleases(): Promise<{
               fixes: Array.isArray(rel.releaseMeta.fixes) ? rel.releaseMeta.fixes : [],
               emailNotification: rel.releaseMeta.emailNotification,
               sizeFormatted: formatFileBytes(rel.stats.size),
-              downloadUrl: destPath,
+              downloadUrl: relDownloadUrl,
+              releasesUrl: relReleasesUrl,
             });
           }
 
@@ -527,6 +581,17 @@ async function scanAndCollectReleases(): Promise<{
                 shaderColorPresets.length
             ];
 
+          const releasesUrl = githubRepo ? `https://github.com/${githubRepo}/releases` : manifest.releasesUrl;
+          const remoteDownloadUrl = githubRepo
+            ? `https://github.com/${githubRepo}/releases/download/v${latest.version}/${latest.exeFile}`
+            : (manifest.downloadUrl || primaryDestPath);
+
+          // Real installed executable name (not the setup installer)
+          let resolvedExeName = manifest.executableName;
+          if (!resolvedExeName || isLikelyInstaller(resolvedExeName)) {
+            resolvedExeName = `${appName}.exe`;
+          }
+
           const catalogEntry = {
             id: appId,
             name: appName,
@@ -536,10 +601,14 @@ async function scanAndCollectReleases(): Promise<{
             size: manifest.size || formatFileBytes(latest.stats.size),
             packageSize: formatFileBytes(latest.stats.size),
             description,
-            executableName: latest.exeFile,
+            executableName: resolvedExeName,
+            setupExecutableName: latest.exeFile,
             packageFileName: latest.exeFile,
             packageFormat: ext,
-            localPackagePath: primaryDestPath,
+            // When app tracks GitHub repo, take setup exe from GitHub, NOT from computer
+            localPackagePath: githubRepo ? undefined : primaryDestPath,
+            downloadUrl: remoteDownloadUrl,
+            releasesUrl,
             gradient: manifest.gradient || shader.gradient,
             textColor: manifest.textColor || shader.textColor,
             glowColor: manifest.glowColor || shader.glow,
@@ -1406,12 +1475,33 @@ function createWindow() {
         await runInstallerSilently(targetExe);
 
         // Auto-detect installed binary
-        const found = findInstalledExecutable({
+        let found = findInstalledExecutable({
           appName: appData.name,
           appId: id,
           executableName,
         });
+
+        if (!found) {
+          for (let i = 0; i < 6; i++) {
+            await new Promise((r) => setTimeout(r, 1000));
+            found = findInstalledExecutable({
+              appName: appData.name,
+              appId: id,
+              executableName,
+            });
+            if (found) break;
+          }
+        }
+
         if (found) {
+          if (found.toLowerCase().endsWith('.lnk')) {
+            try {
+              const sc = shell.readShortcutLink(found);
+              if (sc && sc.target && fs.existsSync(sc.target)) {
+                found = sc.target;
+              }
+            } catch (e) {}
+          }
           sendWindowsNotification(
             'Installation Complete',
             `${appData.name || 'Application'} is installed and ready to open.`,
@@ -1457,40 +1547,7 @@ function createWindow() {
     });
   }
 
-  // Helper: check if a file is an installer or packaging artifact
-  function isLikelyInstaller(filePath: string): boolean {
-    if (!filePath) return false;
-    const lower = filePath.toLowerCase();
-    const baseName = path.basename(lower);
 
-    // If explicitly named uninstaller or setup or installer
-    if (
-      baseName.includes('setup') ||
-      baseName.includes('installer') ||
-      baseName.includes('uninstall') ||
-      baseName.includes('elevate')
-    ) {
-      return true;
-    }
-
-    // Release artifact naming pattern like Tapstudio_1.0.0.exe, TapStudio-V-1.0.0.exe, App_1.2.3.exe
-    if (/^[a-z0-9_-]+[_-]v?\d+(\.\d+)*.*\.exe$/i.test(baseName)) {
-      return true;
-    }
-
-    // Packaging staging or temp directories
-    if (
-      lower.includes('published-apps') ||
-      lower.includes('packages-inbox') ||
-      lower.includes('temp-downloads') ||
-      lower.includes('\\releases\\') ||
-      lower.includes('/releases/')
-    ) {
-      return true;
-    }
-
-    return false;
-  }
 
   // Helper: locate actual installed executable on Windows
   function findInstalledExecutable(options: {
@@ -1728,11 +1785,26 @@ function createWindow() {
 
         if (installedExe && fs.existsSync(installedExe)) {
           targetPath = installedExe;
+        } else if (isLikelyInstaller(targetPath)) {
+          return {
+            success: false,
+            error: `Target application is not yet installed. Please click Install to download and run the setup from GitHub.`,
+          };
         } else if (!fs.existsSync(targetPath)) {
           return {
             success: false,
             error: `Executable for ${appName || 'Application'} not found on disk. Please install the app or fix its path.`,
           };
+        }
+
+        // If shortcut, resolve to real exe target
+        if (targetPath.toLowerCase().endsWith('.lnk')) {
+          try {
+            const sc = shell.readShortcutLink(targetPath);
+            if (sc && sc.target && fs.existsSync(sc.target)) {
+              targetPath = sc.target;
+            }
+          } catch (e) {}
         }
 
         const result = await shell.openPath(targetPath);
@@ -1754,7 +1826,15 @@ function createWindow() {
       data: { appId?: string; name?: string; currentPath?: string; executableName?: string }
     ) => {
       try {
-        const resolved = findInstalledExecutable(data || {});
+        let resolved = findInstalledExecutable(data || {});
+        if (resolved && resolved.toLowerCase().endsWith('.lnk')) {
+          try {
+            const sc = shell.readShortcutLink(resolved);
+            if (sc && sc.target && fs.existsSync(sc.target)) {
+              resolved = sc.target;
+            }
+          } catch (e) {}
+        }
         return {
           installed: !!resolved,
           resolvedPath: resolved || null,
@@ -2421,13 +2501,43 @@ function createWindow() {
             }
             // Execute installer completely silently in the background (no popup)
             await runInstallerSilently(tempDownloadPath);
-            const found = findInstalledExecutable({
+            let found = findInstalledExecutable({
+              appName: targetAppName,
               appId,
               executableName,
             });
+            if (!found) {
+              // Wait and retry up to 6 seconds for NSIS/Inno setup to write files
+              for (let i = 0; i < 6; i++) {
+                await new Promise((r) => setTimeout(r, 1000));
+                found = findInstalledExecutable({
+                  appName: targetAppName,
+                  appId,
+                  executableName,
+                });
+                if (found) break;
+              }
+            }
+
             if (found) {
               resolvedExePath = found;
+              // Clean up downloaded setup executable so sandbox doesn't launch installer
+              try {
+                if (fs.existsSync(tempDownloadPath)) {
+                  fs.unlinkSync(tempDownloadPath);
+                }
+              } catch (e) {}
             }
+
+            if (resolvedExePath.toLowerCase().endsWith('.lnk')) {
+              try {
+                const sc = shell.readShortcutLink(resolvedExePath);
+                if (sc && sc.target && fs.existsSync(sc.target)) {
+                  resolvedExePath = sc.target;
+                }
+              } catch (e) {}
+            }
+
             sendWindowsNotification(
               'Installation Complete',
               `${targetAppName} was installed successfully and is ready to open.`,
