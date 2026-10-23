@@ -18,12 +18,14 @@ export const AnythingBrandEmblem: React.FC<{
   letters?: string;
   gradientFrom?: string;
   gradientTo?: string;
+  glow?: boolean;
 }> = ({
   size = 56,
   className = '',
   letters = 'An',
   gradientFrom = '#FF2A2A',
   gradientTo = '#BA0000',
+  glow = false,
 }) => {
   const isTap = letters.toLowerCase() === 'ts';
   const fromColor = isTap ? '#06B6D4' : gradientFrom;
@@ -36,7 +38,7 @@ export const AnythingBrandEmblem: React.FC<{
       style={{
         width: size,
         height: size,
-        boxShadow: `0 8px 28px ${shadowColor}`,
+        boxShadow: glow ? `0 8px 28px ${shadowColor}` : undefined,
       }}
     >
       <svg

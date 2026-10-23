@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
         className="flex items-center gap-2.5 shrink-0 py-1"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        <AnythingBrandEmblem size={24} className="rounded-lg shrink-0 shadow-xs" />
+        <AnythingBrandEmblem size={24} glow={false} className="rounded-lg shrink-0 shadow-none border border-black/5 dark:border-white/10" />
         <HeaderTitle page={page} appName={appName} />
       </div>
 
