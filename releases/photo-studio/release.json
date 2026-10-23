@@ -1,0 +1,27 @@
+{
+  "appId": "photo-studio",
+  "appName": "Photo Studio Pro",
+  "version": "1.0.0",
+  "executableName": "PhotoStudio_1.0.0.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "major",
+  "tagline": "Initial Official Stable Release",
+  "summary": "Initial high-performance release of Photo Studio Pro, built natively for the Anything ecosystem.",
+  "newFeatures": [
+    "GPU-accelerated non-destructive layer editing engine",
+    "Neural Tone Mapping with 16-bit color depth pipeline",
+    "Windows Start Menu folder and desktop shortcut setup installer"
+  ],
+  "improvements": [
+    "Sub-second cold startup time on NVMe storage",
+    "Optimized RAM cache footprint for multi-layer files"
+  ],
+  "fixes": [
+    "Fixed color space conversion when importing Adobe RGB files",
+    "Resolved Windows 11 high-DPI scaling artifacts"
+  ],
+  "emailNotification": {
+    "subject": "🎉 Welcome to Photo Studio Pro v1.0.0!",
+    "preview": "Discover all the powerful creative tools in the new Photo Studio Pro."
+  }
+}

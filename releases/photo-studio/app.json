@@ -1,0 +1,14 @@
+{
+  "id": "photo-studio",
+  "name": "Photo Studio Pro",
+  "shortName": "PS",
+  "version": "1.0.0",
+  "category": "Creative & Design",
+  "description": "Professional RAW photo editor with real-time neural color grading.",
+  "executableName": "PhotoStudio_1.0.0.exe",
+  "iconType": "emoji",
+  "iconValue": "🎨",
+  "gradient": "from-purple-600 via-pink-500 to-rose-400",
+  "textColor": "#f43f5e",
+  "glowColor": "rgba(244, 63, 94, 0.45)"
+}

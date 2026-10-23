@@ -28,15 +28,21 @@
       "owner": "BSFrameWorks5253",
       "repo": "Anything"
     },
+    "artifactName": "${productName}_${version}.${ext}",
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "${productName}_${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Anything",
+      "artifactName": "${productName}_${version}.${ext}"
     }
   },
   "dependencies": {

@@ -1,1 +1,90 @@
-[]
+[
+  {
+    "id": "photo-studio",
+    "name": "Photo Studio Pro",
+    "shortName": "PS",
+    "category": "Creative & Design",
+    "version": "1.0.0",
+    "description": "Initial high-performance release of Photo Studio Pro, built natively for the Anything ecosystem.",
+    "executableName": "PhotoStudio_1.0.0.exe",
+    "packageFileName": "PhotoStudio_1.0.0.exe",
+    "packageSize": "0 KB",
+    "packageFormat": ".exe",
+    "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\photo-studio\\PhotoStudio_1.0.0.exe",
+    "gradient": "from-purple-600 via-pink-500 to-rose-400",
+    "textColor": "#f43f5e",
+    "glowColor": "rgba(244, 63, 94, 0.45)",
+    "iconType": "emoji",
+    "iconValue": "🎨",
+    "status": "not-installed",
+    "publishedAt": 1792730325880,
+    "releaseInfo": {
+      "version": "1.0.0",
+      "executableName": "PhotoStudio_1.0.0.exe",
+      "releaseDate": "2026-10-23",
+      "releaseType": "major",
+      "tagline": "Initial Official Stable Release",
+      "summary": "Initial high-performance release of Photo Studio Pro, built natively for the Anything ecosystem.",
+      "newFeatures": [
+        "GPU-accelerated non-destructive layer editing engine",
+        "Neural Tone Mapping with 16-bit color depth pipeline",
+        "Windows Start Menu folder and desktop shortcut setup installer"
+      ],
+      "improvements": [
+        "Sub-second cold startup time on NVMe storage",
+        "Optimized RAM cache footprint for multi-layer files"
+      ],
+      "fixes": [
+        "Fixed color space conversion when importing Adobe RGB files",
+        "Resolved Windows 11 high-DPI scaling artifacts"
+      ],
+      "emailNotification": {
+        "subject": "🎉 Welcome to Photo Studio Pro v1.0.0!",
+        "preview": "Discover all the powerful creative tools in the new Photo Studio Pro."
+      },
+      "sizeFormatted": "0 KB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\photo-studio\\PhotoStudio_1.0.0.exe"
+    },
+    "history": [
+      {
+        "version": "1.0.0",
+        "executableName": "PhotoStudio_1.0.0.exe",
+        "releaseDate": "2026-10-23",
+        "releaseType": "major",
+        "tagline": "Initial Official Stable Release",
+        "summary": "Initial high-performance release of Photo Studio Pro, built natively for the Anything ecosystem.",
+        "newFeatures": [
+          "GPU-accelerated non-destructive layer editing engine",
+          "Neural Tone Mapping with 16-bit color depth pipeline",
+          "Windows Start Menu folder and desktop shortcut setup installer"
+        ],
+        "improvements": [
+          "Sub-second cold startup time on NVMe storage",
+          "Optimized RAM cache footprint for multi-layer files"
+        ],
+        "fixes": [
+          "Fixed color space conversion when importing Adobe RGB files",
+          "Resolved Windows 11 high-DPI scaling artifacts"
+        ],
+        "emailNotification": {
+          "subject": "🎉 Welcome to Photo Studio Pro v1.0.0!",
+          "preview": "Discover all the powerful creative tools in the new Photo Studio Pro."
+        },
+        "sizeFormatted": "0 KB",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\photo-studio\\PhotoStudio_1.0.0.exe"
+      }
+    ],
+    "changelog": [
+      "Release v1.0.0 collected from releases/photo-studio",
+      "Format: .EXE · Size: 0 KB",
+      "Feature: GPU-accelerated non-destructive layer editing engine",
+      "Feature: Neural Tone Mapping with 16-bit color depth pipeline",
+      "Feature: Windows Start Menu folder and desktop shortcut setup installer",
+      "Improvement: Sub-second cold startup time on NVMe storage",
+      "Improvement: Optimized RAM cache footprint for multi-layer files",
+      "Fix: Fixed color space conversion when importing Adobe RGB files",
+      "Fix: Resolved Windows 11 high-DPI scaling artifacts"
+    ],
+    "addedByCreator": true
+  }
+]

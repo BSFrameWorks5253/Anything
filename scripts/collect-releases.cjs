@@ -1,9 +1,11 @@
 /**
  * Anything Child App Release Collector
  * 
- * Scans the `releases/` directory for new child app executables,
- * parses metadata / versions, and registers / updates them automatically
- * in `published-apps/catalog.json`.
+ * Scans the `releases/` directory for child app executables and release metadata:
+ * - Supports professional `<AppName>_<version>.exe` setup builds.
+ * - Extracts `release.json` (newFeatures, improvements, fixes, emailNotification).
+ * - Records version history for rollbacks and older version choices.
+ * - Updates `published-apps/catalog.json`.
  * 
  * Usage:
  *   node scripts/collect-releases.cjs
@@ -92,7 +94,7 @@ function collectReleases() {
       const appDir = path.join(RELEASES_DIR, entry.name);
       const appFiles = fs.readdirSync(appDir);
 
-      // Check for optional app.json / manifest.json
+      // Check for manifest: app.json
       let manifest = {};
       const manifestFile = appFiles.find((f) => f.toLowerCase() === 'app.json' || f.toLowerCase() === 'manifest.json');
       if (manifestFile) {
@@ -100,6 +102,17 @@ function collectReleases() {
           manifest = JSON.parse(fs.readFileSync(path.join(appDir, manifestFile), 'utf-8'));
         } catch (e) {
           console.warn(`  ⚠️ Could not parse manifest in ${entry.name}`);
+        }
+      }
+
+      // Check for release changelog file: release.json or release_<version>.json
+      let releaseMeta = {};
+      const relFile = appFiles.find((f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json'));
+      if (relFile) {
+        try {
+          releaseMeta = JSON.parse(fs.readFileSync(path.join(appDir, relFile), 'utf-8'));
+        } catch (e) {
+          console.warn(`  ⚠️ Could not parse release file in ${entry.name}`);
         }
       }
 
@@ -118,11 +131,11 @@ function collectReleases() {
       const stats = fs.statSync(exeFullPath);
       const ext = path.extname(exeFile).toLowerCase();
 
-      const appId = manifest.id || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-      const appName = manifest.name || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-      const appVersion = manifest.version || extractVersion(exeFile) || '1.0.0';
+      const appId = manifest.id || releaseMeta.appId || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+      const appName = manifest.name || releaseMeta.appName || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+      const appVersion = releaseMeta.version || manifest.version || extractVersion(exeFile) || '1.0.0';
       const category = manifest.category || 'Custom Tools';
-      const description = manifest.description || `Child application ${appName} running inside Anything.`;
+      const description = releaseMeta.summary || manifest.description || `Child application ${appName} running inside Anything.`;
       const githubRepo = manifest.githubRepo || undefined;
 
       // Copy package to published directory: published-apps/<appId>/<exeFile>
@@ -145,6 +158,34 @@ function collectReleases() {
 
       const shader = shaderPresets[Math.abs(appId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % shaderPresets.length];
 
+      // Prepare release record
+      const releaseRecord = {
+        version: appVersion,
+        executableName: exeFile,
+        releaseDate: releaseMeta.releaseDate || new Date().toISOString().slice(0, 10),
+        releaseType: releaseMeta.releaseType || 'minor',
+        tagline: releaseMeta.tagline || `${appName} v${appVersion} Update`,
+        summary: releaseMeta.summary || description,
+        newFeatures: Array.isArray(releaseMeta.newFeatures) ? releaseMeta.newFeatures : [],
+        improvements: Array.isArray(releaseMeta.improvements) ? releaseMeta.improvements : [],
+        fixes: Array.isArray(releaseMeta.fixes) ? releaseMeta.fixes : [],
+        emailNotification: releaseMeta.emailNotification,
+        sizeFormatted: formatBytes(stats.size),
+        downloadUrl: destPath,
+      };
+
+      const existingIndex = catalog.findIndex((a) => a.id === appId);
+      const existing = existingIndex >= 0 ? catalog[existingIndex] : null;
+
+      // Accumulate version history
+      const history = Array.isArray(existing?.history) ? [...existing.history] : [];
+      const histIdx = history.findIndex((h) => h.version === appVersion);
+      if (histIdx >= 0) {
+        history[histIdx] = { ...history[histIdx], ...releaseRecord };
+      } else {
+        history.unshift(releaseRecord);
+      }
+
       const catalogEntry = {
         id: appId,
         name: appName,
@@ -165,17 +206,20 @@ function collectReleases() {
         status: 'not-installed',
         githubRepo,
         publishedAt: Date.now(),
+        releaseInfo: releaseRecord,
+        history,
         changelog: [
           `Release v${appVersion} collected from releases/${entry.name}`,
           `Format: ${ext.toUpperCase()} · Size: ${formatBytes(stats.size)}`,
           ...(manifest.changelog || []),
+          ...(releaseMeta.newFeatures ? releaseMeta.newFeatures.map((f) => `Feature: ${f}`) : []),
+          ...(releaseMeta.improvements ? releaseMeta.improvements.map((i) => `Improvement: ${i}`) : []),
+          ...(releaseMeta.fixes ? releaseMeta.fixes.map((x) => `Fix: ${x}`) : []),
         ],
         addedByCreator: true,
       };
 
-      const existingIndex = catalog.findIndex((a) => a.id === appId);
       if (existingIndex >= 0) {
-        const existing = catalog[existingIndex];
         const hasNewerVersion = compareVersions(appVersion, existing.version) > 0;
         if (hasNewerVersion || isNewFile) {
           console.log(`  🚀 [UPDATE DETECTED] ${appName}: v${existing.version} ➔ v${appVersion}`);
@@ -187,6 +231,8 @@ function collectReleases() {
           updatedCount++;
         } else {
           console.log(`  ✓ ${appName} is up to date (v${existing.version})`);
+          // update history in place
+          catalog[existingIndex].history = history;
         }
       } else {
         console.log(`  ✨ [NEW APP REGISTERED] ${appName} (v${appVersion})`);
@@ -195,7 +241,7 @@ function collectReleases() {
       }
     }
 
-    // Case 2: Direct executable file in releases/ (e.g. releases/MyNewTool-v1.0.0.exe)
+    // Case 2: Direct executable file in releases/ (e.g. releases/MyNewTool_1.0.0.exe)
     else if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase();
       if (ext !== '.exe' && ext !== '.msix' && ext !== '.zip') continue;
@@ -214,6 +260,24 @@ function collectReleases() {
       fs.copyFileSync(exeFullPath, destPath);
 
       const shader = shaderPresets[Math.abs(appId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % shaderPresets.length];
+
+      const existingIndex = catalog.findIndex((a) => a.id === appId);
+      const existing = existingIndex >= 0 ? catalog[existingIndex] : null;
+      const history = Array.isArray(existing?.history) ? [...existing.history] : [];
+
+      const histIdx = history.findIndex((h) => h.version === appVersion);
+      const histRecord = {
+        version: appVersion,
+        executableName: entry.name,
+        releaseDate: new Date().toISOString().slice(0, 10),
+        sizeFormatted: formatBytes(stats.size),
+        downloadUrl: destPath,
+      };
+      if (histIdx >= 0) {
+        history[histIdx] = histRecord;
+      } else {
+        history.unshift(histRecord);
+      }
 
       const catalogEntry = {
         id: appId,
@@ -234,13 +298,12 @@ function collectReleases() {
         iconValue: '📦',
         status: 'not-installed',
         publishedAt: Date.now(),
+        history,
         changelog: [`Collected ${entry.name} (v${appVersion})`],
         addedByCreator: true,
       };
 
-      const existingIndex = catalog.findIndex((a) => a.id === appId);
       if (existingIndex >= 0) {
-        const existing = catalog[existingIndex];
         if (compareVersions(appVersion, existing.version) > 0) {
           console.log(`  🚀 [UPDATE DETECTED] ${appName}: v${existing.version} ➔ v${appVersion}`);
           catalog[existingIndex] = { ...existing, ...catalogEntry, status: 'update-available' };

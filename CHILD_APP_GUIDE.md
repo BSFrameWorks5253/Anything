@@ -2,99 +2,107 @@
 
 **Architect & Creator**: Burhanuddin Sounasath (Phone: +91 8369811201)
 
-This guide explains how to create, deploy, and auto-update child apps inside the **Anything** liquid-glass ecosystem.
+This guide explains how to build, deploy, auto-update, and archive child applications inside the **Anything** liquid-glass ecosystem.
 
 ---
 
-## ⚡ The 3-Step Setup
+## ⚡ 1. Executable Build Standards
 
-```
-   ┌────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
-   │ 1. Build your App      │ ───> │ 2. Drop into releases/  │ ───> │ 3. Anything Auto-Syncs  │
-   │ (Electron/Tauri/Python)│      │ (releases/<app>/app.exe)│      │ (Instant launch & tray) │
-   └────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
-```
+Every child app should produce a **professional Windows setup executable**:
+1. **Naming Standard**: The executable MUST strictly be named `<AppName>_<version>.exe` (e.g. `PhotoEditor_1.2.0.exe`, `VideoTrimmer_2.0.0.exe`).
+2. **Setup Experience**:
+   - The installer creates a dedicated **Start Menu folder** named after the app.
+   - It creates a **Desktop shortcut**.
+   - It registers a clean uninstaller in Windows.
 
-### Step 1: Build a Standalone Executable
-You can build your child app using any language or framework:
-- **Tauri / Rust**: `npm run tauri build` → ultra-lightweight `.exe` (~8MB)
-- **Electron**: `npm run build && electron-builder --win portable` → standalone `.exe`
-- **Python**: `pyinstaller --onefile --windowed main.py` → single `.exe`
-- **C# / .NET / C++**: compile standalone release binary.
+---
 
-### Step 2: Drop into the `releases/` Folder
-Inside your Anything directory, open `releases/`:
+## 📁 2. Directory Layout & Files
+
+Place each child app inside a subfolder under `Anything/releases/`:
+
 ```
 Anything/releases/
-└── video-studio/
-    ├── video-studio.exe
-    └── app.json
+└── photo-editor/
+    ├── PhotoEditor_1.2.0.exe      <-- The setup executable
+    ├── app.json                  <-- Identity and branding
+    └── release.json              <-- Changelog & animated email info
 ```
-
-### Step 3: That's It!
-Anything automatically:
-1. Detects the new application.
-2. Extracts metadata and versions.
-3. Adds it to the **Apps Grid**, **System Tray**, and **Quick Launch**.
-4. Fires a Windows Action Center native notification.
 
 ---
 
-## 🔄 Two Ways to Release Updates
+## 📄 3. JSON Configuration Templates
 
-### Method 1: Local Releases Folder Drop (Offline / Local)
-Whenever you make changes to your child app:
-1. Build the new `.exe`.
-2. Name it with the new version (e.g., `video-studio-v1.1.0.exe`) or replace `video-studio.exe` and bump `version` in `app.json`.
-3. Drop it into `releases/video-studio/`.
-4. Anything detects the new version and updates the catalog instantly!
-
-### Method 2: GitHub Releases Auto-Update (Cloud / Remote)
-Link your GitHub repo in `app.json`:
+### `app.json` (Identity Manifest)
 ```json
 {
-  "id": "video-studio",
-  "name": "Video Studio",
-  "version": "1.0.0",
-  "githubRepo": "username/video-studio"
-}
-```
-Whenever you create a new release on GitHub (e.g. tag `v1.1.0`) with the `.exe` attached:
-1. Anything automatically checks GitHub in the background.
-2. Displays an "Update Available" badge.
-3. Downloads the update in the background with live speed & progress.
-4. Hot-swaps the `.exe` without ever reinstalling Anything!
-
----
-
-## 📋 Full `app.json` Reference
-
-```json
-{
-  "id": "pixel-forge",
-  "name": "Pixel Forge",
-  "shortName": "PF",
-  "version": "1.0.0",
+  "id": "photo-editor",
+  "name": "Photo Editor Pro",
+  "shortName": "PE",
+  "version": "1.2.0",
   "category": "Creative & Design",
-  "description": "GPU-accelerated procedural texture and pixel art generator.",
-  "executableName": "PixelForge.exe",
+  "description": "GPU-accelerated photo manipulation and RAW processing suite.",
+  "executableName": "PhotoEditor_1.2.0.exe",
   "iconType": "emoji",
   "iconValue": "🎨",
   "gradient": "from-purple-600 via-pink-500 to-rose-400",
   "textColor": "#f43f5e",
   "glowColor": "rgba(244, 63, 94, 0.45)",
-  "githubRepo": "your-username/pixel-forge",
-  "changelog": [
-    "Initial high-performance release",
-    "Real-time procedural shaders"
-  ]
+  "githubRepo": "your-username/photo-editor"
 }
 ```
 
-Categories available:
-- `Creative & Design`
-- `Development`
-- `Video & 3D`
-- `Productivity`
-- `Gaming & Media`
-- `Custom Tools`
+### `release.json` (Changelog & Animated Email Dispatcher)
+This JSON file drives the **Animated Release Email** dispatched to users and populates the **Version History Archive**:
+```json
+{
+  "appId": "photo-editor",
+  "appName": "Photo Editor Pro",
+  "version": "1.2.0",
+  "executableName": "PhotoEditor_1.2.0.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "minor",
+  "tagline": "Neural Grading & 2x Faster Engine",
+  "summary": "This release brings 2x faster canvas rendering, WebP/AVIF export presets, and crucial Windows 11 high-DPI fixes.",
+  "newFeatures": [
+    "Neural Tone Mapping with HDR10+ support",
+    "GPU-accelerated blur and bokeh engine",
+    "Batch export to WebP and AVIF formats"
+  ],
+  "improvements": [
+    "2.5x faster canvas rendering on 4K/8K displays",
+    "Reduced idle RAM footprint by 45MB",
+    "Smoother brush stroke interpolation at high zoom levels"
+  ],
+  "fixes": [
+    "Fixed memory leak when repeatedly swapping layer masks",
+    "Resolved Windows 11 HDR color banding glitch",
+    "Fixed crash when opening corrupted EXIF metadata files"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Photo Editor Pro v1.2.0 is Here: Neural Grading & 2x Faster Canvas!",
+    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-purple-600 via-pink-500 to-rose-400"
+  }
+}
+```
+
+---
+
+## 🔄 4. Version History & Rollback Archive
+
+Whenever a new version is dropped:
+1. Anything automatically **archives previous versions** in the app's Version History tab.
+2. Users can easily view the exact breakdown of **New Features**, **Improvements**, and **Bug Fixes** for each past release.
+3. If an older version is preferred, users simply click **"Use vX.X.X"** or **"Rollback"** to swap the active version in one click!
+4. Users can also click **"Release Email"** on any version to view the animated email dispatch that was sent for that release.
+
+---
+
+## 📧 5. Authentication & Email Alerts
+
+In **Settings → Authentication & Animated Email Notifications**:
+- Users and developers can configure recipient email addresses.
+- Test and preview animated release dispatches live.
+- Whenever an app is updated locally or via GitHub, Anything triggers the animated email preview.

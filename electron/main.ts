@@ -111,6 +111,17 @@ function scanAndCollectReleases(): {
           } catch (e) {}
         }
 
+        // Check for release changelog file: release.json or release_<version>.json
+        let releaseMeta: any = {};
+        const relFile = appFiles.find(
+          (f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json')
+        );
+        if (relFile) {
+          try {
+            releaseMeta = JSON.parse(fs.readFileSync(path.join(appDir, relFile), 'utf-8'));
+          } catch (e) {}
+        }
+
         const exeFile = appFiles.find((f) => {
           const ext = path.extname(f).toLowerCase();
           return ext === '.exe' || ext === '.msix' || ext === '.zip';
@@ -122,11 +133,11 @@ function scanAndCollectReleases(): {
         const stats = fs.statSync(exeFullPath);
         const ext = path.extname(exeFile).toLowerCase();
 
-        const appId = manifest.id || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-        const appName = manifest.name || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-        const appVersion = manifest.version || extractVersionSemver(exeFile) || '1.0.0';
+        const appId = manifest.id || releaseMeta.appId || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+        const appName = manifest.name || releaseMeta.appName || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+        const appVersion = releaseMeta.version || manifest.version || extractVersionSemver(exeFile) || '1.0.0';
         const category = manifest.category || 'Custom Tools';
-        const description = manifest.description || `Child application ${appName} running inside Anything.`;
+        const description = releaseMeta.summary || manifest.description || `Child application ${appName} running inside Anything.`;
         const githubRepo = manifest.githubRepo || undefined;
 
         const targetDir = path.join(publishedDir, appId);
@@ -150,6 +161,33 @@ function scanAndCollectReleases(): {
             Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
           ];
 
+        // Prepare release record
+        const releaseRecord = {
+          version: appVersion,
+          executableName: exeFile,
+          releaseDate: releaseMeta.releaseDate || new Date().toISOString().slice(0, 10),
+          releaseType: releaseMeta.releaseType || 'minor',
+          tagline: releaseMeta.tagline || `${appName} v${appVersion} Update`,
+          summary: releaseMeta.summary || description,
+          newFeatures: Array.isArray(releaseMeta.newFeatures) ? releaseMeta.newFeatures : [],
+          improvements: Array.isArray(releaseMeta.improvements) ? releaseMeta.improvements : [],
+          fixes: Array.isArray(releaseMeta.fixes) ? releaseMeta.fixes : [],
+          emailNotification: releaseMeta.emailNotification,
+          sizeFormatted: formatFileBytes(stats.size),
+          downloadUrl: destPath,
+        };
+
+        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+        const existing = existingIndex >= 0 ? catalog[existingIndex] : null;
+
+        const history = Array.isArray(existing?.history) ? [...existing.history] : [];
+        const histIdx = history.findIndex((h: any) => h.version === appVersion);
+        if (histIdx >= 0) {
+          history[histIdx] = { ...history[histIdx], ...releaseRecord };
+        } else {
+          history.unshift(releaseRecord);
+        }
+
         const catalogEntry = {
           id: appId,
           name: appName,
@@ -170,15 +208,19 @@ function scanAndCollectReleases(): {
           status: 'not-installed',
           githubRepo,
           publishedAt: Date.now(),
+          releaseInfo: releaseRecord,
+          history,
           changelog: [
             `Release v${appVersion} collected from releases/${entry.name}`,
             `Package size: ${formatFileBytes(stats.size)}`,
             ...(manifest.changelog || []),
+            ...(releaseMeta.newFeatures ? releaseMeta.newFeatures.map((f: string) => `Feature: ${f}`) : []),
+            ...(releaseMeta.improvements ? releaseMeta.improvements.map((i: string) => `Improvement: ${i}`) : []),
+            ...(releaseMeta.fixes ? releaseMeta.fixes.map((x: string) => `Fix: ${x}`) : []),
           ],
           addedByCreator: true,
         };
 
-        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
         if (existingIndex >= 0) {
           const existing = catalog[existingIndex];
           const hasNewer = compareVersions(appVersion, existing.version) > 0;

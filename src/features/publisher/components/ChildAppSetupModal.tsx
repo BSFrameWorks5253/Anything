@@ -42,31 +42,33 @@ export const ChildAppSetupModal: React.FC<ChildAppSetupModalProps> = ({
   const [activeTab, setActiveTab] = useState<'guide' | 'ai-prompt' | 'github'>('guide');
   const [copied, setCopied] = useState(false);
 
-  const aiPromptText = `You are building a dedicated child desktop application for the "Anything" app ecosystem (created by Burhanuddin Sounasath · Phone: 8369811201).
+  const aiPromptText = `You are building a dedicated professional child desktop application for the "Anything" app ecosystem (created by Burhanuddin Sounasath · Phone: 8369811201).
 
-### 🎯 Child App Requirements
+### 🎯 Child App Requirements & Executable Standards
 1. Platform: Windows 10/11 (x64).
-2. Output Target: A single standalone executable (.exe) or portable executable.
-3. Tech Stack Options:
-   - Electron / Vite / React (portable/NSIS build)
-   - Tauri / Rust (lightweight <10MB .exe)
-   - Python PyInstaller (single-file .exe)
-   - C# / .NET (single-file win-x64 release)
-   - Go / C++ (compiled Windows GUI .exe)
+2. Professional Setup Build:
+   - Must be a professional Windows setup installer (NSIS/Inno/WiX/Tauri) or clean self-contained executable.
+   - Must create a Start Menu folder shortcut and desktop shortcut.
+   - Clean uninstaller registered in Windows Settings.
+3. Executable Naming Convention:
+   - The .exe MUST follow: <AppName>_<version>.exe
+   - Examples: PhotoEditor_1.2.0.exe, VectorStudio_2.0.1.exe, VideoTrimmer_1.0.0.exe
 
-### 📦 Output Location & Structure
-When built, place your executable and an app.json manifest inside:
+### 📦 Output Location & Files
+Output your files inside:
 Anything/releases/<your-app-id>/
 
-Create an app.json file:
+Files to place in this folder:
+1. <AppName>_<version>.exe (The professional setup executable)
+2. app.json (Base configuration manifest):
 {
   "id": "my-child-app",
   "name": "My Child App",
   "shortName": "MC",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "category": "Development",
-  "description": "Short description of what this child app does.",
-  "executableName": "my-child-app.exe",
+  "description": "High-performance developer utility built for Anything.",
+  "executableName": "MyChildApp_1.2.0.exe",
   "iconType": "emoji",
   "iconValue": "🚀",
   "gradient": "from-blue-600 via-sky-500 to-cyan-400",
@@ -75,11 +77,41 @@ Create an app.json file:
   "githubRepo": "your-github-username/my-child-app"
 }
 
-### 🔄 Auto-Update Support
-- Method A: Drop new .exe into Anything/releases/<your-app-id>/ (e.g. my-child-app-v1.1.0.exe). Anything's collector detects it and updates the launcher automatically.
-- Method B: If githubRepo is provided, publish new releases with Windows assets (.exe/.zip) on GitHub. Anything will check and auto-download updates in the background.
+3. release.json (Changelog for Animated Email Dispatch & Version History):
+{
+  "appId": "my-child-app",
+  "appName": "My Child App",
+  "version": "1.2.0",
+  "executableName": "MyChildApp_1.2.0.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "minor",
+  "tagline": "Spring Speedup & Neural Rendering",
+  "summary": "This release brings 2x faster performance, new export formats, and key Windows 11 fixes.",
+  "newFeatures": [
+    "GPU-accelerated rendering pipeline for real-time previews",
+    "Added export presets for WebP and AVIF formats",
+    "Windows Start Menu folder and shortcut setup"
+  ],
+  "improvements": [
+    "50% faster startup time from cold launch",
+    "Reduced background memory usage by 40MB"
+  ],
+  "fixes": [
+    "Fixed path resolution on non-C: Windows drives",
+    "Resolved occasional window flickering during resize"
+  ],
+  "emailNotification": {
+    "subject": "🚀 My Child App v1.2.0 is Here: 2x Faster Rendering!",
+    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0."
+  }
+}
 
-Please build the application and manifest now.`;
+### 🔄 Auto-Update & Version History Archive
+- Local Releases: Drop the new <AppName>_<version>.exe and release.json into releases/<your-app-id>/.
+- Anything automatically preserves older versions in the Version History tab so users can switch or rollback anytime!
+- Anything dispatches an animated email to the user with the exact features, improvements, and fixes!
+
+Please build the application code, build configuration (creating Start Menu folder), and the two JSON files now.`;
 
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(aiPromptText);

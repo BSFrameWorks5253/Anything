@@ -29,6 +29,26 @@ export interface DownloadProgress {
   speedBytesPerSec: number;
 }
 
+export interface AppReleaseMetadata {
+  version: string;
+  executableName?: string;
+  releaseDate?: string;
+  releaseType?: 'major' | 'minor' | 'patch';
+  tagline?: string;
+  summary?: string;
+  newFeatures?: string[];
+  improvements?: string[];
+  fixes?: string[];
+  downloadUrl?: string;
+  sizeFormatted?: string;
+  emailNotification?: {
+    subject?: string;
+    preview?: string;
+    ctaText?: string;
+    heroGradient?: string;
+  };
+}
+
 export interface CatalogApp {
   id: string;
   name: string;
@@ -49,6 +69,8 @@ export interface CatalogApp {
   status: AppLifecycleStatus;
   downloadProgress?: DownloadProgress;
   changelog?: string[];
+  releaseInfo?: AppReleaseMetadata;
+  history?: AppReleaseMetadata[];
   systemRequirements?: {
     os: string;
     ram: string;

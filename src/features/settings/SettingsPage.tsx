@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AccountSection } from './components/AccountSection';
 import { SplashScreenSection } from './components/SplashScreenSection';
 import { AutoUpdateSection } from './components/AutoUpdateSection';
+import { AuthEmailNotificationSection } from './components/AuthEmailNotificationSection';
 import { PlanSection } from './components/PlanSection';
 import { StorageSection } from './components/StorageSection';
 import { PreferencesList } from './components/PreferencesList';
@@ -35,6 +36,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash }) =
 
       {/* GitHub Releases Auto-Update Section */}
       <AutoUpdateSection />
+
+      {/* Authentication & Animated Email Release Dispatch */}
+      <AuthEmailNotificationSection />
 
       {/* Subscription Tier Details */}
       <PlanSection />

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "appId": "sample-child-app",
+  "appName": "Sample Child App",
+  "version": "1.2.0",
+  "executableName": "SampleChildApp_1.2.0.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "minor",
+  "tagline": "Faster Startup & Neural Rendering Engine",
+  "summary": "This release brings 2x faster performance, new dark mode shaders, and critical bug fixes.",
+  "newFeatures": [
+    "Added high-performance GPU acceleration for 4K workflows",
+    "New customizable export pipeline with WebP & AVIF presets",
+    "Integrated Windows 11 Fluent mica window frame styling"
+  ],
+  "improvements": [
+    "Reduced startup loading time by 58% across all devices",
+    "Optimized memory usage during intensive background exports",
+    "Smoother high-DPI display scaling on multi-monitor setups"
+  ],
+  "fixes": [
+    "Fixed crash when opening files containing special Unicode characters",
+    "Resolved occasional flickering during window resizing",
+    "Fixed shortcut key conflicts on Windows keyboards"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Sample Child App v1.2.0: 2x Faster Startup & New Shaders!",
+    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-cyan-500 via-sky-500 to-indigo-600"
+  }
+}
