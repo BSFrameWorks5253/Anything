@@ -65,6 +65,8 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uninstallModalOpen, setUninstallModalOpen] = useState(false);
+  const [isUninstalling, setIsUninstalling] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
@@ -164,7 +166,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             </GlassButton>
           )}
 
-          {app.status === 'installed' && (
+          {(app.status === 'installed' || app.status === 'ready') && (
             <GlassButton
               variant="primary"
               size="sm"
@@ -177,15 +179,28 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
           )}
 
           {app.status === 'update-available' && (
-            <GlassButton
-              variant="primary"
-              size="sm"
-              icon={<RefreshCw className="w-3.5 h-3.5" />}
-              onClick={() => onUpdate(app)}
-              className="font-bold"
-            >
-              Update Now
-            </GlassButton>
+            <div className="flex items-center gap-2">
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<RefreshCw className="w-3.5 h-3.5" />}
+                onClick={() => onUpdate(app)}
+                className="font-bold"
+              >
+                Update Now
+              </GlassButton>
+              {app.installedPath && (
+                <GlassButton
+                  variant="glass"
+                  size="sm"
+                  icon={<Play className="w-3.5 h-3.5 fill-current" />}
+                  onClick={() => onLaunch(app)}
+                  className="font-bold"
+                >
+                  Launch App
+                </GlassButton>
+              )}
+            </div>
           )}
 
           {app.status === 'not-installed' && (
@@ -197,6 +212,18 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               className="font-bold"
             >
               Download & Install
+            </GlassButton>
+          )}
+
+          {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
+            <GlassButton
+              variant="glass"
+              size="sm"
+              icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
+              onClick={() => setUninstallModalOpen(true)}
+              className="hover:bg-rose-500/10 hover:text-rose-600 text-rose-500 dark:text-rose-400 border-rose-500/30 font-medium"
+            >
+              Uninstall
             </GlassButton>
           )}
         </div>
@@ -277,13 +304,13 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               Locate Path
             </GlassButton>
 
-            {app.status === 'installed' && (
+            {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
               <GlassButton
                 variant="glass"
                 size="sm"
                 icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
-                onClick={() => onUninstall(app.id)}
-                className="hover:bg-rose-500/10 hover:text-rose-600"
+                onClick={() => setUninstallModalOpen(true)}
+                className="hover:bg-rose-500/10 hover:text-rose-600 text-rose-500 dark:text-rose-400 border-rose-500/30 font-medium"
               >
                 Uninstall
               </GlassButton>
@@ -617,6 +644,59 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               >
                 {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>{isDeleting ? 'Deleting...' : 'Delete Completely'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Uninstall Application Modal */}
+      {uninstallModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-500">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Uninstall {currentAppName}?</h4>
+                <p className="text-xs text-zinc-400">Removes the installed app from your PC. You can reinstall it anytime from Anything.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/60 font-mono">
+              Status: <span className="text-white font-bold">{app.status}</span> • Version: <span className="text-white font-bold">{app.localVersion || app.version}</span>
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setUninstallModalOpen(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isUninstalling}
+                onClick={async () => {
+                  setIsUninstalling(true);
+                  try {
+                    await onUninstall(app.id);
+                    app.status = 'not-installed';
+                    app.installedPath = undefined;
+                    app.localVersion = undefined;
+                  } catch (err) {
+                    console.error('Uninstall failed:', err);
+                  } finally {
+                    setIsUninstalling(false);
+                    setUninstallModalOpen(false);
+                  }
+                }}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5"
+              >
+                {isUninstalling ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isUninstalling ? 'Uninstalling...' : 'Yes, Uninstall'}</span>
               </button>
             </div>
           </div>

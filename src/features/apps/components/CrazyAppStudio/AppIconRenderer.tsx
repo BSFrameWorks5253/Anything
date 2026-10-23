@@ -35,18 +35,21 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
       if (rawIconValue.startsWith('data:image/')) return rawIconValue;
       if (rawIconValue.startsWith('http://') || rawIconValue.startsWith('https://')) return rawIconValue;
       if (rawIconValue.startsWith('/')) return rawIconValue;
+      if (rawIconValue === 'assets/logo.svg' || rawIconValue === 'logo.svg' || rawIconValue.endsWith('logo.svg')) {
+        return '/tap-studio-logo.svg';
+      }
       if (rawIconValue === 'app-logo.png' || rawIconValue.endsWith('app-logo.png')) {
-        return '/tap-studio-logo.png';
+        return '/tap-studio-logo.svg';
       }
       if (/\.(png|svg|jpg|jpeg|webp)$/i.test(rawIconValue)) {
         return `/${rawIconValue.replace(/^(\.\/)+/, '')}`;
       }
     }
-    if (app.iconType === 'image') {
-      return isTapStudio ? '/tap-studio-logo.png' : null;
+    if (app.iconType === 'image' || app.iconType === 'svg') {
+      return isTapStudio ? '/tap-studio-logo.svg' : null;
     }
     if (isTapStudio) {
-      return '/tap-studio-logo.png';
+      return '/tap-studio-logo.svg';
     }
     return null;
   };

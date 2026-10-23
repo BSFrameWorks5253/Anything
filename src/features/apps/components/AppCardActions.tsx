@@ -188,7 +188,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                   <span>Locate Executable</span>
                 </button>
 
-                {app.status === 'installed' && (
+                {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
                   <button
                     onClick={() => {
                       setShowMenu(false);

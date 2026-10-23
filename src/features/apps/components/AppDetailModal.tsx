@@ -88,7 +88,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                 >
                   {app.name}
                 </h2>
-                {app.status === 'installed' && (
+                {(app.status === 'installed' || app.status === 'ready') && (
                   <GlassBadge variant="emerald" dot>Installed</GlassBadge>
                 )}
                 {app.status === 'update-available' && (
@@ -485,7 +485,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                {app.status === 'installed' && (
+                {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
                   <button
                     onClick={() => setConfirmAction('uninstall')}
                     className="text-xs text-white/40 hover:text-rose-400 flex items-center gap-1.5 transition-colors font-mono"

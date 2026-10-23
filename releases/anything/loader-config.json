@@ -1,0 +1,13 @@
+{
+  "appId": "anything",
+  "enabled": true,
+  "artworkUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85",
+  "artistName": "Anything Creation",
+  "artworkTitle": "-Designed by Burhanuddin",
+  "productName": "Anything",
+  "versionText": "2026.1 Release · v1.0.0 (x64)",
+  "tagline": "Creative & Productivity Master Hub",
+  "durationMs": 2800,
+  "logoText": "An",
+  "badgeGradient": "from-red-600 via-rose-500 to-amber-500"
+}

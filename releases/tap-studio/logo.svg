@@ -1,0 +1,38 @@
+<svg width="256" height="256" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tapLogoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338CA" />
+      <stop offset="30%" stop-color="#4F46E5" />
+      <stop offset="70%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="irisRing" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="45%" stop-color="#E0E7FF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#A5F3FC" stop-opacity="0.95" />
+    </linearGradient>
+    <linearGradient id="coreChevron" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EEF2FF" />
+    </linearGradient>
+    <linearGradient id="specularGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect x="3" y="3" width="94" height="94" rx="24" fill="url(#tapLogoBg)" />
+  <rect x="4" y="4" width="92" height="92" rx="23" stroke="url(#specularGlow)" stroke-width="1.8" fill="none" />
+  <path d="M3 27C15 25 32 32 50 24C68 16 85 22 97 19V3C97 3 94 3 90 3H10C6 3 3 6 3 10V27Z" fill="url(#specularGlow)" opacity="0.3" />
+  <circle cx="50" cy="50" r="31" stroke="rgba(255, 255, 255, 0.25)" stroke-width="2.5" stroke-dasharray="4 3" />
+  <circle cx="50" cy="50" r="24" stroke="url(#irisRing)" stroke-width="3.2" fill="rgba(15, 23, 42, 0.18)" />
+  <path d="M44 37.5C44 35.8 45.9 34.7 47.4 35.6L63.2 46.1C64.6 47 64.6 49 63.2 49.9L47.4 60.4C45.9 61.3 44 60.2 44 58.5V37.5Z" fill="url(#coreChevron)" filter="url(#softGlow)" />
+  <circle cx="72" cy="28" r="4.5" fill="#38BDF8" />
+  <circle cx="72" cy="28" r="2.2" fill="#FFFFFF" />
+  <circle cx="28" cy="72" r="3.2" fill="#A855F7" />
+  <circle cx="28" cy="72" r="1.5" fill="#FFFFFF" />
+</svg>

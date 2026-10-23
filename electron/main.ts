@@ -63,6 +63,8 @@ const getAllReleaseDirs = (): string[] => {
     const parentDir = path.resolve(getProjectRoot(), '..');
     dirs.push(path.join(parentDir, 'releases'));
     dirs.push(path.join(parentDir, 'release'));
+    const desktopTapStudio = path.join(parentDir, '..', 'Tap Studio', 'releases');
+    if (fs.existsSync(desktopTapStudio)) dirs.push(desktopTapStudio);
   } catch (e) {}
   return dirs.filter((d, idx, arr) => fs.existsSync(d) && arr.indexOf(d) === idx);
 };
@@ -101,11 +103,45 @@ function matchesApp(folderName: string, targetId: string, targetName: string, fo
   return false;
 }
 
-function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: string } | null {
+async function findAppLogoImage(dirPath: string): Promise<{ iconType: 'image'; iconValue: string } | null> {
   try {
     if (!fs.existsSync(dirPath)) return null;
 
-    const preferredNames = [
+    const files = fs.readdirSync(dirPath);
+
+    // 1. High-priority SVG check (as requested: "TAKE THE SVG FROM THE TAP STUDIO FOLDER IN THE RELEASE")
+    const preferredSvgNames = [
+      'logo.svg',
+      'app-logo.svg',
+      'app_logo.svg',
+      'icon.svg',
+    ];
+
+    let chosenSvg = files.find((f) => preferredSvgNames.includes(f.toLowerCase().trim()));
+    if (!chosenSvg) {
+      chosenSvg = files.find((f) => {
+        const lower = f.toLowerCase();
+        return (
+          lower.endsWith('.svg') &&
+          !lower.includes('banner') &&
+          !lower.includes('pattern') &&
+          !lower.includes('splash')
+        );
+      });
+    }
+
+    if (chosenSvg) {
+      const fullPath = path.join(dirPath, chosenSvg);
+      const svgContent = fs.readFileSync(fullPath, 'utf-8');
+      const base64 = Buffer.from(svgContent, 'utf-8').toString('base64');
+      return {
+        iconType: 'image',
+        iconValue: `data:image/svg+xml;base64,${base64}`,
+      };
+    }
+
+    // 2. High-priority PNG check
+    const preferredPngNames = [
       'app-logo.png',
       'app_logo.png',
       'app logo.png',
@@ -113,31 +149,15 @@ function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: stri
       'logo.png',
       'icon.png',
       'app.png',
-      'logo.svg',
-      'icon.svg',
     ];
 
-    // 1. Direct scan in dirPath (prioritize high-res PNG logos)
-    const files = fs.readdirSync(dirPath);
-    let chosenFile = files.find((f) => {
-      const lower = f.toLowerCase().trim();
-      return (
-        lower === 'app-logo.png' ||
-        lower === 'app_logo.png' ||
-        lower === 'app logo.png' ||
-        lower === 'applogo.png' ||
-        lower === 'logo.png'
-      );
-    });
-    if (!chosenFile) {
-      chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase().trim()));
-    }
-    if (!chosenFile) {
-      chosenFile = files.find((f) => {
+    let chosenPng = files.find((f) => preferredPngNames.includes(f.toLowerCase().trim()));
+    if (!chosenPng) {
+      chosenPng = files.find((f) => {
         const ext = path.extname(f).toLowerCase();
         const lower = f.toLowerCase();
         return (
-          (ext === '.png' || ext === '.svg' || ext === '.jpg' || ext === '.webp') &&
+          (ext === '.png' || ext === '.webp' || ext === '.jpg') &&
           !lower.includes('banner') &&
           !lower.includes('splash') &&
           !lower.includes('bg')
@@ -145,10 +165,10 @@ function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: stri
       });
     }
 
-    if (chosenFile) {
-      const fullPath = path.join(dirPath, chosenFile);
-      const ext = path.extname(chosenFile).toLowerCase().replace('.', '');
-      const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+    if (chosenPng) {
+      const fullPath = path.join(dirPath, chosenPng);
+      const ext = path.extname(chosenPng).toLowerCase().replace('.', '');
+      const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
       const base64 = fs.readFileSync(fullPath).toString('base64');
       return {
         iconType: 'image',
@@ -156,21 +176,83 @@ function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: stri
       };
     }
 
-    // 2. Recursive scan in subdirectories (e.g. V-1.0.0, v1.2.0, assets)
+    // 3. Scan subdirectories (assets, v1.2.0, etc.)
     for (const file of files) {
       const subPath = path.join(dirPath, file);
       if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
         const subFiles = fs.readdirSync(subPath);
-        const subMatch = subFiles.find((f) => preferredNames.includes(f.toLowerCase().trim()));
-        if (subMatch) {
-          const fullPath = path.join(subPath, subMatch);
-          const ext = path.extname(subMatch).toLowerCase().replace('.', '');
-          const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+
+        // Check subfolder for SVG first
+        const subSvg = subFiles.find((f) => {
+          const lower = f.toLowerCase();
+          return (
+            (preferredSvgNames.includes(lower) || lower.endsWith('.svg')) &&
+            !lower.includes('banner') &&
+            !lower.includes('pattern') &&
+            !lower.includes('splash')
+          );
+        });
+        if (subSvg) {
+          const fullPath = path.join(subPath, subSvg);
+          const svgContent = fs.readFileSync(fullPath, 'utf-8');
+          const base64 = Buffer.from(svgContent, 'utf-8').toString('base64');
+          return {
+            iconType: 'image',
+            iconValue: `data:image/svg+xml;base64,${base64}`,
+          };
+        }
+
+        // Check subfolder for PNG
+        const subPng = subFiles.find((f) => preferredPngNames.includes(f.toLowerCase().trim()));
+        if (subPng) {
+          const fullPath = path.join(subPath, subPng);
+          const ext = path.extname(subPng).toLowerCase().replace('.', '');
+          const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
           const base64 = fs.readFileSync(fullPath).toString('base64');
           return {
             iconType: 'image',
             iconValue: `data:${mime};base64,${base64}`,
           };
+        }
+      }
+    }
+
+    // 4. "OR USE EXE THUMBNAIL" - Extract high-resolution Windows icon directly from .exe
+    const allExes: string[] = [];
+    for (const f of files) {
+      if (f.toLowerCase().endsWith('.exe')) {
+        allExes.push(path.join(dirPath, f));
+      }
+    }
+    for (const file of files) {
+      const subPath = path.join(dirPath, file);
+      if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
+        const subFiles = fs.readdirSync(subPath);
+        for (const sf of subFiles) {
+          if (sf.toLowerCase().endsWith('.exe')) {
+            allExes.push(path.join(subPath, sf));
+          }
+        }
+      }
+    }
+
+    if (allExes.length > 0) {
+      const chosenExe =
+        allExes.find((e) => e.toLowerCase().includes('_setup') || e.toLowerCase().includes('setup')) ||
+        allExes.find((e) => !e.toLowerCase().includes('uninstall')) ||
+        allExes[0];
+
+      if (chosenExe && fs.existsSync(chosenExe)) {
+        try {
+          const icon = await app.getFileIcon(chosenExe, { size: 'large' });
+          if (icon && !icon.isEmpty()) {
+            return {
+              iconType: 'image',
+              iconValue: icon.toDataURL(),
+            };
+          }
+        } catch (err) {
+          console.warn('Failed extracting exe thumbnail for', chosenExe, err);
         }
       }
     }
@@ -232,14 +314,14 @@ function pickReleaseExecutable(files: string[]): string | undefined {
   return files.find((f) => f.toLowerCase().endsWith('.zip'));
 }
 
-function scanAndCollectReleases(): {
+async function scanAndCollectReleases(): Promise<{
   success: boolean;
   addedCount: number;
   updatedCount: number;
   total: number;
   catalog: any[];
   error?: string;
-} {
+}> {
   try {
     const releasesDir = getReleasesDir();
     const publishedDir = getPublishedDir();
@@ -268,8 +350,8 @@ function scanAndCollectReleases(): {
           const appDir = path.join(releasesDir, entry.name);
           const appFiles = fs.readdirSync(appDir);
 
-          // 1. Check for App Listing Icon (.png, .svg, etc.)
-          const appLogo = findAppLogoImage(appDir);
+          // 1. Check for App Listing Icon (.png, .svg, or .exe thumbnail)
+          const appLogo = await findAppLogoImage(appDir);
 
           // 2. Base Identity Manifest: app.json or manifest.json
           let manifest: any = {};
@@ -506,14 +588,10 @@ function scanAndCollectReleases(): {
             );
 
             if (appLogo) {
-              const isCurrentPng = existing.iconValue && existing.iconValue.startsWith('data:image/png');
-              const isNewPng = appLogo.iconValue && appLogo.iconValue.startsWith('data:image/png');
-              if (!isCurrentPng || isNewPng) {
-                existing.iconType = appLogo.iconType;
-                existing.iconValue = appLogo.iconValue;
-                catalogEntry.iconType = appLogo.iconType;
-                catalogEntry.iconValue = appLogo.iconValue;
-              }
+              existing.iconType = appLogo.iconType;
+              existing.iconValue = appLogo.iconValue;
+              catalogEntry.iconType = appLogo.iconType;
+              catalogEntry.iconValue = appLogo.iconValue;
             }
 
             if (hasNewer || isNewFile || logoChanged || catalogEntry.packageFileName !== existing.packageFileName) {
@@ -1153,7 +1231,7 @@ function createWindow() {
   });
 
   ipcMain.handle('releases:scan-and-collect', async () => {
-    const result = scanAndCollectReleases();
+    const result = await scanAndCollectReleases();
     if (result.addedCount > 0 || result.updatedCount > 0) {
       if (win && !win.isDestroyed()) {
         win.webContents.send('catalog:updated', result.catalog);
@@ -1717,12 +1795,92 @@ function createWindow() {
   // Uninstall Application from Disk
   ipcMain.handle('app:uninstall', async (_, appId: string) => {
     try {
-      const appsDir = getInstalledAppsDir();
-      const targetDir = path.join(appsDir, appId);
-      if (fs.existsSync(targetDir)) {
-        fs.rmSync(targetDir, { recursive: true, force: true });
+      if (!appId) return { success: false, error: 'App ID is required.' };
+      const safeAppId = path.basename(appId.trim());
+      const normSafeId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+
+      // Load catalog to find app metadata and installed path
+      const publishedDir = getPublishedDir();
+      const catalogFile = path.join(publishedDir, 'catalog.json');
+      let catalog: any[] = [];
+      if (fs.existsSync(catalogFile)) {
+        try { catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8')); } catch (e) {}
       }
-      return { success: true };
+
+      const idx = catalog.findIndex((a: any) => {
+        const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        return a.id === safeAppId || aNorm === normSafeId;
+      });
+
+      let appName = safeAppId;
+      let appIcon: string | undefined;
+      let installedPath: string | undefined;
+
+      if (idx >= 0) {
+        appName = catalog[idx].name || safeAppId;
+        appIcon = catalog[idx].iconValue;
+        installedPath = catalog[idx].installedPath;
+      }
+
+      // 1. If installedPath exists, check for silent uninstaller executable
+      if (installedPath && fs.existsSync(installedPath)) {
+        const installDir = path.dirname(installedPath);
+        if (fs.existsSync(installDir)) {
+          try {
+            const files = fs.readdirSync(installDir);
+            const uninstaller = files.find((f) => {
+              const lower = f.toLowerCase();
+              return (
+                lower.endsWith('.exe') &&
+                (lower.includes('uninstall') || lower.startsWith('unins'))
+              );
+            });
+            if (uninstaller) {
+              const uninstallerPath = path.join(installDir, uninstaller);
+              await runInstallerSilently(uninstallerPath);
+            }
+          } catch (e) {
+            console.warn('Error running uninstaller for', appId, e);
+          }
+        }
+      }
+
+      // 2. Clean up installed-apps directory
+      const appsDir = getInstalledAppsDir();
+      const possibleDirs = [
+        path.join(appsDir, safeAppId),
+        path.join(appsDir, safeAppId.replace(/^app-/, '')),
+      ];
+      for (const pDir of possibleDirs) {
+        if (fs.existsSync(pDir)) {
+          try { fs.rmSync(pDir, { recursive: true, force: true }); } catch (e) {}
+        }
+      }
+
+      // 3. Update catalog state to not-installed
+      if (idx >= 0) {
+        catalog[idx].status = 'not-installed';
+        catalog[idx].installedPath = undefined;
+        catalog[idx].localVersion = undefined;
+        fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
+      }
+
+      // 4. Broadcast to all open windows
+      const allWindows = BrowserWindow.getAllWindows();
+      for (const w of allWindows) {
+        w.webContents.send('catalog:updated', catalog);
+      }
+
+      // 5. Send native Windows Toast Notification with app's real name and icon
+      sendWindowsNotification(
+        'App Uninstalled',
+        `${appName} was successfully uninstalled from your PC.`,
+        undefined,
+        appIcon,
+        appName
+      );
+
+      return { success: true, catalog };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
@@ -2511,8 +2669,8 @@ function createWindow() {
       if (!fs.existsSync(relDir)) continue;
       fs.watch(relDir, { recursive: true }, () => {
         if (releasesDebounce) clearTimeout(releasesDebounce);
-        releasesDebounce = setTimeout(() => {
-          const res = scanAndCollectReleases();
+        releasesDebounce = setTimeout(async () => {
+          const res = await scanAndCollectReleases();
           if (res.addedCount > 0 || res.updatedCount > 0) {
             if (win && !win.isDestroyed()) {
               win.webContents.send('catalog:updated', res.catalog);
