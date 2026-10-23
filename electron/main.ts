@@ -13,7 +13,7 @@ import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
 app.name = 'Anything';
@@ -820,12 +820,12 @@ function ensureWindowsShortcut() {
   }
 }
 
-// Set Windows AppUserModelId for native Action Center toast notifications
+// Set Windows AppUserModelId for dedicated taskbar grouping and native Action Center toast notifications
+const ANYTHING_AUMID = 'com.burhanuddin.anything';
 if (process.platform === 'win32') {
-  app.setAppUserModelId('Anything');
+  app.setAppUserModelId(ANYTHING_AUMID);
   const defaultAppLogo = path.join(getProjectRoot(), 'public', 'app-logo.png');
-  ensureWindowsAppRegistration('Anything', 'Anything', defaultAppLogo);
-  ensureWindowsAppRegistration('com.burhanuddin.anything', 'Anything', defaultAppLogo);
+  ensureWindowsAppRegistration(ANYTHING_AUMID, 'Anything', defaultAppLogo);
   ensureWindowsShortcut();
 }
 
@@ -871,12 +871,6 @@ function sendWindowsNotification(
       iconImg = nativeImage.createFromPath(resolvedIconPath);
     }
 
-    if (process.platform === 'win32') {
-      const targetAumid = appName || 'Anything';
-      ensureWindowsAppRegistration(targetAumid, targetAumid, resolvedIconPath);
-      app.setAppUserModelId(targetAumid);
-    }
-
     const notif = new Notification({
       title,
       body,
@@ -887,15 +881,6 @@ function sendWindowsNotification(
       notif.on('click', onClick);
     }
     notif.show();
-
-    // Reset AUMID back to Anything after showing child notification
-    if (process.platform === 'win32' && appName && appName !== 'Anything') {
-      setTimeout(() => {
-        try {
-          app.setAppUserModelId('Anything');
-        } catch {}
-      }, 1000);
-    }
   } catch (e) {
     console.error('Notification error:', e);
   }
@@ -1805,6 +1790,17 @@ function createWindow() {
               targetPath = sc.target;
             }
           } catch (e) {}
+        }
+
+        // Launch executable in a completely detached process so Windows isolates its taskbar icon & window hierarchy
+        if (targetPath.toLowerCase().endsWith('.exe')) {
+          const child = spawn(targetPath, [], {
+            detached: true,
+            stdio: 'ignore',
+            cwd: path.dirname(targetPath),
+          });
+          child.unref();
+          return { success: true, resolvedPath: targetPath };
         }
 
         const result = await shell.openPath(targetPath);
