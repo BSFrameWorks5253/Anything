@@ -9,7 +9,8 @@ This guide explains how to build, deploy, auto-update, and archive child applica
 ## ⚡ 1. Executable Build Standards
 
 Every child app should produce a **professional Windows setup executable**:
-1. **Naming Standard**: The executable MUST strictly be named `<AppName>_<version>.exe` (e.g. `PhotoEditor_1.2.0.exe`, `VideoTrimmer_2.0.0.exe`).
+1. **Naming Standard**: The executable MUST strictly be named:
+   `<AppName>-V-<version>.exe` (e.g. `TapStudio-V-1.0.0.exe`, `PhotoEditor-V-1.2.0.exe`).
 2. **Setup Experience**:
    - The installer creates a dedicated **Start Menu folder** named after the app.
    - It creates a **Desktop shortcut**.
@@ -17,92 +18,117 @@ Every child app should produce a **professional Windows setup executable**:
 
 ---
 
-## 📁 2. Directory Layout & Files
+## 🖼️ 2. Listing Icon & Logo Requirements
 
-Place each child app inside a subfolder under `Anything/releases/`:
+Anything automatically scans for the app icon inside the app's release folder:
+- **File Name**: `app-logo.png` (or `icon.png`, `logo.png`).
+- **Dimensions**: **512 x 512 pixels** (Square 1:1 aspect ratio).
+- **Format**: 32-bit PNG with transparency (alpha channel).
+- **Safe Area Padding**: 10% to 15% inner padding so squircle and circle containers do not clip edges.
+- **Visuals**: Modern, high contrast, vibrant visual identity optimized for dark glass UI.
 
+---
+
+## 📁 3. Directory Layout & Files
+
+Place each child app inside the `release/` (or `releases/`) directory with versioned subfolders:
+
+```text
+release/
+  └── Tap Studio/
+      ├── app-logo.png                          (512x512 PNG listing icon)
+      ├── app.json                              (Base identity & endpoints manifest)
+      └── V-1.0.0/
+          ├── TapStudio-V-1.0.0.exe             (Setup installer)
+          └── release.json                      (Changelog & animated release email)
 ```
-Anything/releases/
-└── photo-editor/
-    ├── PhotoEditor_1.2.0.exe      <-- The setup executable
-    ├── app.json                  <-- Identity and branding
-    └── release.json              <-- Changelog & animated email info
+
+For subsequent versions (e.g. `V-1.1.0`), simply create a new version folder beside `V-1.0.0/`:
+```text
+release/
+  └── Tap Studio/
+      ├── app-logo.png
+      ├── app.json                              (Bump version to "1.1.0")
+      ├── V-1.0.0/
+      │   ├── TapStudio-V-1.0.0.exe
+      │   └── release.json
+      └── V-1.1.0/
+          ├── TapStudio-V-1.1.0.exe
+          └── release.json
 ```
 
 ---
 
-## 📄 3. JSON Configuration Templates
+## 📄 4. JSON Configuration Templates
 
 ### `app.json` (Identity Manifest)
+Place at `release/<AppName>/app.json`:
 ```json
 {
-  "id": "photo-editor",
-  "name": "Photo Editor Pro",
-  "shortName": "PE",
-  "version": "1.2.0",
-  "category": "Creative & Design",
-  "description": "GPU-accelerated photo manipulation and RAW processing suite.",
-  "executableName": "PhotoEditor_1.2.0.exe",
-  "iconType": "emoji",
-  "iconValue": "🎨",
-  "gradient": "from-purple-600 via-pink-500 to-rose-400",
-  "textColor": "#f43f5e",
-  "glowColor": "rgba(244, 63, 94, 0.45)",
-  "githubRepo": "your-username/photo-editor"
+  "id": "tap-studio",
+  "name": "Tap Studio",
+  "shortName": "TS",
+  "version": "1.0.0",
+  "size": "42.8 MB",
+  "category": "Productivity",
+  "author": "Burhanuddin Sounasath",
+  "contact": "8369811201",
+  "description": "Hardware companion, low-latency stream deck macro controller, and desktop automation suite for the Anything ecosystem.",
+  "executableName": "TapStudio-V-1.0.0.exe",
+  "iconType": "image",
+  "iconValue": "app-logo.png",
+  "gradient": "from-cyan-500 via-teal-500 to-emerald-400",
+  "textColor": "#2dd4bf",
+  "glowColor": "rgba(45, 212, 191, 0.45)",
+  "githubRepo": "BSFrameWorks5253/TapDesk",
+  "endpoints": {
+    "repository": "https://github.com/BSFrameWorks5253/TapDesk",
+    "releasesDashboard": "https://github.com/BSFrameWorks5253/TapDesk/releases",
+    "latestReleaseApi": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
+    "binaryDownloadPattern": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v{version}/TapStudio-V-{version}.exe"
+  }
 }
 ```
 
 ### `release.json` (Changelog & Animated Email Dispatcher)
-This JSON file drives the **Animated Release Email** dispatched to users and populates the **Version History Archive**:
+Place at `release/<AppName>/V-<version>/release.json`:
 ```json
 {
-  "appId": "photo-editor",
-  "appName": "Photo Editor Pro",
-  "version": "1.2.0",
-  "executableName": "PhotoEditor_1.2.0.exe",
+  "appId": "tap-studio",
+  "appName": "Tap Studio",
+  "version": "1.0.0",
+  "executableName": "TapStudio-V-1.0.0.exe",
   "releaseDate": "2026-10-23",
-  "releaseType": "minor",
-  "tagline": "Neural Grading & 2x Faster Engine",
-  "summary": "This release brings 2x faster canvas rendering, WebP/AVIF export presets, and crucial Windows 11 high-DPI fixes.",
+  "releaseType": "major",
+  "tagline": "Launch Release & High-Speed Engine",
+  "summary": "Initial release featuring ultra low-latency processing, Windows 11 integration, and Anything auto-updates.",
   "newFeatures": [
-    "Neural Tone Mapping with HDR10+ support",
-    "GPU-accelerated blur and bokeh engine",
-    "Batch export to WebP and AVIF formats"
+    "Native Windows 11 Start Menu shortcut integration and clean uninstaller",
+    "Full Anything auto-updater and Version History rollback support",
+    "GPU-accelerated rendering pipeline with low-latency event loop"
   ],
   "improvements": [
-    "2.5x faster canvas rendering on 4K/8K displays",
-    "Reduced idle RAM footprint by 45MB",
-    "Smoother brush stroke interpolation at high zoom levels"
+    "Instant cold-start launch in under 400ms on SSDs",
+    "Lightweight background RAM footprint (~30MB)"
   ],
   "fixes": [
-    "Fixed memory leak when repeatedly swapping layer masks",
-    "Resolved Windows 11 HDR color banding glitch",
-    "Fixed crash when opening corrupted EXIF metadata files"
+    "Initial stable release with high-DPI scaling bugfixes"
   ],
   "emailNotification": {
-    "subject": "🚀 Photo Editor Pro v1.2.0 is Here: Neural Grading & 2x Faster Canvas!",
-    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
-    "ctaText": "Open in Anything",
-    "heroGradient": "from-purple-600 via-pink-500 to-rose-400"
+    "subject": "🚀 Tap Studio v1.0.0 is Live in Anything!",
+    "preview": "Discover all the capabilities of Tap Studio with automated updates.",
+    "ctaText": "Launch Application",
+    "heroGradient": "from-cyan-500 via-teal-500 to-emerald-400"
   }
 }
 ```
 
 ---
 
-## 🔄 4. Version History & Rollback Archive
+## 🔄 5. Version History & Rollback Archive
 
-Whenever a new version is dropped:
+Whenever a new version folder is detected:
 1. Anything automatically **archives previous versions** in the app's Version History tab.
 2. Users can easily view the exact breakdown of **New Features**, **Improvements**, and **Bug Fixes** for each past release.
 3. If an older version is preferred, users simply click **"Use vX.X.X"** or **"Rollback"** to swap the active version in one click!
 4. Users can also click **"Release Email"** on any version to view the animated email dispatch that was sent for that release.
-
----
-
-## 📧 5. Authentication & Email Alerts
-
-In **Settings → Authentication & Animated Email Notifications**:
-- Users and developers can configure recipient email addresses.
-- Test and preview animated release dispatches live.
-- Whenever an app is updated locally or via GitHub, Anything triggers the animated email preview.

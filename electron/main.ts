@@ -44,10 +44,57 @@ const getInstalledAppsDir = () => {
 };
 
 const getReleasesDir = () => {
-  const dir = path.join(getProjectRoot(), 'releases');
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return dir;
+  const root = getProjectRoot();
+  const dir1 = path.join(root, 'releases');
+  const dir2 = path.join(root, 'release');
+  if (fs.existsSync(dir2) && !fs.existsSync(dir1)) return dir2;
+  if (!fs.existsSync(dir1)) fs.mkdirSync(dir1, { recursive: true });
+  return dir1;
 };
+
+function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: string } | null {
+  try {
+    if (!fs.existsSync(dirPath)) return null;
+    const files = fs.readdirSync(dirPath);
+    const preferredNames = [
+      'app-logo.png',
+      'logo.png',
+      'icon.png',
+      'app.png',
+      'app_logo.png',
+      'logo.svg',
+      'icon.svg',
+    ];
+
+    let chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase()));
+    if (!chosenFile) {
+      chosenFile = files.find((f) => {
+        const ext = path.extname(f).toLowerCase();
+        const lower = f.toLowerCase();
+        return (
+          (ext === '.png' || ext === '.svg' || ext === '.jpg' || ext === '.webp') &&
+          !lower.includes('banner') &&
+          !lower.includes('splash') &&
+          !lower.includes('bg')
+        );
+      });
+    }
+
+    if (chosenFile) {
+      const fullPath = path.join(dirPath, chosenFile);
+      const ext = path.extname(chosenFile).toLowerCase().replace('.', '');
+      const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+      const base64 = fs.readFileSync(fullPath).toString('base64');
+      return {
+        iconType: 'image',
+        iconValue: `data:${mime};base64,${base64}`,
+      };
+    }
+  } catch (e) {
+    console.error('Failed to parse app logo image:', e);
+  }
+  return null;
+}
 
 function formatFileBytes(bytes: number): string {
   if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
@@ -92,227 +139,325 @@ function scanAndCollectReleases(): {
     let addedCount = 0;
     let updatedCount = 0;
 
-    const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
+    // Collect all release root folders (supports both "releases" and "release")
+    const scanRoots = [
+      path.join(getProjectRoot(), 'releases'),
+      path.join(getProjectRoot(), 'release'),
+    ].filter((dir, idx, arr) => fs.existsSync(dir) && arr.indexOf(dir) === idx);
 
-    for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+    for (const releasesDir of scanRoots) {
+      const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
 
-      if (entry.isDirectory()) {
-        const appDir = path.join(releasesDir, entry.name);
-        const appFiles = fs.readdirSync(appDir);
+      for (const entry of entries) {
+        if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
 
-        let manifest: any = {};
-        const manifestFile = appFiles.find(
-          (f) => f.toLowerCase() === 'app.json' || f.toLowerCase() === 'manifest.json'
-        );
-        if (manifestFile) {
-          try {
-            manifest = JSON.parse(fs.readFileSync(path.join(appDir, manifestFile), 'utf-8'));
-          } catch (e) {}
-        }
+        if (entry.isDirectory()) {
+          const appDir = path.join(releasesDir, entry.name);
+          const appFiles = fs.readdirSync(appDir);
 
-        // Check for release changelog file: release.json or release_<version>.json
-        let releaseMeta: any = {};
-        const relFile = appFiles.find(
-          (f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json')
-        );
-        if (relFile) {
-          try {
-            releaseMeta = JSON.parse(fs.readFileSync(path.join(appDir, relFile), 'utf-8'));
-          } catch (e) {}
-        }
+          // 1. Check for App Listing Icon (.png, .svg, etc.)
+          const appLogo = findAppLogoImage(appDir);
 
-        const exeFile = appFiles.find((f) => {
-          const ext = path.extname(f).toLowerCase();
-          return ext === '.exe' || ext === '.msix' || ext === '.zip';
-        });
-
-        if (!exeFile) continue;
-
-        const exeFullPath = path.join(appDir, exeFile);
-        const stats = fs.statSync(exeFullPath);
-        const ext = path.extname(exeFile).toLowerCase();
-
-        const appId = manifest.id || releaseMeta.appId || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-        const appName = manifest.name || releaseMeta.appName || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-        const appVersion = releaseMeta.version || manifest.version || extractVersionSemver(exeFile) || '1.0.0';
-        const category = manifest.category || 'Custom Tools';
-        const description = releaseMeta.summary || manifest.description || `Child application ${appName} running inside Anything.`;
-        const githubRepo = manifest.githubRepo || undefined;
-
-        const targetDir = path.join(publishedDir, appId);
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-        const destPath = path.join(targetDir, exeFile);
-
-        let isNewFile = true;
-        if (fs.existsSync(destPath)) {
-          const destStats = fs.statSync(destPath);
-          if (destStats.size === stats.size && destStats.mtimeMs === stats.mtimeMs) {
-            isNewFile = false;
+          // 2. Base Identity Manifest: app.json or manifest.json
+          let manifest: any = {};
+          const manifestFile = appFiles.find(
+            (f) => f.toLowerCase() === 'app.json' || f.toLowerCase() === 'manifest.json'
+          );
+          if (manifestFile) {
+            try {
+              manifest = JSON.parse(fs.readFileSync(path.join(appDir, manifestFile), 'utf-8'));
+            } catch (e) {}
           }
-        }
 
-        if (isNewFile) {
+          // 3. Detect version releases: both subdirectories (e.g. "V-1.0.0") and flat files
+          interface DiscoveredRelease {
+            version: string;
+            exeFile: string;
+            exeFullPath: string;
+            stats: fs.Stats;
+            releaseMeta: any;
+          }
+
+          const discoveredReleases: DiscoveredRelease[] = [];
+
+          // Scan version subdirectories: V-1.0.0, v1.0.0, 1.0.0, etc.
+          const subEntries = fs.readdirSync(appDir, { withFileTypes: true });
+          const versionDirs = subEntries.filter(
+            (e) =>
+              e.isDirectory() &&
+              (e.name.toLowerCase().startsWith('v') || /^\d+\.\d+/.test(e.name))
+          );
+
+          for (const vDir of versionDirs) {
+            const vDirPath = path.join(appDir, vDir.name);
+            const vFiles = fs.readdirSync(vDirPath);
+
+            const vExe = vFiles.find((f) => {
+              const ext = path.extname(f).toLowerCase();
+              return ext === '.exe' || ext === '.msix' || ext === '.zip';
+            });
+
+            if (vExe) {
+              const exeFullPath = path.join(vDirPath, vExe);
+              let releaseMeta: any = {};
+              const relFile = vFiles.find(
+                (f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json')
+              );
+              if (relFile) {
+                try {
+                  releaseMeta = JSON.parse(fs.readFileSync(path.join(vDirPath, relFile), 'utf-8'));
+                } catch (e) {}
+              }
+
+              const ver =
+                releaseMeta.version ||
+                extractVersionSemver(vDir.name) ||
+                extractVersionSemver(vExe) ||
+                '1.0.0';
+
+              discoveredReleases.push({
+                version: ver,
+                exeFile: vExe,
+                exeFullPath,
+                stats: fs.statSync(exeFullPath),
+                releaseMeta,
+              });
+            }
+          }
+
+          // Also check flat files directly in appDir
+          const flatExe = appFiles.find((f) => {
+            const ext = path.extname(f).toLowerCase();
+            return ext === '.exe' || ext === '.msix' || ext === '.zip';
+          });
+
+          if (flatExe) {
+            let releaseMeta: any = {};
+            const relFile = appFiles.find(
+              (f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json')
+            );
+            if (relFile) {
+              try {
+                releaseMeta = JSON.parse(fs.readFileSync(path.join(appDir, relFile), 'utf-8'));
+              } catch (e) {}
+            }
+            const ver =
+              releaseMeta.version || manifest.version || extractVersionSemver(flatExe) || '1.0.0';
+
+            // Avoid duplicate if already picked up from subfolder
+            if (!discoveredReleases.some((r) => r.version === ver)) {
+              const exeFullPath = path.join(appDir, flatExe);
+              discoveredReleases.push({
+                version: ver,
+                exeFile: flatExe,
+                exeFullPath,
+                stats: fs.statSync(exeFullPath),
+                releaseMeta,
+              });
+            }
+          }
+
+          if (discoveredReleases.length === 0) continue;
+
+          // Sort releases semantically descending (latest version first)
+          discoveredReleases.sort((a, b) => compareVersions(b.version, a.version));
+          const latest = discoveredReleases[0];
+
+          const appId =
+            manifest.id ||
+            latest.releaseMeta.appId ||
+            `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+          const appName =
+            manifest.name ||
+            latest.releaseMeta.appName ||
+            entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+          const category = manifest.category || 'Productivity';
+          const description =
+            latest.releaseMeta.summary ||
+            manifest.description ||
+            `Child application ${appName} running inside Anything.`;
+          const githubRepo = manifest.githubRepo || undefined;
+
+          const targetDir = path.join(publishedDir, appId);
+          if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+          // Copy executables and prepare release records
+          const historyRecords: any[] = [];
+          let isNewFile = false;
+
+          for (const rel of discoveredReleases) {
+            const destPath = path.join(targetDir, rel.exeFile);
+            let needsCopy = true;
+            if (fs.existsSync(destPath)) {
+              const destStats = fs.statSync(destPath);
+              if (destStats.size === rel.stats.size && destStats.mtimeMs === rel.stats.mtimeMs) {
+                needsCopy = false;
+              }
+            }
+            if (needsCopy) {
+              fs.copyFileSync(rel.exeFullPath, destPath);
+              if (rel === latest) isNewFile = true;
+            }
+
+            historyRecords.push({
+              version: rel.version,
+              executableName: rel.exeFile,
+              releaseDate: rel.releaseMeta.releaseDate || new Date().toISOString().slice(0, 10),
+              releaseType: rel.releaseMeta.releaseType || 'minor',
+              tagline: rel.releaseMeta.tagline || `${appName} v${rel.version} Update`,
+              summary: rel.releaseMeta.summary || description,
+              newFeatures: Array.isArray(rel.releaseMeta.newFeatures) ? rel.releaseMeta.newFeatures : [],
+              improvements: Array.isArray(rel.releaseMeta.improvements) ? rel.releaseMeta.improvements : [],
+              fixes: Array.isArray(rel.releaseMeta.fixes) ? rel.releaseMeta.fixes : [],
+              emailNotification: rel.releaseMeta.emailNotification,
+              sizeFormatted: formatFileBytes(rel.stats.size),
+              downloadUrl: destPath,
+            });
+          }
+
+          const primaryDestPath = path.join(targetDir, latest.exeFile);
+          const ext = path.extname(latest.exeFile).toLowerCase();
+
+          const shader =
+            shaderColorPresets[
+              Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) %
+                shaderColorPresets.length
+            ];
+
+          const catalogEntry = {
+            id: appId,
+            name: appName,
+            shortName: (manifest.shortName || appName.slice(0, 2)).toUpperCase(),
+            category,
+            version: latest.version,
+            size: manifest.size || formatFileBytes(latest.stats.size),
+            packageSize: formatFileBytes(latest.stats.size),
+            description,
+            executableName: latest.exeFile,
+            packageFileName: latest.exeFile,
+            packageFormat: ext,
+            localPackagePath: primaryDestPath,
+            gradient: manifest.gradient || shader.gradient,
+            textColor: manifest.textColor || shader.textColor,
+            glowColor: manifest.glowColor || shader.glow,
+            iconType: appLogo ? 'image' : manifest.iconType || 'emoji',
+            iconValue: appLogo ? appLogo.iconValue : manifest.iconValue || '⚡',
+            status: 'not-installed',
+            githubRepo,
+            endpoints: manifest.endpoints || undefined,
+            publishedAt: Date.now(),
+            releaseInfo: historyRecords[0],
+            history: historyRecords,
+            systemRequirements: manifest.systemRequirements || {
+              os: 'Windows 10 / Windows 11 (64-bit)',
+              ram: '8 GB RAM (16 GB Recommended)',
+              gpu: 'DirectX 12 / Direct3D 11 GPU Accelerated',
+              storage: `${manifest.size || formatFileBytes(latest.stats.size)} Available Space`,
+            },
+            changelog: [
+              ...(manifest.changelog || []),
+              ...(latest.releaseMeta.newFeatures
+                ? latest.releaseMeta.newFeatures.map((f: string) => `Feature: ${f}`)
+                : []),
+              ...(latest.releaseMeta.improvements
+                ? latest.releaseMeta.improvements.map((i: string) => `Improvement: ${i}`)
+                : []),
+              ...(latest.releaseMeta.fixes
+                ? latest.releaseMeta.fixes.map((x: string) => `Fix: ${x}`)
+                : []),
+            ],
+            addedByCreator: true,
+          };
+
+          const appVersion = latest.version;
+          const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+          if (existingIndex >= 0) {
+            const existing = catalog[existingIndex];
+            const hasNewer = compareVersions(appVersion, existing.version) > 0;
+            if (hasNewer || isNewFile) {
+              catalog[existingIndex] = {
+                ...existing,
+                ...catalogEntry,
+                status: existing.status === 'ready' ? 'update-available' : existing.status,
+              };
+              updatedCount++;
+              sendWindowsNotification(
+                `⚡ Update Detected for ${appName}!`,
+                `Version v${appVersion} was collected from releases. Ready to launch!`
+              );
+            }
+          } else {
+            catalog.unshift(catalogEntry);
+            addedCount++;
+            sendWindowsNotification(
+              `🎉 New Child App: ${appName}`,
+              `Version v${appVersion} was automatically registered from releases!`
+            );
+          }
+        } else if (entry.isFile()) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (ext !== '.exe' && ext !== '.msix' && ext !== '.zip') continue;
+
+          const exeFullPath = path.join(releasesDir, entry.name);
+          const stats = fs.statSync(exeFullPath);
+          const cleanBase = entry.name.replace(/\.[^/.]+$/, '').replace(/[-_v0-9.]+$/g, '').trim();
+          const appName = (cleanBase || 'Application').replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+          const appId = `app-${appName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+          const appVersion = extractVersionSemver(entry.name);
+
+          const targetDir = path.join(publishedDir, appId);
+          if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+          const destPath = path.join(targetDir, entry.name);
+
           fs.copyFileSync(exeFullPath, destPath);
-        }
 
-        const shader =
-          shaderColorPresets[
-            Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
-          ];
+          const shader =
+            shaderColorPresets[
+              Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
+            ];
 
-        // Prepare release record
-        const releaseRecord = {
-          version: appVersion,
-          executableName: exeFile,
-          releaseDate: releaseMeta.releaseDate || new Date().toISOString().slice(0, 10),
-          releaseType: releaseMeta.releaseType || 'minor',
-          tagline: releaseMeta.tagline || `${appName} v${appVersion} Update`,
-          summary: releaseMeta.summary || description,
-          newFeatures: Array.isArray(releaseMeta.newFeatures) ? releaseMeta.newFeatures : [],
-          improvements: Array.isArray(releaseMeta.improvements) ? releaseMeta.improvements : [],
-          fixes: Array.isArray(releaseMeta.fixes) ? releaseMeta.fixes : [],
-          emailNotification: releaseMeta.emailNotification,
-          sizeFormatted: formatFileBytes(stats.size),
-          downloadUrl: destPath,
-        };
+          const catalogEntry = {
+            id: appId,
+            name: appName,
+            shortName: appName.slice(0, 2).toUpperCase(),
+            category: 'Custom Tools',
+            version: appVersion,
+            description: `Direct release executable ${entry.name}`,
+            executableName: entry.name,
+            packageFileName: entry.name,
+            packageSize: formatFileBytes(stats.size),
+            packageFormat: ext,
+            localPackagePath: destPath,
+            gradient: shader.gradient,
+            textColor: shader.textColor,
+            glowColor: shader.glow,
+            iconType: 'emoji',
+            iconValue: '📦',
+            status: 'not-installed',
+            publishedAt: Date.now(),
+            changelog: [`Collected ${entry.name} (v${appVersion})`],
+            addedByCreator: true,
+          };
 
-        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
-        const existing = existingIndex >= 0 ? catalog[existingIndex] : null;
-
-        const history = Array.isArray(existing?.history) ? [...existing.history] : [];
-        const histIdx = history.findIndex((h: any) => h.version === appVersion);
-        if (histIdx >= 0) {
-          history[histIdx] = { ...history[histIdx], ...releaseRecord };
-        } else {
-          history.unshift(releaseRecord);
-        }
-
-        const catalogEntry = {
-          id: appId,
-          name: appName,
-          shortName: (manifest.shortName || appName.slice(0, 2)).toUpperCase(),
-          category,
-          version: appVersion,
-          size: manifest.size || formatFileBytes(stats.size),
-          packageSize: formatFileBytes(stats.size),
-          description,
-          executableName: manifest.executableName || exeFile,
-          packageFileName: exeFile,
-          packageFormat: ext,
-          localPackagePath: destPath,
-          gradient: manifest.gradient || shader.gradient,
-          textColor: manifest.textColor || shader.textColor,
-          glowColor: manifest.glowColor || shader.glow,
-          iconType: manifest.iconType || 'emoji',
-          iconValue: manifest.iconValue || '⚡',
-          status: 'not-installed',
-          githubRepo,
-          endpoints: manifest.endpoints || undefined,
-          publishedAt: Date.now(),
-          releaseInfo: releaseRecord,
-          history,
-          systemRequirements: manifest.systemRequirements || {
-            os: 'Windows 10 / Windows 11 (64-bit)',
-            ram: '8 GB RAM (16 GB Recommended)',
-            gpu: 'DirectX 12 / Direct3D 11 GPU Accelerated',
-            storage: `${manifest.size || formatFileBytes(stats.size)} Available Space`,
-          },
-          changelog: [
-            ...(manifest.changelog || []),
-            ...(releaseMeta.newFeatures ? releaseMeta.newFeatures.map((f: string) => `Feature: ${f}`) : []),
-            ...(releaseMeta.improvements ? releaseMeta.improvements.map((i: string) => `Improvement: ${i}`) : []),
-            ...(releaseMeta.fixes ? releaseMeta.fixes.map((x: string) => `Fix: ${x}`) : []),
-          ],
-          addedByCreator: true,
-        };
-
-        if (existingIndex >= 0) {
-          const existing = catalog[existingIndex];
-          const hasNewer = compareVersions(appVersion, existing.version) > 0;
-          if (hasNewer || isNewFile) {
-            catalog[existingIndex] = {
-              ...existing,
-              ...catalogEntry,
-              status: existing.status === 'ready' ? 'update-available' : existing.status,
-            };
-            updatedCount++;
+          const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+          if (existingIndex >= 0) {
+            const existing = catalog[existingIndex];
+            if (compareVersions(appVersion, existing.version) > 0) {
+              catalog[existingIndex] = { ...existing, ...catalogEntry, status: 'update-available' };
+              updatedCount++;
+              sendWindowsNotification(
+                `⚡ Update Detected for ${appName}!`,
+                `Version v${appVersion} was collected from releases.`
+              );
+            }
+          } else {
+            catalog.unshift(catalogEntry);
+            addedCount++;
             sendWindowsNotification(
-              `⚡ Update Detected for ${appName}!`,
-              `Version v${appVersion} was collected from releases. Ready to launch!`
+              `🎉 New Child App: ${appName}`,
+              `Version v${appVersion} is now ready in Anything!`
             );
           }
-        } else {
-          catalog.unshift(catalogEntry);
-          addedCount++;
-          sendWindowsNotification(
-            `🎉 New Child App: ${appName}`,
-            `Version v${appVersion} was automatically registered from releases!`
-          );
-        }
-      } else if (entry.isFile()) {
-        const ext = path.extname(entry.name).toLowerCase();
-        if (ext !== '.exe' && ext !== '.msix' && ext !== '.zip') continue;
-
-        const exeFullPath = path.join(releasesDir, entry.name);
-        const stats = fs.statSync(exeFullPath);
-        const cleanBase = entry.name.replace(/\.[^/.]+$/, '').replace(/[-_v0-9.]+$/g, '').trim();
-        const appName = (cleanBase || 'Application').replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-        const appId = `app-${appName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-        const appVersion = extractVersionSemver(entry.name);
-
-        const targetDir = path.join(publishedDir, appId);
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-        const destPath = path.join(targetDir, entry.name);
-
-        fs.copyFileSync(exeFullPath, destPath);
-
-        const shader =
-          shaderColorPresets[
-            Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
-          ];
-
-        const catalogEntry = {
-          id: appId,
-          name: appName,
-          shortName: appName.slice(0, 2).toUpperCase(),
-          category: 'Custom Tools',
-          version: appVersion,
-          description: `Direct release executable ${entry.name}`,
-          executableName: entry.name,
-          packageFileName: entry.name,
-          packageSize: formatFileBytes(stats.size),
-          packageFormat: ext,
-          localPackagePath: destPath,
-          gradient: shader.gradient,
-          textColor: shader.textColor,
-          glowColor: shader.glow,
-          iconType: 'emoji',
-          iconValue: '📦',
-          status: 'not-installed',
-          publishedAt: Date.now(),
-          changelog: [`Collected ${entry.name} (v${appVersion})`],
-          addedByCreator: true,
-        };
-
-        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
-        if (existingIndex >= 0) {
-          const existing = catalog[existingIndex];
-          if (compareVersions(appVersion, existing.version) > 0) {
-            catalog[existingIndex] = { ...existing, ...catalogEntry, status: 'update-available' };
-            updatedCount++;
-            sendWindowsNotification(
-              `⚡ Update Detected for ${appName}!`,
-              `Version v${appVersion} was collected from releases.`
-            );
-          }
-        } else {
-          catalog.unshift(catalogEntry);
-          addedCount++;
-          sendWindowsNotification(
-            `🎉 New Child App: ${appName}`,
-            `Version v${appVersion} is now ready in Anything!`
-          );
         }
       }
     }
