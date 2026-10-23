@@ -12,6 +12,7 @@ interface AppCardProps {
   onUpdate: (app: CatalogApp) => void;
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
+  onCustomizeLoader?: (app: CatalogApp) => void;
 }
 
 export const AppCard: React.FC<AppCardProps> = ({
@@ -22,6 +23,7 @@ export const AppCard: React.FC<AppCardProps> = ({
   onUpdate,
   onFixPath,
   onUninstall,
+  onCustomizeLoader,
 }) => {
   return (
     <GlassCard
@@ -38,6 +40,7 @@ export const AppCard: React.FC<AppCardProps> = ({
         onUpdate={onUpdate}
         onFixPath={onFixPath}
         onUninstall={onUninstall}
+        onCustomizeLoader={onCustomizeLoader}
       />
     </GlassCard>
   );

@@ -11,66 +11,97 @@ interface AdobeSplashScreenProps {
   isStandaloneSplash?: boolean;
 }
 
-// Inlined Adobe CC Style Squircle Logo Badge for instantaneous, 100% reliable rendering
-export const AnythingBrandEmblem: React.FC<{ size?: number; className?: string }> = ({
+// Inlined Brand Emblem Squircle Logo Badge for instantaneous, 100% reliable rendering
+export const AnythingBrandEmblem: React.FC<{
+  size?: number;
+  className?: string;
+  letters?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+}> = ({
   size = 56,
   className = '',
-}) => (
-  <div
-    className={`shrink-0 rounded-2xl overflow-hidden shadow-[0_8px_28px_rgba(224,2,1,0.45)] select-none ${className}`}
-    style={{ width: size, height: size }}
-  >
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-full"
-    >
-      <defs>
-        <linearGradient id="anLogoRedGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FF2A2A" />
-          <stop offset="100%" stopColor="#BA0000" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="100" rx="22" fill="url(#anLogoRedGrad)" />
-      {/* Specular glass highlight rim */}
-      <rect
-        x="1.5"
-        y="1.5"
-        width="97"
-        height="97"
-        rx="20.5"
-        stroke="rgba(255,255,255,0.35)"
-        strokeWidth="1.5"
-      />
-      <text
-        x="50"
-        y="67"
-        textAnchor="middle"
-        fill="#FFFFFF"
-        style={{
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-          fontWeight: 800,
-          fontSize: '52px',
-          letterSpacing: '-1.5px',
-        }}
-      >
-        An
-      </text>
-    </svg>
-  </div>
-);
+  letters = 'An',
+  gradientFrom = '#FF2A2A',
+  gradientTo = '#BA0000',
+}) => {
+  const isTap = letters.toLowerCase() === 'ts';
+  const fromColor = isTap ? '#06B6D4' : gradientFrom;
+  const toColor = isTap ? '#4F46E5' : gradientTo;
+  const shadowColor = isTap ? 'rgba(6, 182, 212, 0.45)' : 'rgba(224, 2, 1, 0.45)';
 
-const initializationSteps = [
-  'Initializing Direct3D 12 GPU hardware pipeline...',
-  'Loading Adobe Spectrum layout engine...',
-  'Parsing application registry & package catalog...',
-  'Synchronizing Cloud Documents & Spatial assets...',
-  'Connecting GitHub release channels & delta maps...',
-  'Restoring workspace panels & layout state...',
-  'Starting Anything...',
-];
+  return (
+    <div
+      className={`shrink-0 rounded-2xl overflow-hidden select-none ${className}`}
+      style={{
+        width: size,
+        height: size,
+        boxShadow: `0 8px 28px ${shadowColor}`,
+      }}
+    >
+      <svg
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        <defs>
+          <linearGradient id={`emblemGrad_${letters}`} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={fromColor} />
+            <stop offset="100%" stopColor={toColor} />
+          </linearGradient>
+        </defs>
+        <rect width="100" height="100" rx="22" fill={`url(#emblemGrad_${letters})`} />
+        {/* Specular glass highlight rim */}
+        <rect
+          x="1.5"
+          y="1.5"
+          width="97"
+          height="97"
+          rx="20.5"
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth="1.5"
+        />
+        <text
+          x="50"
+          y="67"
+          textAnchor="middle"
+          fill="#FFFFFF"
+          style={{
+            fontFamily:
+              "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+            fontWeight: 800,
+            fontSize: letters.length > 2 ? '42px' : '52px',
+            letterSpacing: '-1.5px',
+          }}
+        >
+          {letters}
+        </text>
+      </svg>
+    </div>
+  );
+};
+
+const getInitializationSteps = (name: string = '') => {
+  if (name.toLowerCase().includes('tap')) {
+    return [
+      'Initializing Direct3D 12 low-latency driver...',
+      'Scanning USB Stream Deck & Macro Devices...',
+      'Loading Hotkeys and Dynamic Keymaps...',
+      'Syncing with Anything Ecosystem...',
+      'Starting Tap Studio...',
+    ];
+  }
+  return [
+    'Initializing Direct3D 12 GPU hardware pipeline...',
+    'Loading Anything Spectrum layout engine...',
+    'Parsing application registry & package catalog...',
+    'Synchronizing Cloud Documents & Spatial assets...',
+    'Connecting GitHub release channels & delta maps...',
+    'Restoring workspace panels & layout state...',
+    'Starting Anything...',
+  ];
+};
 
 export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
   settings,
@@ -96,6 +127,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
     const intervalTime = 35;
     const totalSteps = duration / intervalTime;
     const increment = 100 / totalSteps;
+    const stepsList = getInitializationSteps(settings.productName);
 
     let currentProgress = 0;
 
@@ -104,7 +136,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
       if (currentProgress >= 100) {
         currentProgress = 100;
         setProgress(100);
-        setCurrentStepIndex(initializationSteps.length - 1);
+        setCurrentStepIndex(stepsList.length - 1);
         clearInterval(timer);
 
         // Smooth fadeout into workspace
@@ -117,17 +149,24 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
       } else {
         setProgress(currentProgress);
         const step = Math.min(
-          initializationSteps.length - 2,
-          Math.floor((currentProgress / 100) * (initializationSteps.length - 1))
+          stepsList.length - 2,
+          Math.floor((currentProgress / 100) * (stepsList.length - 1))
         );
         setCurrentStepIndex(step);
       }
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [isOpen, settings.durationMs, onComplete]);
+  }, [isOpen, settings.durationMs, settings.productName, onComplete]);
 
   if (!isOpen) return null;
+
+  const stepsList = getInitializationSteps(settings.productName);
+  const emblemLetters =
+    settings.logoText ||
+    (settings.productName?.toLowerCase().includes('tap')
+      ? 'Ts'
+      : settings.productName?.slice(0, 2) || 'An');
 
   return (
     <div
@@ -180,7 +219,11 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
           <div className="relative z-10 flex items-start justify-between">
             <div className="flex items-center gap-4">
               {/* Reliable Inlined Official Logo Badge */}
-              <AnythingBrandEmblem size={56} className="transition-transform duration-200 hover:scale-105" />
+              <AnythingBrandEmblem
+                size={56}
+                letters={emblemLetters}
+                className="transition-transform duration-200 hover:scale-105"
+              />
 
               <div>
                 <div className="flex items-center gap-2.5">
@@ -244,7 +287,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
               <div className="flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 text-red-500 animate-spin shrink-0" />
                 <span className="font-mono text-zinc-200 text-[11px] font-medium tracking-wide">
-                  {initializationSteps[currentStepIndex]}
+                  {stepsList[currentStepIndex] || 'Starting application...'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 font-mono text-xs">

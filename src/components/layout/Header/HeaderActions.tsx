@@ -1,8 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Sun, Moon, Eye, Wrench, CheckCircle2, RefreshCw } from 'lucide-react';
+import {
+  Bell,
+  Sun,
+  Moon,
+  Eye,
+  Wrench,
+  CheckCircle2,
+  RefreshCw,
+  LogOut,
+  LogIn,
+  ShieldCheck,
+  User,
+  Phone,
+} from 'lucide-react';
 import { GlassInput } from '../../ui/GlassInput';
 import { useTheme } from '../../../context/ThemeContext';
 import { useViewMode } from '../../../context/ViewModeContext';
+import { useAuth } from '../../../context/AuthContext';
 
 interface HeaderActionsProps {
   searchQuery: string;
@@ -15,21 +29,27 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { viewMode, setViewMode } = useViewMode();
+  const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const isLight = theme === 'light';
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
     };
-    if (showNotifications) {
+    if (showNotifications || showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
+  }, [showNotifications, showUserMenu]);
 
   return (
     <div
@@ -150,17 +170,84 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         )}
       </div>
 
-      {/* User Monogram */}
-      <div
-        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs select-none border transition-colors ${
-          isLight
-            ? 'bg-zinc-100 border-zinc-300 text-zinc-800'
-            : 'bg-zinc-800 border-zinc-700 text-zinc-200'
-        }`}
-        title="Burhanuddin"
-      >
-        B
-      </div>
+      {/* User Authentication & Profile Menu */}
+      {isAuthenticated && user ? (
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs select-none border transition-transform hover:scale-105 overflow-hidden relative ${
+              isLight
+                ? 'bg-zinc-100 border-zinc-300 text-zinc-800'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-200'
+            }`}
+            title={`${user.name} (${user.role})`}
+          >
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span>{user.name.charAt(0).toUpperCase()}</span>
+            )}
+            <span className="absolute bottom-0 right-0 w-1.5 h-1.5 rounded-full bg-emerald-500 border border-slate-900" />
+          </button>
+
+          {showUserMenu && (
+            <div
+              className={`absolute right-0 mt-2 w-72 rounded-xl p-3.5 shadow-2xl border z-50 animate-in fade-in zoom-in-95 duration-100 ${
+                isLight
+                  ? 'bg-white border-zinc-200 text-zinc-900 shadow-zinc-200/80'
+                  : 'bg-zinc-900 border-zinc-700 text-zinc-100 shadow-black/80'
+              }`}
+            >
+              <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="truncate">
+                  <div className="flex items-center gap-1">
+                    <p className="font-bold text-xs truncate">{user.name}</p>
+                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                  </div>
+                  <p className="text-[11px] text-zinc-500 font-mono truncate">{user.email}</p>
+                  {user.phone && (
+                    <p className="text-[10px] text-zinc-400 font-mono flex items-center gap-1 mt-0.5">
+                      <Phone className="w-2.5 h-2.5" />
+                      {user.phone}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-1">
+                <div className="px-2 py-1 text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                  Session: Verified
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    logout();
+                  }}
+                  className="w-full px-2.5 py-1.5 text-xs text-left rounded-lg text-rose-500 hover:bg-rose-500/10 flex items-center gap-2 transition-colors font-medium"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={openAuthModal}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600/10 hover:bg-red-600/20 text-red-600 border border-red-600/20 transition-colors"
+        >
+          <LogIn className="w-3 h-3" />
+          <span>Sign In</span>
+        </button>
+      )}
     </div>
   );
 };

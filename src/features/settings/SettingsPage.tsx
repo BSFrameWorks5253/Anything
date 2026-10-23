@@ -4,8 +4,6 @@ import { SplashScreenSection } from './components/SplashScreenSection';
 import { AutoUpdateSection } from './components/AutoUpdateSection';
 import { AuthEmailNotificationSection } from './components/AuthEmailNotificationSection';
 import { PlanSection } from './components/PlanSection';
-import { StorageSection } from './components/StorageSection';
-import { PreferencesList } from './components/PreferencesList';
 import { AdobeSplashScreen } from '../../components/ui/AdobeSplashScreen';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GlassBadge } from '../../components/ui/GlassBadge';
@@ -13,9 +11,10 @@ import { type SplashSettings } from '../../data/splash.data';
 
 interface SettingsPageProps {
   onPreviewSplash?: (settings: SplashSettings) => void;
+  initialAppId?: string;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, initialAppId = 'anything' }) => {
   const [previewSettings, setPreviewSettings] = useState<SplashSettings | null>(null);
 
   const handlePreview = (settings: SplashSettings) => {
@@ -32,7 +31,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash }) =
       <AccountSection />
 
       {/* Adobe Splash Screen & Loader Customizer */}
-      <SplashScreenSection onPreview={handlePreview} />
+      <SplashScreenSection initialAppId={initialAppId} onPreview={handlePreview} />
 
       {/* GitHub Releases Auto-Update Section */}
       <AutoUpdateSection />
@@ -42,12 +41,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash }) =
 
       {/* Subscription Tier Details */}
       <PlanSection />
-
-      {/* Cloud Storage Breakdown */}
-      <StorageSection />
-
-      {/* Hardware & Engine Preferences */}
-      <PreferencesList />
 
       {/* Creator & Architect Signature Card */}
       <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 relative overflow-hidden">

@@ -946,6 +946,58 @@ function createWindow() {
     }
   });
 
+  // ================= CHILD APP LOADER CUSTOMIZATION & SYNC =================
+  ipcMain.handle('loader:save-child-config', async (_, { appId, config }) => {
+    try {
+      const targetAppId = appId || 'tap-studio';
+      const rootDir = getProjectRoot();
+
+      // 1. Write to releases/<appId>/loader-config.json
+      const releasesAppDir = path.join(rootDir, 'releases', targetAppId);
+      if (!fs.existsSync(releasesAppDir)) {
+        fs.mkdirSync(releasesAppDir, { recursive: true });
+      }
+      const releaseConfigPath = path.join(releasesAppDir, 'loader-config.json');
+      fs.writeFileSync(releaseConfigPath, JSON.stringify(config, null, 2), 'utf-8');
+
+      // 2. Write to global UserData loaders folder (%APPDATA%/Anything/loaders/<appId>.json)
+      const globalLoadersDir = path.join(app.getPath('userData'), 'loaders');
+      if (!fs.existsSync(globalLoadersDir)) {
+        fs.mkdirSync(globalLoadersDir, { recursive: true });
+      }
+      const globalPath = path.join(globalLoadersDir, `${targetAppId}.json`);
+      fs.writeFileSync(globalPath, JSON.stringify(config, null, 2), 'utf-8');
+
+      // 3. Write into installed apps folder if present
+      const installedDir = path.join(getInstalledAppsDir(), targetAppId);
+      if (fs.existsSync(installedDir)) {
+        fs.writeFileSync(path.join(installedDir, 'loader-config.json'), JSON.stringify(config, null, 2), 'utf-8');
+      }
+
+      return { success: true, releaseConfigPath, globalPath };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('loader:load-child-config', async (_, appId: string) => {
+    try {
+      const targetAppId = appId || 'tap-studio';
+      const rootDir = getProjectRoot();
+      const releaseConfigPath = path.join(rootDir, 'releases', targetAppId, 'loader-config.json');
+      if (fs.existsSync(releaseConfigPath)) {
+        return { success: true, config: JSON.parse(fs.readFileSync(releaseConfigPath, 'utf-8')) };
+      }
+      const globalPath = path.join(app.getPath('userData'), 'loaders', `${targetAppId}.json`);
+      if (fs.existsSync(globalPath)) {
+        return { success: true, config: JSON.parse(fs.readFileSync(globalPath, 'utf-8')) };
+      }
+      return { success: false, notFound: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
   // ================= GITHUB APP RELEASES HANDLERS =================
   ipcMain.handle('github:check-release', async (_, { repo, currentVersion }) => {
     try {

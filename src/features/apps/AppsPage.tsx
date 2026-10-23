@@ -24,6 +24,7 @@ interface AppsPageProps {
   onAddCustomApp: (newApp: any) => void;
   onImportApps: (imported: any[]) => void;
   onNavigateToPublisher?: () => void;
+  onCustomizeLoader?: (app: CatalogApp) => void;
   isCheckingUpdates?: boolean;
   onCheckUpdates?: () => void;
 }
@@ -40,6 +41,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   onAddCustomApp,
   onImportApps,
   onNavigateToPublisher,
+  onCustomizeLoader,
   isCheckingUpdates,
   onCheckUpdates,
 }) => {
@@ -123,6 +125,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
             onUpdate={onUpdateApp}
             onFixPath={onFixPathApp}
             onUninstall={onUninstallApp}
+            onCustomizeLoader={onCustomizeLoader}
           />
         </>
       )}

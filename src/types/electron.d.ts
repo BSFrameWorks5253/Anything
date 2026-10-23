@@ -22,6 +22,18 @@ export interface ElectronAPI {
     catalog: any[];
     error?: string;
   }>;
+  saveChildAppLoaderConfig?: (data: { appId: string; config: any }) => Promise<{
+    success: boolean;
+    releaseConfigPath?: string;
+    globalPath?: string;
+    error?: string;
+  }>;
+  loadChildAppLoaderConfig?: (appId: string) => Promise<{
+    success: boolean;
+    config?: any;
+    notFound?: boolean;
+    error?: string;
+  }>;
   onCatalogUpdated: (callback: (catalog: any[]) => void) => () => void;
 
   // App Lifecycle

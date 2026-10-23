@@ -1,18 +1,37 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldCheck, Sparkles, Key, Camera, Phone, Mail, UserCheck, RotateCcw } from 'lucide-react';
+import {
+  ShieldCheck,
+  Sparkles,
+  Key,
+  Camera,
+  Phone,
+  Mail,
+  UserCheck,
+  RotateCcw,
+  LogOut,
+  LogIn,
+} from 'lucide-react';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
+import { useAuth } from '../../../context/AuthContext';
 
 export const AccountSection: React.FC = () => {
+  const { user, isAuthenticated, logout, openAuthModal, updateUser } = useAuth();
   const [avatar, setAvatar] = useState<string | null>(() => {
-    return localStorage.getItem('anything_user_avatar') || null;
+    return localStorage.getItem('anything_user_avatar') || user?.avatar || null;
   });
 
   const [cropperOpen, setCropperOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user?.avatar) {
+      setAvatar(user.avatar);
+    }
+  }, [user?.avatar]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,19 +45,24 @@ export const AccountSection: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
-    // reset input so the same file can be re-selected if needed
     e.target.value = '';
   };
 
   const handleCropComplete = (croppedDataUrl: string) => {
     setAvatar(croppedDataUrl);
     localStorage.setItem('anything_user_avatar', croppedDataUrl);
+    if (updateUser) {
+      updateUser({ avatar: croppedDataUrl });
+    }
     window.dispatchEvent(new Event('storage'));
   };
 
   const handleResetAvatar = () => {
     setAvatar(null);
     localStorage.removeItem('anything_user_avatar');
+    if (updateUser) {
+      updateUser({ avatar: null });
+    }
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -103,68 +127,94 @@ export const AccountSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                  Burhanuddin Sounasath
+                  {user ? user.name : 'Signed Out'}
                 </h4>
-                <ShieldCheck className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 font-bold">
-                  Founder & Architect
-                </span>
+                {user ? (
+                  <>
+                    <ShieldCheck className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 font-bold">
+                      {user.role}
+                    </span>
+                  </>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/15 text-amber-600 border border-amber-500/30 font-bold">
+                    Guest Mode
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-1.5 text-xs text-zinc-600 dark:text-white/70 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                  <span className="font-mono text-zinc-900 dark:text-white font-semibold">
-                    8369811201
-                  </span>
-                  <span className="text-[11px] text-zinc-400 font-mono">(Direct)</span>
-                </div>
+                {user?.phone && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                    <span className="font-mono text-zinc-900 dark:text-white font-semibold">
+                      {user.phone}
+                    </span>
+                    <span className="text-[11px] text-zinc-400 font-mono">(Direct)</span>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="font-mono">burhanuddin@anything.io</span>
+                  <span className="font-mono">{user ? user.email : 'No active session'}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 mt-2.5">
                 <GlassBadge variant="cyan" dot>
-                  Anything Ecosystem Pro
+                  {user ? 'Verified Account' : 'Offline'}
                 </GlassBadge>
-                <span className="text-[11px] text-zinc-500 dark:text-white/40 hidden sm:inline font-mono font-medium">
-                  UID: BURHANUDDIN-8369811201
-                </span>
+                {user?.uid && (
+                  <span className="text-[11px] text-zinc-500 dark:text-white/40 hidden sm:inline font-mono font-medium">
+                    UID: {user.uid}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <GlassButton
-              variant="glass"
-              size="sm"
-              icon={<Camera className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Change Photo
-            </GlassButton>
+            {isAuthenticated ? (
+              <>
+                <GlassButton
+                  variant="glass"
+                  size="sm"
+                  icon={<Camera className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Change Photo
+                </GlassButton>
 
-            {avatar && (
+                {avatar && (
+                  <GlassButton
+                    variant="glass"
+                    size="sm"
+                    icon={<RotateCcw className="w-3.5 h-3.5 text-zinc-400" />}
+                    onClick={handleResetAvatar}
+                  >
+                    Reset
+                  </GlassButton>
+                )}
+
+                <GlassButton
+                  variant="glass"
+                  size="sm"
+                  icon={<LogOut className="w-3.5 h-3.5 text-rose-500" />}
+                  onClick={logout}
+                >
+                  Sign Out
+                </GlassButton>
+              </>
+            ) : (
               <GlassButton
-                variant="glass"
+                variant="primary"
                 size="sm"
-                icon={<RotateCcw className="w-3.5 h-3.5 text-zinc-400" />}
-                onClick={handleResetAvatar}
+                icon={<LogIn className="w-3.5 h-3.5" />}
+                onClick={openAuthModal}
               >
-                Reset
+                Sign In
               </GlassButton>
             )}
-
-            <GlassButton
-              variant="primary"
-              size="sm"
-              icon={<Key className="w-3.5 h-3.5" />}
-            >
-              Passkeys & Security
-            </GlassButton>
           </div>
         </div>
       </GlassCard>

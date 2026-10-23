@@ -9,6 +9,8 @@ import { FilesPage } from './features/files/FilesPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
+import { useAuth } from './context/AuthContext';
+import { AuthScreen } from './features/auth/AuthScreen';
 
 export function App() {
   const isSplashWindow =
@@ -16,8 +18,10 @@ export function App() {
     new URLSearchParams(window.location.search).get('view') === 'splash';
 
   const isElectron = Boolean(typeof window !== 'undefined' && (window as any).electronAPI);
+  const { isAuthenticated, isAuthModalOpen, closeAuthModal } = useAuth();
 
   const [currentPage, setCurrentPage] = useState<NavigationPage>('apps');
+  const [customizeAppId, setCustomizeAppId] = useState<string>('anything');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [splashSettings, setSplashSettings] = useState<SplashSettings>(() => loadSplashSettings());
   const [isBooting, setIsBooting] = useState<boolean>(() => !isElectron && splashSettings.enabled);
@@ -590,6 +594,10 @@ export function App() {
             onAddCustomApp={(custom) => handleAddCatalogApp(custom as any)}
             onImportApps={(imported) => persistApps(imported)}
             onNavigateToPublisher={() => setCurrentPage('publisher')}
+            onCustomizeLoader={(targetApp) => {
+              setCustomizeAppId(targetApp.id);
+              setCurrentPage('settings');
+            }}
             isCheckingUpdates={isCheckingUpdates}
             onCheckUpdates={checkAllGitHubUpdates}
           />
@@ -608,6 +616,7 @@ export function App() {
       case 'settings':
         return (
           <SettingsPage
+            initialAppId={customizeAppId}
             onPreviewSplash={(customSettings) => {
               setPreviewSplash(customSettings);
             }}
@@ -646,7 +655,12 @@ export function App() {
     );
   }
 
-  // 2. Main Applications Hub: Revealed smoothly after loader finishes
+  // 3. User Authentication Gate: if user hasn't signed in, show Sign In screen
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
+
+  // 4. Main Applications Hub: Revealed smoothly after loader finishes
   return (
     <div className="w-full h-full animate-fadeIn">
       {previewSplash && (
@@ -656,6 +670,9 @@ export function App() {
           onComplete={() => setPreviewSplash(null)}
           isPreview={true}
         />
+      )}
+      {isAuthModalOpen && (
+        <AuthScreen isModal onClose={closeAuthModal} />
       )}
       <AppLayout
         currentPage={currentPage}

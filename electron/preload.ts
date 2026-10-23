@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getReleasesPath: () => ipcRenderer.invoke('releases:get-path'),
   openReleasesFolder: () => ipcRenderer.invoke('releases:open-folder'),
   scanAndCollectReleases: () => ipcRenderer.invoke('releases:scan-and-collect'),
+  saveChildAppLoaderConfig: (data: { appId: string; config: any }) =>
+    ipcRenderer.invoke('loader:save-child-config', data),
+  loadChildAppLoaderConfig: (appId: string) =>
+    ipcRenderer.invoke('loader:load-child-config', appId),
   onCatalogUpdated: (callback: (catalog: any[]) => void) => {
     const subscription = (_: any, data: any) => callback(data);
     ipcRenderer.on('catalog:updated', subscription);

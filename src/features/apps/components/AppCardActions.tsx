@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Download, RefreshCw, AlertTriangle, MoreHorizontal, Wrench, Trash2, FolderOpen } from 'lucide-react';
+import { Play, Download, RefreshCw, AlertTriangle, MoreHorizontal, Wrench, Trash2, FolderOpen, Sparkles } from 'lucide-react';
 import type { CatalogApp } from '../../../types/app.types';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { useTheme } from '../../../context/ThemeContext';
@@ -11,6 +11,7 @@ interface AppCardActionsProps {
   onUpdate: (app: CatalogApp) => void;
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
+  onCustomizeLoader?: (app: CatalogApp) => void;
 }
 
 export const AppCardActions: React.FC<AppCardActionsProps> = ({
@@ -20,6 +21,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
   onUpdate,
   onFixPath,
   onUninstall,
+  onCustomizeLoader,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
   const { theme } = useTheme();
@@ -154,8 +156,21 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
             {showMenu && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute right-0 bottom-full mb-1.5 w-44 rounded-xl bg-slate-900/95 border border-white/15 backdrop-blur-2xl shadow-2xl py-1.5 z-30 text-xs text-white/80 select-none animate-fadeIn"
+                className="absolute right-0 bottom-full mb-1.5 w-48 rounded-xl bg-slate-900/95 border border-white/15 backdrop-blur-2xl shadow-2xl py-1.5 z-30 text-xs text-white/80 select-none animate-fadeIn"
               >
+                {onCustomizeLoader && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onCustomizeLoader(app);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-cyan-500/15 text-cyan-300 flex items-center gap-2 transition-colors font-medium"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Customize Loader</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     setShowMenu(false);
