@@ -11,6 +11,7 @@ interface AppCardActionsProps {
   onUpdate: (app: CatalogApp) => void;
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
+  onDeleteApp?: (appId: string) => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
 }
 
@@ -21,6 +22,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
   onUpdate,
   onFixPath,
   onUninstall,
+  onDeleteApp,
   onCustomizeLoader,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
@@ -192,6 +194,25 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                   >
                     <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                     <span>Uninstall App</span>
+                  </button>
+                )}
+
+                {onDeleteApp && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      if (
+                        window.confirm(
+                          `Are you sure you want to completely delete "${app.name}" and remove all its releases from Anything?`
+                        )
+                      ) {
+                        onDeleteApp(app.id);
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-rose-500/20 text-rose-400 flex items-center gap-2 transition-colors border-t border-white/10 mt-1 pt-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span className="font-semibold text-rose-300">Delete from Anything</span>
                   </button>
                 )}
               </div>

@@ -21,6 +21,7 @@ interface AppsPageProps {
   onRollbackApp?: (app: CatalogApp, release: any) => void;
   onFixPathApp: (app: CatalogApp) => void;
   onUninstallApp: (appId: string) => void;
+  onDeleteApp?: (appId: string) => void;
   onAddCustomApp: (newApp: any) => void;
   onImportApps: (imported: any[]) => void;
   onNavigateToPublisher?: () => void;
@@ -39,6 +40,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   onRollbackApp,
   onFixPathApp,
   onUninstallApp,
+  onDeleteApp,
   onAddCustomApp,
   onImportApps,
   onNavigateToPublisher,
@@ -133,6 +135,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
             onUpdate={onUpdateApp}
             onFixPath={onFixPathApp}
             onUninstall={onUninstallApp}
+            onDeleteApp={onDeleteApp}
             onCustomizeLoader={onCustomizeLoader}
           />
         </>
@@ -158,6 +161,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
         onRollback={onRollbackApp}
         onFixPath={onFixPathApp}
         onUninstall={onUninstallApp}
+        onDeleteApp={onDeleteApp}
       />
     </div>
   );

@@ -18,6 +18,7 @@ interface AppDetailModalProps {
   onRollback?: (app: CatalogApp, release: any) => void;
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
+  onDeleteApp?: (appId: string) => void;
 }
 
 export const AppDetailModal: React.FC<AppDetailModalProps> = ({
@@ -30,9 +31,10 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
   onRollback,
   onFixPath,
   onUninstall,
+  onDeleteApp,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'uninstall' | 'delete' | null>(null);
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
@@ -443,7 +445,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           }`}
         >
           <div>
-            {confirmDelete ? (
+            {confirmAction === 'uninstall' ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-rose-300 font-medium">Uninstall from PC?</span>
                 <button
@@ -456,22 +458,52 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                   Yes, Uninstall
                 </button>
                 <button
-                  onClick={() => setConfirmDelete(false)}
+                  onClick={() => setConfirmAction(null)}
+                  className="px-2.5 py-1 rounded-full text-xs text-white/60 hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : confirmAction === 'delete' ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-rose-300 font-medium">Delete completely?</span>
+                <button
+                  onClick={() => {
+                    if (onDeleteApp) onDeleteApp(app.id);
+                    onClose();
+                  }}
+                  className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all"
+                >
+                  Yes, Delete All
+                </button>
+                <button
+                  onClick={() => setConfirmAction(null)}
                   className="px-2.5 py-1 rounded-full text-xs text-white/60 hover:text-white"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              app.status === 'installed' && (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="text-xs text-white/40 hover:text-rose-400 flex items-center gap-1.5 transition-colors font-mono"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Uninstall Application</span>
-                </button>
-              )
+              <div className="flex items-center gap-3">
+                {app.status === 'installed' && (
+                  <button
+                    onClick={() => setConfirmAction('uninstall')}
+                    className="text-xs text-white/40 hover:text-rose-400 flex items-center gap-1.5 transition-colors font-mono"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Uninstall</span>
+                  </button>
+                )}
+                {onDeleteApp && (
+                  <button
+                    onClick={() => setConfirmAction('delete')}
+                    className="text-xs text-rose-400/70 hover:text-rose-400 flex items-center gap-1.5 transition-colors font-mono"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Delete from Anything</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 

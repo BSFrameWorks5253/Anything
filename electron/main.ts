@@ -52,6 +52,53 @@ const getReleasesDir = () => {
   return dir1;
 };
 
+const getAllReleaseDirs = (): string[] => {
+  const dirs = [
+    path.join(getProjectRoot(), 'releases'),
+    path.join(getProjectRoot(), 'release'),
+  ];
+  try {
+    const parentDir = path.resolve(getProjectRoot(), '..');
+    dirs.push(path.join(parentDir, 'releases'));
+    dirs.push(path.join(parentDir, 'release'));
+  } catch (e) {}
+  return dirs.filter((d, idx, arr) => fs.existsSync(d) && arr.indexOf(d) === idx);
+};
+
+function matchesApp(folderName: string, targetId: string, targetName: string, folderPath?: string): boolean {
+  const normFolder = folderName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normId = targetId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+  const normName = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  if (normFolder === normId || normFolder === normName) return true;
+
+  if (folderPath && fs.existsSync(folderPath)) {
+    const appJsonPath = path.join(folderPath, 'app.json');
+    if (fs.existsSync(appJsonPath)) {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
+        const manId = (manifest.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        const manName = (manifest.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (manId === normId || manId === normFolder || manName === normName) {
+          return true;
+        }
+      } catch (e) {}
+    }
+    const relJsonPath = path.join(folderPath, 'release.json');
+    if (fs.existsSync(relJsonPath)) {
+      try {
+        const rel = JSON.parse(fs.readFileSync(relJsonPath, 'utf-8'));
+        const relId = (rel.appId || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        const relName = (rel.appName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (relId === normId || relName === normName) {
+          return true;
+        }
+      } catch (e) {}
+    }
+  }
+  return false;
+}
+
 function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: string } | null {
   try {
     if (!fs.existsSync(dirPath)) return null;
@@ -140,10 +187,7 @@ function scanAndCollectReleases(): {
     let updatedCount = 0;
 
     // Collect all release root folders (supports both "releases" and "release")
-    const scanRoots = [
-      path.join(getProjectRoot(), 'releases'),
-      path.join(getProjectRoot(), 'release'),
-    ].filter((dir, idx, arr) => fs.existsSync(dir) && arr.indexOf(dir) === idx);
+    const scanRoots = getAllReleaseDirs();
 
     for (const releasesDir of scanRoots) {
       const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
@@ -768,6 +812,31 @@ function createWindow() {
     },
   });
 
+  // Security: Restrict navigation & popups
+  for (const targetWin of [win, splashWindow]) {
+    targetWin.webContents.setWindowOpenHandler(({ url }) => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:') {
+          shell.openExternal(url);
+        }
+      } catch {}
+      return { action: 'deny' };
+    });
+
+    targetWin.webContents.on('will-navigate', (event, navigationUrl) => {
+      try {
+        const parsed = new URL(navigationUrl);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          if (!navigationUrl.startsWith('http://127.0.0.1') && !navigationUrl.startsWith('http://localhost')) {
+            event.preventDefault();
+            shell.openExternal(navigationUrl);
+          }
+        }
+      } catch {}
+    });
+  }
+
   splashWindow.on('closed', () => {
     splashWindow = null;
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
@@ -994,8 +1063,9 @@ function createWindow() {
 
       // 1. MSIX Native Installation
       if (packageFormat === '.msix' || packageFormat === '.appx') {
+        const safePkgPath = path.resolve(localPackagePath).replace(/'/g, "''");
         await new Promise<void>((resolve, reject) => {
-          const cmd = `powershell -NoProfile -Command "Add-AppxPackage -Path '${localPackagePath}'"`;
+          const cmd = `powershell -NoProfile -NonInteractive -Command "Add-AppxPackage -Path '${safePkgPath}'"`;
           exec(cmd, (error) => {
             if (error) reject(error);
             else resolve();
@@ -1007,8 +1077,10 @@ function createWindow() {
       // 2. ZIP Archive Extraction
       if (packageFormat === '.zip') {
         win.webContents.send('catalog:download-progress', { appId: id, percent: 99, status: 'extracting' });
+        const safeZipPath = path.resolve(localPackagePath).replace(/'/g, "''");
+        const safeDestDir = path.resolve(targetAppDir).replace(/'/g, "''");
         await new Promise<void>((resolve, reject) => {
-          const powershellCmd = `powershell -NoProfile -Command "Expand-Archive -Path '${localPackagePath}' -DestinationPath '${targetAppDir}' -Force"`;
+          const powershellCmd = `powershell -NoProfile -NonInteractive -Command "Expand-Archive -Path '${safeZipPath}' -DestinationPath '${safeDestDir}' -Force"`;
           exec(powershellCmd, (error) => {
             if (error) reject(error);
             else resolve();
@@ -1096,12 +1168,29 @@ function createWindow() {
     }
   });
 
+  // Open external URL safely
+  ipcMain.handle('app:open-external', async (_, targetUrl: string) => {
+    try {
+      if (!targetUrl || typeof targetUrl !== 'string') return false;
+      const parsed = new URL(targetUrl);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:' || parsed.protocol === 'tel:') {
+        await shell.openExternal(targetUrl);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
   // Rename Application (Updates catalog.json and app.json)
   ipcMain.handle('app:rename', async (_, { appId, newName }) => {
     try {
       if (!appId || !newName || !newName.trim()) {
         return { success: false, error: 'Valid appId and new name are required.' };
       }
+      const safeAppId = path.basename(appId.trim());
+      const normSafeId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
       const trimmedName = newName.trim();
       const publishedDir = getPublishedDir();
       const catalogFile = path.join(publishedDir, 'catalog.json');
@@ -1110,31 +1199,34 @@ function createWindow() {
         try { catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8')); } catch (e) {}
       }
 
-      const idx = catalog.findIndex((a: any) => a.id === appId);
+      let oldName = safeAppId;
+      const idx = catalog.findIndex((a: any) => {
+        const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        return a.id === safeAppId || aNorm === normSafeId;
+      });
       if (idx >= 0) {
+        oldName = catalog[idx].name || safeAppId;
         catalog[idx].name = trimmedName;
         fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
       }
 
       // Also update app.json on disk if present
-      const scanRoots = [
-        path.join(getProjectRoot(), 'releases'),
-        path.join(getProjectRoot(), 'release'),
-      ];
+      const scanRoots = getAllReleaseDirs();
       for (const root of scanRoots) {
         if (!fs.existsSync(root)) continue;
         const subdirs = fs.readdirSync(root, { withFileTypes: true });
         for (const d of subdirs) {
           if (!d.isDirectory()) continue;
-          const appJsonPath = path.join(root, d.name, 'app.json');
-          if (fs.existsSync(appJsonPath)) {
-            try {
-              const manifest = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
-              if (manifest.id === appId || d.name.toLowerCase() === appId.replace('app-', '').toLowerCase()) {
+          const fullPath = path.join(root, d.name);
+          if (matchesApp(d.name, safeAppId, oldName, fullPath)) {
+            const appJsonPath = path.join(fullPath, 'app.json');
+            if (fs.existsSync(appJsonPath)) {
+              try {
+                const manifest = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
                 manifest.name = trimmedName;
                 fs.writeFileSync(appJsonPath, JSON.stringify(manifest, null, 2), 'utf-8');
-              }
-            } catch (e) {}
+              } catch (e) {}
+            }
           }
         }
       }
@@ -1157,7 +1249,9 @@ function createWindow() {
       if (!appId || !version) {
         return { success: false, error: 'appId and version are required.' };
       }
-      const cleanVer = version.replace(/^[vV]/, '');
+      const safeAppId = path.basename(appId.trim());
+      const normSafeId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      const cleanVer = version.replace(/^[vV]/, '').trim();
       const publishedDir = getPublishedDir();
       const catalogFile = path.join(publishedDir, 'catalog.json');
       let catalog: any[] = [];
@@ -1165,39 +1259,79 @@ function createWindow() {
         try { catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8')); } catch (e) {}
       }
 
-      const idx = catalog.findIndex((a: any) => a.id === appId);
+      const idx = catalog.findIndex((a: any) => {
+        const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        return a.id === safeAppId || aNorm === normSafeId;
+      });
+      let appName = safeAppId;
+      let remainingHistory: any[] = [];
       if (idx >= 0) {
         const appItem = catalog[idx];
+        appName = appItem.name || safeAppId;
         if (Array.isArray(appItem.history)) {
           appItem.history = appItem.history.filter(
-            (h: any) => (h.version || '').replace(/^[vV]/, '') !== cleanVer
+            (h: any) => (h.version || '').replace(/^[vV]/, '').trim() !== cleanVer
           );
+          remainingHistory = appItem.history;
         }
-        if ((appItem.version || '').replace(/^[vV]/, '') === cleanVer) {
+        if ((appItem.version || '').replace(/^[vV]/, '').trim() === cleanVer) {
           if (appItem.history && appItem.history.length > 0) {
             appItem.version = appItem.history[0].version;
             appItem.executableName = appItem.history[0].executableName;
+            appItem.localPackagePath = appItem.history[0].downloadUrl || appItem.localPackagePath;
+          } else {
+            appItem.status = 'not-installed';
           }
         }
         fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
       }
 
-      // Remove matching version subfolder on disk (V-1.0.0, v1.0.0, etc.)
-      const scanRoots = [
-        path.join(getProjectRoot(), 'releases'),
-        path.join(getProjectRoot(), 'release'),
-      ];
+      // 1. Remove matching version subfolder on disk (V-1.0.0, v1.0.0, etc.)
+      const scanRoots = getAllReleaseDirs();
       for (const root of scanRoots) {
         if (!fs.existsSync(root)) continue;
         const subdirs = fs.readdirSync(root, { withFileTypes: true });
         for (const d of subdirs) {
           if (!d.isDirectory()) continue;
-          const appFolder = path.join(root, d.name);
-          const vDirVariants = [`V-${cleanVer}`, `v${cleanVer}`, cleanVer, `V${cleanVer}`];
-          for (const vVar of vDirVariants) {
-            const targetVDir = path.join(appFolder, vVar);
-            if (fs.existsSync(targetVDir)) {
-              fs.rmSync(targetVDir, { recursive: true, force: true });
+          const fullPath = path.join(root, d.name);
+          if (matchesApp(d.name, safeAppId, appName, fullPath)) {
+            const vDirVariants = [
+              `V-${cleanVer}`, `v-${cleanVer}`,
+              `V${cleanVer}`, `v${cleanVer}`,
+              cleanVer, `version-${cleanVer}`
+            ];
+            for (const vVar of vDirVariants) {
+              const targetVDir = path.join(fullPath, vVar);
+              if (fs.existsSync(targetVDir)) {
+                try { fs.rmSync(targetVDir, { recursive: true, force: true }); } catch (e) {}
+              }
+            }
+            // Also clean up any flat file matching cleanVer
+            const subFiles = fs.readdirSync(fullPath);
+            for (const sf of subFiles) {
+              const lower = sf.toLowerCase();
+              if (
+                lower.includes(cleanVer.toLowerCase()) &&
+                (lower.endsWith('.exe') || lower.endsWith('.msix') || lower.endsWith('.zip'))
+              ) {
+                try { fs.rmSync(path.join(fullPath, sf), { force: true }); } catch (e) {}
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Remove matching files from published-apps
+      const pubDirs = [
+        path.join(publishedDir, safeAppId),
+        path.join(publishedDir, safeAppId.replace(/^app-/, '')),
+      ];
+      for (const pDir of pubDirs) {
+        if (fs.existsSync(pDir)) {
+          const pFiles = fs.readdirSync(pDir);
+          for (const pf of pFiles) {
+            if (pf.toLowerCase().includes(cleanVer.toLowerCase())) {
+              try { fs.rmSync(path.join(pDir, pf), { force: true }); } catch (e) {}
             }
           }
         }
@@ -1208,7 +1342,7 @@ function createWindow() {
         w.webContents.send('catalog:updated', catalog);
       }
       sendWindowsNotification('Version Removed', `Version v${cleanVer} was deleted from disk and history.`);
-      return { success: true, catalog };
+      return { success: true, catalog, remainingHistory };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
@@ -1218,6 +1352,8 @@ function createWindow() {
   ipcMain.handle('app:delete', async (_, appId: string) => {
     try {
       if (!appId) return { success: false, error: 'App ID is required.' };
+      const safeAppId = path.basename(appId.trim());
+      const normSafeId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
       const publishedDir = getPublishedDir();
       const catalogFile = path.join(publishedDir, 'catalog.json');
       let catalog: any[] = [];
@@ -1225,44 +1361,69 @@ function createWindow() {
         try { catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8')); } catch (e) {}
       }
 
-      const idx = catalog.findIndex((a: any) => a.id === appId);
-      let appName = appId;
+      const idx = catalog.findIndex((a: any) => {
+        const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        return a.id === safeAppId || aNorm === normSafeId;
+      });
+      let appName = safeAppId;
       if (idx >= 0) {
-        appName = catalog[idx].name;
+        appName = catalog[idx].name || safeAppId;
         catalog.splice(idx, 1);
         fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
       }
 
-      // Remove from installed-apps
-      const installedDir = path.join(getInstalledAppsDir(), appId);
-      if (fs.existsSync(installedDir)) {
-        fs.rmSync(installedDir, { recursive: true, force: true });
-      }
-
-      // Remove from published-apps
-      const pubAppDir = path.join(publishedDir, appId);
-      if (fs.existsSync(pubAppDir)) {
-        fs.rmSync(pubAppDir, { recursive: true, force: true });
-      }
-
-      // Remove from releases / release folders
-      const scanRoots = [
-        path.join(getProjectRoot(), 'releases'),
-        path.join(getProjectRoot(), 'release'),
+      // 1. Remove from installed-apps
+      const installedRoot = getInstalledAppsDir();
+      const possibleInstDirs = [
+        path.join(installedRoot, safeAppId),
+        path.join(installedRoot, safeAppId.replace(/^app-/, '')),
+        path.join(installedRoot, `app-${safeAppId.replace(/^app-/, '')}`),
       ];
+      for (const instDir of possibleInstDirs) {
+        if (fs.existsSync(instDir)) {
+          try { fs.rmSync(instDir, { recursive: true, force: true }); } catch (e) {}
+        }
+      }
+
+      // 2. Remove from published-apps
+      const possiblePubDirs = [
+        path.join(publishedDir, safeAppId),
+        path.join(publishedDir, safeAppId.replace(/^app-/, '')),
+        path.join(publishedDir, `app-${safeAppId.replace(/^app-/, '')}`),
+      ];
+      for (const pubDir of possiblePubDirs) {
+        if (fs.existsSync(pubDir)) {
+          try { fs.rmSync(pubDir, { recursive: true, force: true }); } catch (e) {}
+        }
+      }
+
+      // 3. Remove from releases / release folders
+      const scanRoots = getAllReleaseDirs();
       for (const root of scanRoots) {
         if (!fs.existsSync(root)) continue;
-        const subdirs = fs.readdirSync(root, { withFileTypes: true });
-        for (const d of subdirs) {
-          if (!d.isDirectory()) continue;
-          if (
-            d.name === appName ||
-            d.name.toLowerCase() === appName.toLowerCase() ||
-            d.name.toLowerCase() === appId.replace('app-', '').toLowerCase()
-          ) {
-            fs.rmSync(path.join(root, d.name), { recursive: true, force: true });
+        const entries = fs.readdirSync(root, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(root, entry.name);
+          if (entry.isDirectory()) {
+            if (matchesApp(entry.name, safeAppId, appName, fullPath)) {
+              try { fs.rmSync(fullPath, { recursive: true, force: true }); } catch (e) {}
+            }
+          } else if (entry.isFile()) {
+            const normEntry = entry.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const normId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+            const normName = appName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (normEntry.startsWith(normId) || normEntry.startsWith(normName)) {
+              try { fs.rmSync(fullPath, { force: true }); } catch (e) {}
+            }
           }
         }
+      }
+
+      // 4. Remove loaders if any
+      const globalLoadersDir = path.join(app.getPath('userData'), 'loaders');
+      const loaderPath = path.join(globalLoadersDir, `${safeAppId}.json`);
+      if (fs.existsSync(loaderPath)) {
+        try { fs.rmSync(loaderPath, { force: true }); } catch (e) {}
       }
 
       const allWindows = BrowserWindow.getAllWindows();
@@ -1270,7 +1431,7 @@ function createWindow() {
         w.webContents.send('catalog:updated', catalog);
       }
       sendWindowsNotification('App Deleted', `${appName} was completely removed from Anything.`);
-      return { success: true, catalog };
+      return { success: true, catalog, deletedId: safeAppId };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
@@ -1448,8 +1609,9 @@ function createWindow() {
             percent: 99,
             status: 'extracting',
           });
+          const safeMsixPath = path.resolve(tempDownloadPath).replace(/'/g, "''");
           await new Promise<void>((resolve, reject) => {
-            const cmd = `powershell -NoProfile -Command "Add-AppxPackage -Path '${tempDownloadPath}'"`;
+            const cmd = `powershell -NoProfile -NonInteractive -Command "Add-AppxPackage -Path '${safeMsixPath}'"`;
             exec(cmd, (error) => {
               if (error) reject(error);
               else resolve();
@@ -1462,8 +1624,10 @@ function createWindow() {
             percent: 99,
             status: 'extracting',
           });
+          const safeZipPath = path.resolve(tempDownloadPath).replace(/'/g, "''");
+          const safeDestDir = path.resolve(targetAppDir).replace(/'/g, "''");
           await new Promise<void>((resolve, reject) => {
-            const powershellCmd = `powershell -NoProfile -Command "Expand-Archive -Path '${tempDownloadPath}' -DestinationPath '${targetAppDir}' -Force"`;
+            const powershellCmd = `powershell -NoProfile -NonInteractive -Command "Expand-Archive -Path '${safeZipPath}' -DestinationPath '${safeDestDir}' -Force"`;
             exec(powershellCmd, (error) => {
               if (error) reject(error);
               else resolve();
@@ -1648,18 +1812,13 @@ function createWindow() {
     }
   }, 60 * 60 * 1000);
 
-  // Live Auto-Watcher on releases folder: drops are immediately detected and synced
+  // Live Auto-Watcher on releases folders: drops and deletions are immediately detected and synced
   try {
-    const relDir = getReleasesDir();
+    const relDirs = getAllReleaseDirs();
     let releasesDebounce: NodeJS.Timeout | null = null;
-    fs.watch(relDir, { recursive: true }, (eventType, filename) => {
-      if (
-        filename &&
-        (filename.endsWith('.exe') ||
-          filename.endsWith('.json') ||
-          filename.endsWith('.msix') ||
-          filename.endsWith('.zip'))
-      ) {
+    for (const relDir of relDirs) {
+      if (!fs.existsSync(relDir)) continue;
+      fs.watch(relDir, { recursive: true }, () => {
         if (releasesDebounce) clearTimeout(releasesDebounce);
         releasesDebounce = setTimeout(() => {
           const res = scanAndCollectReleases();
@@ -1669,8 +1828,8 @@ function createWindow() {
             }
           }
         }, 1500);
-      }
-    });
+      });
+    }
   } catch (err) {
     console.error('Error starting releases folder watcher:', err);
   }

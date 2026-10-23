@@ -39,6 +39,9 @@ interface AppDetailPageProps {
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
+  onDeleteApp?: (appId: string) => void;
+  onRenameApp?: (appId: string, newName: string) => void;
+  onVersionDeleted?: (appId: string, version: string) => void;
 }
 
 export const AppDetailPage: React.FC<AppDetailPageProps> = ({
@@ -51,6 +54,9 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   onFixPath,
   onUninstall,
   onCustomizeLoader,
+  onDeleteApp,
+  onRenameApp,
+  onVersionDeleted,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
   const [currentAppName, setCurrentAppName] = useState(app.name);
@@ -64,15 +70,19 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
   const handleSaveRename = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!renameInput.trim()) return;
+    const trimmed = renameInput.trim();
+    if (!trimmed) return;
     setIsRenaming(true);
     try {
       const electronAPI = (window as any).electronAPI;
       if (electronAPI?.renameApp) {
-        await electronAPI.renameApp({ appId: app.id, newName: renameInput.trim() });
+        await electronAPI.renameApp({ appId: app.id, newName: trimmed });
       }
-      setCurrentAppName(renameInput.trim());
-      app.name = renameInput.trim();
+      setCurrentAppName(trimmed);
+      app.name = trimmed;
+      if (onRenameApp) {
+        onRenameApp(app.id, trimmed);
+      }
       setRenameModalOpen(false);
     } catch (err) {
       console.error('Failed to rename app:', err);
@@ -87,6 +97,9 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
       const electronAPI = (window as any).electronAPI;
       if (electronAPI?.deleteApp) {
         await electronAPI.deleteApp(app.id);
+      }
+      if (onDeleteApp) {
+        onDeleteApp(app.id);
       }
       setDeleteModalOpen(false);
       onBack();
@@ -508,6 +521,11 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 onRollback(targetApp, release);
               } else {
                 onUpdate(targetApp);
+              }
+            }}
+            onVersionDeleted={(ver) => {
+              if (onVersionDeleted) {
+                onVersionDeleted(app.id, ver);
               }
             }}
           />

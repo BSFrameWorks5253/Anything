@@ -41,9 +41,14 @@ export interface GitHubReleaseItem {
 interface VersionHistoryTabProps {
   app: CatalogApp;
   onRollback: (app: CatalogApp, release: any) => void;
+  onVersionDeleted?: (version: string) => void;
 }
 
-export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRollback }) => {
+export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({
+  app,
+  onRollback,
+  onVersionDeleted,
+}) => {
   const [releases, setReleases] = useState<GitHubReleaseItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -209,6 +214,9 @@ export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRol
         await electronAPI.deleteAppVersion({ appId: app.id, version: tag });
       }
       setReleases((prev) => prev.filter((r) => r.tag !== tag));
+      if (onVersionDeleted) {
+        onVersionDeleted(tag);
+      }
       setDeleteConfirmTag(null);
     } catch (e: any) {
       setError(e.message || 'Failed to delete version.');

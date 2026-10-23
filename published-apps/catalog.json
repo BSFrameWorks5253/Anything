@@ -3,52 +3,89 @@
     "id": "tap-studio",
     "name": "Tap Studio",
     "shortName": "TS",
-    "category": "Productivity",
-    "version": "1.0.0",
-    "description": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
-    "executableName": "Tapstudio_1.0.0.exe",
+    "category": "Media & Video",
+    "version": "1.2.0",
+    "description": "Tap Studio v1.2.0 introduces a complete Apple WWDC26 Liquid Glass UI redesign, native Windows 10/11 Action Center interactive toast banners, GitHub release update checking, and zero-stick fluid navigation.",
+    "executableName": "Tapstudio_1.2.0.exe",
     "packageFileName": "Tapstudio_1.0.0.exe",
     "packageSize": "0 KB",
     "packageFormat": ".exe",
     "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe",
-    "gradient": "from-cyan-500 via-teal-500 to-emerald-400",
-    "textColor": "#2dd4bf",
-    "glowColor": "rgba(45, 212, 191, 0.45)",
-    "iconType": "emoji",
-    "iconValue": "🖲️",
+    "gradient": "from-indigo-600 via-purple-600 to-cyan-500",
+    "textColor": "#6366f1",
+    "glowColor": "rgba(99, 102, 241, 0.45)",
+    "iconType": "svg",
+    "iconValue": "assets/logo.svg",
     "status": "not-installed",
     "githubRepo": "BSFrameWorks5253/TapDesk",
-    "publishedAt": 1792731424308,
+    "publishedAt": 1792736512684,
     "releaseInfo": {
-      "version": "1.0.0",
+      "version": "1.2.0",
       "executableName": "Tapstudio_1.0.0.exe",
       "releaseDate": "2026-10-23",
-      "releaseType": "major",
-      "tagline": "Official Tap Studio Release for Anything",
-      "summary": "High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls.",
+      "releaseType": "minor",
+      "tagline": "Apple WWDC26 Liquid Glass UI & Native Action Center Notifications",
+      "summary": "Tap Studio v1.2.0 introduces a complete Apple WWDC26 Liquid Glass UI redesign, native Windows 10/11 Action Center interactive toast banners, GitHub release update checking, and zero-stick fluid navigation.",
       "newFeatures": [
-        "Full integration with Anything ecosystem & auto-release fetcher",
-        "Automated cloud releases linked with BSFrameWorks5253/TapDesk",
-        "Windows Start Menu folder and desktop shortcut setup installer",
-        "Low latency (<1ms) macro trigger engine"
+        "Native Windows 10/11 Action Center interactive banners for batch renders and updates",
+        "Apple WWDC26 Liquid Glass UI with dynamic chromatic ambient light orbs",
+        "Automated release packaging script generating version-wise Tapstudio_<version>.exe binaries",
+        "Centralized auto-sync directly into the Anything ecosystem"
       ],
       "improvements": [
-        "Ultra-lightweight background memory footprint (~28MB)",
-        "Sub-second startup speed on NVMe drives"
+        "Restored and enhanced official Tap Studio iris-aperture squircle emblem with useId isolation",
+        "Repositioned Studio Settings to the bottom navigation bar for a cleaner workflow layout",
+        "Eliminated utilities drawer clutter and resolved Vite native configLoader warnings",
+        "Optimized background video rendering pipeline and memory disposal"
       ],
       "fixes": [
-        "Initial stable release with Windows 11 Fluent dark mode styling"
+        "Fixed navigation bar grey hover state sticking to tabs after clicking",
+        "Fixed splash screen logo mismatch, aligning it 100% with the official app insignia",
+        "Resolved premature window maximize display flicker during cold startup"
       ],
       "emailNotification": {
-        "subject": "🚀 Tap Studio v1.0.0 is Live: Macro Automation for Anything!",
-        "preview": "Discover all the capabilities of Tap Studio with automated GitHub releases.",
-        "ctaText": "Launch Tap Studio",
-        "heroGradient": "from-cyan-500 via-teal-500 to-emerald-400"
+        "subject": "🚀 Tap Studio v1.2.0: Apple WWDC26 Liquid Glass UI & Native Windows Notifications!",
+        "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
+        "ctaText": "Open in Anything",
+        "heroGradient": "from-indigo-600 via-purple-600 to-cyan-500"
       },
       "sizeFormatted": "0 KB",
       "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe"
     },
     "history": [
+      {
+        "version": "1.2.0",
+        "executableName": "Tapstudio_1.0.0.exe",
+        "releaseDate": "2026-10-23",
+        "releaseType": "minor",
+        "tagline": "Apple WWDC26 Liquid Glass UI & Native Action Center Notifications",
+        "summary": "Tap Studio v1.2.0 introduces a complete Apple WWDC26 Liquid Glass UI redesign, native Windows 10/11 Action Center interactive toast banners, GitHub release update checking, and zero-stick fluid navigation.",
+        "newFeatures": [
+          "Native Windows 10/11 Action Center interactive banners for batch renders and updates",
+          "Apple WWDC26 Liquid Glass UI with dynamic chromatic ambient light orbs",
+          "Automated release packaging script generating version-wise Tapstudio_<version>.exe binaries",
+          "Centralized auto-sync directly into the Anything ecosystem"
+        ],
+        "improvements": [
+          "Restored and enhanced official Tap Studio iris-aperture squircle emblem with useId isolation",
+          "Repositioned Studio Settings to the bottom navigation bar for a cleaner workflow layout",
+          "Eliminated utilities drawer clutter and resolved Vite native configLoader warnings",
+          "Optimized background video rendering pipeline and memory disposal"
+        ],
+        "fixes": [
+          "Fixed navigation bar grey hover state sticking to tabs after clicking",
+          "Fixed splash screen logo mismatch, aligning it 100% with the official app insignia",
+          "Resolved premature window maximize display flicker during cold startup"
+        ],
+        "emailNotification": {
+          "subject": "🚀 Tap Studio v1.2.0: Apple WWDC26 Liquid Glass UI & Native Windows Notifications!",
+          "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-indigo-600 via-purple-600 to-cyan-500"
+        },
+        "sizeFormatted": "0 KB",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\tap-studio\\Tapstudio_1.0.0.exe"
+      },
       {
         "version": "1.0.0",
         "executableName": "Tapstudio_1.0.0.exe",
@@ -80,15 +117,19 @@
       }
     ],
     "changelog": [
-      "Release v1.0.0 collected from releases/tap-studio",
+      "Release v1.2.0 collected from releases/tap-studio",
       "Package size: 0 KB",
-      "Feature: Full integration with Anything ecosystem & auto-release fetcher",
-      "Feature: Automated cloud releases linked with BSFrameWorks5253/TapDesk",
-      "Feature: Windows Start Menu folder and desktop shortcut setup installer",
-      "Feature: Low latency (<1ms) macro trigger engine",
-      "Improvement: Ultra-lightweight background memory footprint (~28MB)",
-      "Improvement: Sub-second startup speed on NVMe drives",
-      "Fix: Initial stable release with Windows 11 Fluent dark mode styling"
+      "Feature: Native Windows 10/11 Action Center interactive banners for batch renders and updates",
+      "Feature: Apple WWDC26 Liquid Glass UI with dynamic chromatic ambient light orbs",
+      "Feature: Automated release packaging script generating version-wise Tapstudio_<version>.exe binaries",
+      "Feature: Centralized auto-sync directly into the Anything ecosystem",
+      "Improvement: Restored and enhanced official Tap Studio iris-aperture squircle emblem with useId isolation",
+      "Improvement: Repositioned Studio Settings to the bottom navigation bar for a cleaner workflow layout",
+      "Improvement: Eliminated utilities drawer clutter and resolved Vite native configLoader warnings",
+      "Improvement: Optimized background video rendering pipeline and memory disposal",
+      "Fix: Fixed navigation bar grey hover state sticking to tabs after clicking",
+      "Fix: Fixed splash screen logo mismatch, aligning it 100% with the official app insignia",
+      "Fix: Resolved premature window maximize display flicker during cold startup"
     ],
     "addedByCreator": true
   },

@@ -1,0 +1,21 @@
+{
+  "appId": "tap-studio",
+  "productName": "Tap Studio",
+  "versionText": "v1.0.0 (x64)",
+  "tagline": "Macro Automation & Hardware Deck Companion",
+  "artworkUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85",
+  "artistName": "Anything Creation",
+  "artworkTitle": "Refractive Glass in Motion",
+  "durationMs": 2800,
+  "logoText": "Ts",
+  "badgeGradient": "from-cyan-600 via-sky-500 to-indigo-600",
+  "steps": [
+    "Initializing Direct3D 12 low-latency driver...",
+    "Scanning USB Stream Deck & Macro Devices...",
+    "Loading Hotkeys and Dynamic Keymaps...",
+    "Syncing with Anything Ecosystem...",
+    "Starting Tap Studio..."
+  ],
+  "author": "Burhanuddin Sounasath",
+  "contactPhone": "8369811201"
+}

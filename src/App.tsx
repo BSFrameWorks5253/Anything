@@ -85,6 +85,34 @@ export function App() {
     loadFromDisk();
   }, []);
 
+  // Listen for real-time catalog changes from Electron (e.g. app deleted, version deleted, app renamed)
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onCatalogUpdated) {
+      const unsub = electronAPI.onCatalogUpdated((newCatalog: any[]) => {
+        if (Array.isArray(newCatalog)) {
+          setApps((prevApps) => {
+            const merged = newCatalog.map((remote: any) => {
+              const local = prevApps.find((a) => a.id === remote.id);
+              if (local) {
+                return {
+                  ...remote,
+                  status: local.status,
+                  installedPath: local.installedPath,
+                  localVersion: local.localVersion,
+                };
+              }
+              return remote;
+            });
+            localStorage.setItem('creative_hub_catalog_apps_v4', JSON.stringify(merged));
+            return merged;
+          });
+        }
+      });
+      return unsub;
+    }
+  }, []);
+
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
 
   // Real-time catalog download progress listener
@@ -565,7 +593,63 @@ export function App() {
   };
 
   const handleRemoveCatalogApp = (id: string) => {
-    persistApps(apps.filter((a) => a.id !== id));
+    const normTarget = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const updated = apps.filter((a) => {
+      const aNorm = a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      return a.id !== id && aNorm !== normTarget;
+    });
+    persistApps(updated);
+    if (viewingApp && (viewingApp.id === id || viewingApp.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === normTarget)) {
+      setViewingApp(null);
+    }
+  };
+
+  const handleDeleteApp = async (id: string) => {
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.deleteApp) {
+        await electronAPI.deleteApp(id);
+      }
+    } catch (err) {
+      console.error('Failed to delete app:', err);
+    }
+    handleRemoveCatalogApp(id);
+  };
+
+  const handleRenameApp = (id: string, newName: string) => {
+    const normTarget = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const updated = apps.map((a) => {
+      const aNorm = a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      return (a.id === id || aNorm === normTarget) ? { ...a, name: newName } : a;
+    });
+    persistApps(updated);
+    if (viewingApp && (viewingApp.id === id || viewingApp.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === normTarget)) {
+      setViewingApp({ ...viewingApp, name: newName });
+    }
+  };
+
+  const handleVersionDeleted = (id: string, deletedVer: string) => {
+    const cleanVer = deletedVer.replace(/^[vV]/, '').trim();
+    const normTarget = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const updated = apps.map((a) => {
+      const aNorm = a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      if (a.id === id || aNorm === normTarget) {
+        const nextHistory = (a.history || []).filter(
+          (h: any) => (h.version || '').replace(/^[vV]/, '').trim() !== cleanVer
+        );
+        const nextVersion =
+          (a.version || '').replace(/^[vV]/, '').trim() === cleanVer
+            ? nextHistory[0]?.version || a.version
+            : a.version;
+        return { ...a, history: nextHistory, version: nextVersion };
+      }
+      return a;
+    });
+    persistApps(updated);
+    if (viewingApp && (viewingApp.id === id || viewingApp.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === normTarget)) {
+      const current = updated.find((a) => a.id === id || a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === normTarget);
+      if (current) setViewingApp(current);
+    }
   };
 
   const updateCount = apps.filter((a) => a.status === 'update-available').length;
@@ -582,6 +666,9 @@ export function App() {
           onRollback={handleRollbackApp}
           onFixPath={handleFixPathApp}
           onUninstall={handleUninstallApp}
+          onDeleteApp={handleDeleteApp}
+          onRenameApp={handleRenameApp}
+          onVersionDeleted={handleVersionDeleted}
           onCustomizeLoader={(targetApp) => {
             setCustomizeAppId(targetApp.id);
             setViewingApp(null);
@@ -617,6 +704,7 @@ export function App() {
             onRollbackApp={handleRollbackApp}
             onFixPathApp={handleFixPathApp}
             onUninstallApp={handleUninstallApp}
+            onDeleteApp={handleDeleteApp}
             onAddCustomApp={(custom) => handleAddCatalogApp(custom as any)}
             onImportApps={(imported) => persistApps(imported)}
             onNavigateToPublisher={() => {
@@ -638,7 +726,7 @@ export function App() {
           <PublisherPage
             catalogApps={apps}
             onAddCatalogApp={handleAddCatalogApp}
-            onRemoveCatalogApp={handleRemoveCatalogApp}
+            onRemoveCatalogApp={handleDeleteApp}
             onNavigateToApps={() => setCurrentPage('apps')}
           />
         );

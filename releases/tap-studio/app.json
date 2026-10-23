@@ -2,34 +2,18 @@
   "id": "tap-studio",
   "name": "Tap Studio",
   "shortName": "TS",
-  "version": "1.0.0",
-  "size": "42.8 MB",
-  "category": "Productivity",
-  "description": "Hardware companion, low-latency stream deck macro controller, and desktop automation suite for the Anything ecosystem.",
-  "executableName": "Tapstudio_1.0.0.exe",
-  "iconType": "emoji",
-  "iconValue": "🖲️",
-  "gradient": "from-cyan-500 via-teal-500 to-emerald-400",
-  "textColor": "#2dd4bf",
-  "glowColor": "rgba(45, 212, 191, 0.45)",
+  "version": "1.2.0",
+  "category": "Media & Video",
+  "description": "Enterprise video title card insertion, multi-track timeline rendering, audio alternation, and media archiving suite.",
+  "executableName": "Tapstudio_1.2.0.exe",
+  "setupExecutableName": "Tapstudio_1.2.0_Setup.exe",
+  "iconType": "svg",
+  "iconValue": "assets/logo.svg",
+  "gradient": "from-indigo-600 via-purple-600 to-cyan-500",
+  "textColor": "#6366f1",
+  "glowColor": "rgba(99, 102, 241, 0.45)",
   "githubRepo": "BSFrameWorks5253/TapDesk",
-  "systemRequirements": {
-    "os": "Windows 10 / Windows 11 (64-bit)",
-    "ram": "8 GB RAM (16 GB Recommended)",
-    "gpu": "DirectX 12 / Direct3D 11 Compatible GPU",
-    "storage": "45 MB Available SSD · USB HID / Macro Support"
-  },
-  "changelog": [
-    "Ultra low-latency global macro and hotkey triggers",
-    "USB Stream Deck & hardware peripheral dynamic keymaps",
-    "Automatic Anything Ecosystem background release updater",
-    "Customizable startup loader and splash screen receiver",
-    "Windows 11 Start Menu shortcut & NSIS packaging"
-  ],
-  "endpoints": {
-    "repository": "https://github.com/BSFrameWorks5253/TapDesk",
-    "releasesDashboard": "https://github.com/BSFrameWorks5253/TapDesk/releases",
-    "latestReleaseApi": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
-    "binaryDownloadPattern": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v{version}/Tapstudio_{version}.exe"
-  }
+  "releasesUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases",
+  "releasesApiUrl": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v1.2.0/Tapstudio_1.2.0.exe"
 }
