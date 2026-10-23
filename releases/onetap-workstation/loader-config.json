@@ -1,0 +1,13 @@
+{
+  "appId": "onetap-workstation",
+  "appName": "One Tap",
+  "monogram": "OT",
+  "tagline": "One Tap Desktop Workstation",
+  "gradient": "from-amber-500 via-orange-600 to-rose-700",
+  "presetId": "dark-obsidian",
+  "bootPhrases": [
+    "Connecting One Tap to Anything...",
+    "Synchronizing hardware macro event loop...",
+    "Ready."
+  ]
+}

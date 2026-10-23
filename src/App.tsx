@@ -12,9 +12,9 @@ import { CreatorProfilePage } from './features/creator/CreatorProfilePage';
 import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
 import {
-  TAP_STUDIO_LOGO_BASE64,
   MEDIAFLOW_STUDIO_LOGO_BASE64,
 } from './features/apps/components/CrazyAppStudio/AppIconRenderer';
+import { AppDemoModal } from './features/apps/components/AppDemoModal';
 import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
 
@@ -28,6 +28,7 @@ export function App() {
 
   const [currentPage, setCurrentPage] = useState<NavigationPage>('apps');
   const [viewingApp, setViewingApp] = useState<CatalogApp | null>(null);
+  const [demoModalApp, setDemoModalApp] = useState<CatalogApp | null>(null);
   const [customizeAppId, setCustomizeAppId] = useState<string>('anything');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [splashSettings, setSplashSettings] = useState<SplashSettings>(() => loadSplashSettings());
@@ -51,23 +52,24 @@ export function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.map((a: CatalogApp) => {
-            if (
-              a.id === 'tap-studio' ||
-              a.id === 'app-tap-studio' ||
-              (a.name && a.name.toLowerCase().includes('tap studio'))
-            ) {
-              return { ...a, iconType: 'image' as const, iconValue: TAP_STUDIO_LOGO_BASE64 };
-            }
-            if (
-              a.id === 'mediaflow-studio' ||
-              a.id === 'app-mediaflow-studio' ||
-              (a.name && a.name.toLowerCase().includes('mediaflow'))
-            ) {
-              return { ...a, iconType: 'image' as const, iconValue: MEDIAFLOW_STUDIO_LOGO_BASE64 };
-            }
-            return a;
-          });
+          return parsed
+            .filter((a: any) => {
+              const id = (a?.id || '').toLowerCase();
+              const name = (a?.name || '').toLowerCase();
+              return !(id === 'tap-studio' || id === 'app-tap-studio' || name.includes('tap studio'));
+            })
+            .map((a: CatalogApp) => {
+              if (
+                a.id === 'mediaflow-studio' ||
+                a.id === 'app-mediaflow-studio' ||
+                (a.name && a.name.toLowerCase().includes('mediaflow'))
+              ) {
+                if (!a.iconValue || a.iconType !== 'image') {
+                  return { ...a, iconType: 'image' as const, iconValue: MEDIAFLOW_STUDIO_LOGO_BASE64 };
+                }
+              }
+              return a;
+            });
         }
       } catch (e) {
         console.error(e);
@@ -87,10 +89,16 @@ export function App() {
       const electronAPI = (window as any).electronAPI;
       if (electronAPI?.loadPublishedCatalog) {
         const res = await electronAPI.loadPublishedCatalog();
-        if (res.success && res.catalog && res.catalog.length > 0) {
+        if (res.success && Array.isArray(res.catalog)) {
+          const validCatalog = res.catalog.filter((remote: any) => {
+            const id = (remote?.id || '').toLowerCase();
+            const name = (remote?.name || '').toLowerCase();
+            return !(id === 'tap-studio' || id === 'app-tap-studio' || name.includes('tap studio'));
+          });
+
           // Merge with local install state
           const merged = await Promise.all(
-            res.catalog.map(async (remote: any) => {
+            validCatalog.map(async (remote: any) => {
               const normRemoteId = (remote.id || '').toLowerCase().replace(/^app-/, '');
               const local = apps.find(
                 (a) =>
@@ -125,20 +133,24 @@ export function App() {
               }
 
               if (
-                item.id === 'tap-studio' ||
-                item.id === 'app-tap-studio' ||
-                (item.name && item.name.toLowerCase().includes('tap studio'))
-              ) {
-                item.iconType = 'image';
-                item.iconValue = TAP_STUDIO_LOGO_BASE64;
-              }
-              if (
                 item.id === 'mediaflow-studio' ||
                 item.id === 'app-mediaflow-studio' ||
                 (item.name && item.name.toLowerCase().includes('mediaflow'))
               ) {
-                item.iconType = 'image';
-                item.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+                if (!item.iconValue || item.iconType !== 'image') {
+                  item.iconType = 'image';
+                  item.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+                }
+              }
+
+              if (
+                item.id === 'onetap-workstation' ||
+                item.id === 'one-tap' ||
+                item.id === 'app-one-tap' ||
+                (item.name && (item.name.toLowerCase().includes('one tap') || item.name.toLowerCase().includes('uni desk')))
+              ) {
+                item.name = 'One Tap';
+                item.shortName = 'OT';
               }
 
               return item;
@@ -158,7 +170,12 @@ export function App() {
       const unsub = electronAPI.onCatalogUpdated((newCatalog: any[]) => {
         if (Array.isArray(newCatalog)) {
           setApps((prevApps) => {
-            const merged = newCatalog.map((remote: any) => {
+            const validCatalog = newCatalog.filter((remote: any) => {
+              const id = (remote?.id || '').toLowerCase();
+              const name = (remote?.name || '').toLowerCase();
+              return !(id === 'tap-studio' || id === 'app-tap-studio' || name.includes('tap studio'));
+            });
+            const merged = validCatalog.map((remote: any) => {
               const local = prevApps.find((a) => a.id === remote.id);
               const target = local
                 ? {
@@ -169,26 +186,35 @@ export function App() {
                   }
                 : remote;
               if (
-                target.id === 'tap-studio' ||
-                target.id === 'app-tap-studio' ||
-                (target.name && target.name.toLowerCase().includes('tap studio'))
-              ) {
-                target.iconType = 'image';
-                target.iconValue = TAP_STUDIO_LOGO_BASE64;
-              }
-              if (
                 target.id === 'mediaflow-studio' ||
                 target.id === 'app-mediaflow-studio' ||
                 (target.name && target.name.toLowerCase().includes('mediaflow'))
               ) {
-                target.iconType = 'image';
-                target.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+                if (!target.iconValue || target.iconType !== 'image') {
+                  target.iconType = 'image';
+                  target.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+                }
               }
               return target;
             });
             localStorage.setItem('creative_hub_catalog_apps_v4', JSON.stringify(merged));
             return merged;
           });
+        }
+      });
+      return unsub;
+    }
+  }, []);
+
+  // Real-time loader customization sync across all windows
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onLoaderUpdated) {
+      const unsub = electronAPI.onLoaderUpdated((data: { appId: string; config: any }) => {
+        if (data?.config) {
+          if (data.appId === 'anything' || !data.appId) {
+            setSplashSettings(data.config);
+          }
         }
       });
       return unsub;
@@ -553,6 +579,11 @@ export function App() {
     const isMediaFlow =
       targetApp.id === 'mediaflow-studio' ||
       Boolean(targetApp.name && targetApp.name.toLowerCase().includes('mediaflow'));
+    const isOneTap =
+      targetApp.id === 'onetap-workstation' ||
+      targetApp.id === 'one-tap' ||
+      targetApp.id === 'app-one-tap' ||
+      Boolean(targetApp.name && (targetApp.name.toLowerCase().includes('one tap') || targetApp.name.toLowerCase().includes('uni desk')));
 
     let launchPath = targetApp.installedPath || '';
     if (
@@ -564,6 +595,8 @@ export function App() {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\Tap Studio.exe';
       } else if (isMediaFlow) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
+      } else if (isOneTap) {
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Uni Desk\\Uni Desk.exe';
       } else {
         launchPath = targetApp.executableName || '';
       }
@@ -774,6 +807,39 @@ export function App() {
     }
   };
 
+  const handleEditApp = async (id: string, updates: Partial<CatalogApp>) => {
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.updateApp) {
+        await electronAPI.updateApp({ appId: id, ...updates });
+      }
+    } catch (err) {
+      console.error('Failed to update app in main process:', err);
+    }
+
+    const normTarget = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const updated = apps.map((a) => {
+      const aNorm = a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      if (a.id === id || aNorm === normTarget) {
+        return {
+          ...a,
+          ...updates,
+          hasRealIcon: true,
+        };
+      }
+      return a;
+    });
+    persistApps(updated);
+
+    if (viewingApp && (viewingApp.id === id || viewingApp.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === normTarget)) {
+      setViewingApp({
+        ...viewingApp,
+        ...updates,
+        hasRealIcon: true,
+      });
+    }
+  };
+
   const handleVersionDeleted = (id: string, deletedVer: string) => {
     const cleanVer = deletedVer.replace(/^[vV]/, '').trim();
     const normTarget = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
@@ -798,6 +864,37 @@ export function App() {
     }
   };
 
+  const handleStartTrial = (targetApp: CatalogApp) => {
+    const updated = apps.map((a) => {
+      if (a.id === targetApp.id) {
+        return {
+          ...a,
+          status: 'trial' as const,
+          trialInfo: {
+            active: true,
+            startedAt: Date.now(),
+            daysTotal: 7,
+            daysRemaining: 7,
+          },
+        };
+      }
+      return a;
+    });
+    persistApps(updated);
+    if (viewingApp && viewingApp.id === targetApp.id) {
+      setViewingApp({
+        ...viewingApp,
+        status: 'trial' as const,
+        trialInfo: {
+          active: true,
+          startedAt: Date.now(),
+          daysTotal: 7,
+          daysRemaining: 7,
+        },
+      });
+    }
+  };
+
   const updateCount = apps.filter((a) => a.status === 'update-available').length;
 
   const renderActivePage = () => {
@@ -814,7 +911,9 @@ export function App() {
           onUninstall={handleUninstallApp}
           onDeleteApp={handleDeleteApp}
           onRenameApp={handleRenameApp}
+          onEditApp={handleEditApp}
           onVersionDeleted={handleVersionDeleted}
+          onStartTrial={handleStartTrial}
           onCustomizeLoader={(targetApp) => {
             setCustomizeAppId(targetApp.id);
             setViewingApp(null);
@@ -851,6 +950,8 @@ export function App() {
             onFixPathApp={handleFixPathApp}
             onUninstallApp={handleUninstallApp}
             onDeleteApp={handleDeleteApp}
+            onEditApp={handleEditApp}
+            onTryDemoApp={(app) => setDemoModalApp(app)}
             onAddCustomApp={(custom) => handleAddCatalogApp(custom as any)}
             onImportApps={(imported) => persistApps(imported)}
             onNavigateToPublisher={() => {
@@ -889,6 +990,7 @@ export function App() {
       case 'settings':
         return (
           <SettingsPage
+            apps={apps}
             initialAppId={customizeAppId}
             onPreviewSplash={(customSettings) => {
               setPreviewSplash(customSettings);
@@ -961,6 +1063,23 @@ export function App() {
       >
         {renderActivePage()}
       </AppLayout>
+
+      {/* Global Interactive Demo Simulator & 7-Day Trial Modal */}
+      {demoModalApp && (
+        <AppDemoModal
+          app={demoModalApp}
+          isOpen={Boolean(demoModalApp)}
+          onClose={() => setDemoModalApp(null)}
+          onInstall={(appToInstall) => {
+            handleInstallApp(appToInstall);
+            setDemoModalApp(null);
+          }}
+          onStartTrial={(appToTrial) => {
+            handleStartTrial(appToTrial);
+            setDemoModalApp(null);
+          }}
+        />
+      )}
     </div>
   );
 }

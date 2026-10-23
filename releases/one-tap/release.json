@@ -1,0 +1,31 @@
+{
+  "appId": "one-tap",
+  "appName": "One Tap",
+  "version": "26.10.12",
+  "executableName": "OneTap-V-26.10.12.exe",
+  "releaseDate": "2026-10-23",
+  "releaseType": "major",
+  "tagline": "Automated Batch Rendering Engine & VisionOS Design System",
+  "summary": "Next-generation release featuring Adobe CC master studio telemetry, sequential multi-batch rendering pipelines, and seamless integration with Anything.",
+  "newFeatures": [
+    "Adobe CC Master Studio splash loader with 'Ot' squircle emblem and DirectX 12 telemetry",
+    "Sequential Multi-Batch Rendering pipeline with real-time ETA tracking",
+    "Dynamic Island status indicator and floating system bridge",
+    "Native Anything app catalog auto-discovery and version management"
+  ],
+  "improvements": [
+    "Cold-start launch in under 350ms on modern NVMe drives",
+    "Optimized RAM footprint (~35MB idle)",
+    "High-DPI 4K and multi-monitor scaling synchronization"
+  ],
+  "fixes": [
+    "Resolved batch output folder alignment for multi-pass video exports",
+    "Fixed tray dock icon persistence on Windows 11 taskbar"
+  ],
+  "emailNotification": {
+    "subject": "🚀 One Tap v26.10.12 is Live in Anything!",
+    "preview": "Discover the all-new One Tap workstation with batch rendering and Anything integration.",
+    "ctaText": "Launch One Tap",
+    "heroGradient": "from-rose-600 via-red-600 to-amber-500"
+  }
+}

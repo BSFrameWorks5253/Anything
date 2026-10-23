@@ -59,13 +59,6 @@ const getAllReleaseDirs = (): string[] => {
     path.join(getProjectRoot(), 'releases'),
     path.join(getProjectRoot(), 'release'),
   ];
-  try {
-    const parentDir = path.resolve(getProjectRoot(), '..');
-    dirs.push(path.join(parentDir, 'releases'));
-    dirs.push(path.join(parentDir, 'release'));
-    const desktopTapStudio = path.join(parentDir, '..', 'Tap Studio', 'releases');
-    if (fs.existsSync(desktopTapStudio)) dirs.push(desktopTapStudio);
-  } catch (e) {}
   return dirs.filter((d, idx, arr) => fs.existsSync(d) && arr.indexOf(d) === idx);
 };
 
@@ -377,11 +370,35 @@ async function scanAndCollectReleases(): Promise<{
       } catch (e) {}
     }
 
+    // Collect all release root folders (supports both "releases" and "release")
+    const scanRoots = getAllReleaseDirs();
+
     let addedCount = 0;
     let updatedCount = 0;
 
-    // Collect all release root folders (supports both "releases" and "release")
-    const scanRoots = getAllReleaseDirs();
+    // Prune any catalog entries whose files no longer exist on disk in published-apps or releases
+    const initialLen = catalog.length;
+    catalog = catalog.filter((app: any) => {
+      if (!app || !app.id) return false;
+      const cleanId = (app.id || '').replace(/^app-/, '');
+      const pubDir1 = path.join(publishedDir, app.id);
+      const pubDir2 = path.join(publishedDir, cleanId);
+      const hasPub =
+        (fs.existsSync(pubDir1) && fs.readdirSync(pubDir1).length > 0) ||
+        (fs.existsSync(pubDir2) && fs.readdirSync(pubDir2).length > 0);
+      const hasRel = scanRoots.some((r) => {
+        const r1 = path.join(r, app.id);
+        const r2 = path.join(r, cleanId);
+        return (
+          (fs.existsSync(r1) && fs.readdirSync(r1).length > 0) ||
+          (fs.existsSync(r2) && fs.readdirSync(r2).length > 0)
+        );
+      });
+      return hasPub || hasRel;
+    });
+    if (catalog.length !== initialLen) {
+      updatedCount++;
+    }
 
     for (const releasesDir of scanRoots) {
       const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
@@ -798,19 +815,9 @@ function ensureWindowsAppRegistration(appId: string, displayName: string, iconPa
 function ensureWindowsShortcut() {
   if (process.platform !== 'win32') return;
   try {
-    const shortcutPath = path.join(
-      process.env.APPDATA || '',
-      'Microsoft',
-      'Windows',
-      'Start Menu',
-      'Programs',
-      'Anything.lnk'
-    );
-    if (!fs.existsSync(shortcutPath)) {
-      const scriptPath = path.join(getProjectRoot(), 'scripts', 'create-shortcut.ps1');
-      if (fs.existsSync(scriptPath)) {
-        exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, () => {});
-      }
+    const scriptPath = path.join(getProjectRoot(), 'scripts', 'create-shortcut.ps1');
+    if (fs.existsSync(scriptPath)) {
+      exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, () => {});
     }
   } catch (e) {
     console.warn('ensureWindowsShortcut error:', e);
@@ -821,8 +828,10 @@ function ensureWindowsShortcut() {
 const ANYTHING_AUMID = 'com.burhanuddin.anything';
 if (process.platform === 'win32') {
   app.setAppUserModelId(ANYTHING_AUMID);
+  const defaultIco = path.join(getProjectRoot(), 'public', 'icon.ico');
   const defaultAppLogo = path.join(getProjectRoot(), 'public', 'app-logo.png');
-  ensureWindowsAppRegistration(ANYTHING_AUMID, 'Anything', defaultAppLogo);
+  const regLogo = fs.existsSync(defaultIco) ? defaultIco : defaultAppLogo;
+  ensureWindowsAppRegistration(ANYTHING_AUMID, 'Anything', regLogo);
   ensureWindowsShortcut();
 }
 
@@ -1112,12 +1121,295 @@ async function downloadAssetWithProgress(
   });
 }
 
+// ================= AUTOMATED APP SOURCES SYNCHRONIZER =================
+async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: number; errors: string[] }> {
+  try {
+    const rootDir = getProjectRoot();
+    const sourcesPath = path.join(rootDir, 'app-sources.json');
+    if (!fs.existsSync(sourcesPath)) {
+      fs.writeFileSync(
+        sourcesPath,
+        JSON.stringify(
+          [
+            {
+              url: 'https://github.com/BSFrameWorks5253/MediaFlow-Studio',
+              name: 'MediaFlow Studio',
+              category: 'Media & Video',
+              autoSync: true,
+            },
+          ],
+          null,
+          2
+        ),
+        'utf-8'
+      );
+      return { success: true, synced: 0, errors: [] };
+    }
+
+    let sources: any[] = [];
+    try {
+      sources = JSON.parse(fs.readFileSync(sourcesPath, 'utf-8'));
+    } catch (err: any) {
+      console.error('Error parsing app-sources.json:', err);
+      return { success: false, synced: 0, errors: [err.message] };
+    }
+
+    if (!Array.isArray(sources)) {
+      return { success: false, synced: 0, errors: ['app-sources.json must contain a JSON array'] };
+    }
+
+    const errors: string[] = [];
+    let synced = 0;
+    const publishedDir = getPublishedDir();
+    const catalogFile = path.join(publishedDir, 'catalog.json');
+    let catalog: any[] = [];
+    if (fs.existsSync(catalogFile)) {
+      try {
+        catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8'));
+      } catch {}
+    }
+
+    const GITHUB_TOKEN = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+    const authHeaders: Record<string, string> = {
+      'User-Agent': 'Anything-App-Synchronizer',
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    if (GITHUB_TOKEN) {
+      authHeaders['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
+    }
+
+    for (const src of sources) {
+      try {
+        const rawUrl = typeof src === 'string' ? src : src.url || src.repo || '';
+        if (!rawUrl) continue;
+        const parsed = parseGitHubRepo(rawUrl);
+        if (!parsed) {
+          errors.push(`Invalid GitHub repository link: ${rawUrl}`);
+          continue;
+        }
+
+        // 1. Fetch Latest Release from GitHub API
+        const relApi = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases/latest`;
+        const relRes = await fetch(relApi, { headers: authHeaders });
+        if (!relRes.ok) {
+          continue;
+        }
+        const relData: any = await relRes.json();
+        if (!relData || !relData.tag_name) continue;
+
+        const remoteTag = relData.tag_name;
+        const cleanVer = remoteTag.replace(/^[vV]/, '').trim();
+        const asset = pickWindowsAsset(relData.assets || []);
+        const appId = (src.id || parsed.repo).toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const appName =
+          src.name ||
+          parsed.repo
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, (c: string) => c.toUpperCase());
+        const category =
+          src.category ||
+          (parsed.repo.toLowerCase().includes('media') || parsed.repo.toLowerCase().includes('video')
+            ? 'Media & Video'
+            : parsed.repo.toLowerCase().includes('code') || parsed.repo.toLowerCase().includes('dev')
+            ? 'Development'
+            : 'Custom Tools');
+
+        // Extract changelog features from GitHub release body
+        const bodyLines = (relData.body || '')
+          .split('\n')
+          .map((l: string) => l.trim().replace(/^[-*•]\s*/, ''))
+          .filter((l: string) => l && !l.startsWith('#') && l.length > 5);
+
+        const releaseFeatures = bodyLines.slice(0, 5);
+        const setupExeName = asset ? asset.name : `${parsed.repo}_${cleanVer}_Setup.exe`;
+        const downloadUrl = asset
+          ? asset.browser_download_url
+          : `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${remoteTag}/${setupExeName}`;
+
+        const shader =
+          shaderColorPresets[
+            Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) %
+              shaderColorPresets.length
+          ];
+
+        // Ensure releases/<appId>/v<cleanVer>/ folder structure exists
+        const appReleaseRoot = path.join(rootDir, 'releases', appId);
+        const appVersionDir = path.join(appReleaseRoot, `v${cleanVer}`);
+        if (!fs.existsSync(appVersionDir)) {
+          fs.mkdirSync(appVersionDir, { recursive: true });
+        }
+
+        // Auto-generate app.json if missing
+        const appJsonPath = path.join(appVersionDir, 'app.json');
+        const rootAppJsonPath = path.join(appReleaseRoot, 'app.json');
+        const appMetadata = {
+          id: appId,
+          name: appName,
+          shortName: appName
+            .split(' ')
+            .map((w: string) => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          version: cleanVer,
+          category,
+          description: relData.body?.slice(0, 240) || `${appName} for the Anything ecosystem.`,
+          executableName: setupExeName.replace(/_setup/i, ''),
+          setupExecutableName: setupExeName,
+          gradient: shader.gradient,
+          textColor: shader.textColor,
+          glowColor: shader.glow,
+          githubRepo: `${parsed.owner}/${parsed.repo}`,
+          iconType: 'monogram',
+        };
+
+        if (!fs.existsSync(appJsonPath)) {
+          fs.writeFileSync(appJsonPath, JSON.stringify(appMetadata, null, 2), 'utf-8');
+        }
+        if (!fs.existsSync(rootAppJsonPath)) {
+          fs.writeFileSync(rootAppJsonPath, JSON.stringify(appMetadata, null, 2), 'utf-8');
+        }
+
+        // Auto-generate release.json if missing
+        const releaseJsonPath = path.join(appVersionDir, 'release.json');
+        const releaseMetadata = {
+          appId,
+          appName,
+          version: cleanVer,
+          executableName: setupExeName,
+          releaseDate: relData.published_at ? relData.published_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          releaseType: 'minor',
+          tagline: `${appName} v${cleanVer} from GitHub Releases`,
+          summary: relData.name || `Release ${remoteTag}`,
+          newFeatures:
+            releaseFeatures.length > 0 ? releaseFeatures : [`Automated release from GitHub: ${remoteTag}`],
+          improvements: ['Ecosystem loader integration', 'Performance optimizations'],
+          fixes: ['Stability and compatibility updates'],
+          emailNotification: {
+            subject: `🚀 ${appName} v${cleanVer} is Live!`,
+            preview: `Discover all the updates in ${remoteTag}.`,
+            ctaText: 'Open in Anything',
+            heroGradient: shader.gradient,
+          },
+        };
+
+        if (!fs.existsSync(releaseJsonPath)) {
+          fs.writeFileSync(releaseJsonPath, JSON.stringify(releaseMetadata, null, 2), 'utf-8');
+        }
+
+        // Auto-generate loader-config.json if missing
+        const loaderConfigPath = path.join(appReleaseRoot, 'loader-config.json');
+        if (!fs.existsSync(loaderConfigPath)) {
+          fs.writeFileSync(
+            loaderConfigPath,
+            JSON.stringify(
+              {
+                appId,
+                appName,
+                monogram: appMetadata.shortName,
+                tagline: appMetadata.description,
+                gradient: shader.gradient,
+                presetId: 'apple-ambient',
+                bootPhrases: [
+                  `Connecting ${appName} to Anything...`,
+                  'Initializing graphics pipeline...',
+                  'Ready.',
+                ],
+              },
+              null,
+              2
+            ),
+            'utf-8'
+          );
+        }
+
+        // Auto-merge into catalog
+        const existingIdx = catalog.findIndex((c: any) => c.id === appId);
+        const catalogEntry = {
+          ...appMetadata,
+          downloadUrl,
+          releasesUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases`,
+          releasesTagUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/tag/`,
+          releasesApiUrl: relApi,
+          packageFileName: setupExeName,
+          packageSize: asset ? formatFileBytes(asset.size) : 'Online Release',
+          packageFormat: path.extname(setupExeName) || '.exe',
+          status: 'not-installed',
+          publishedAt: new Date(relData.published_at || Date.now()).getTime(),
+          releaseInfo: releaseMetadata,
+          history: [releaseMetadata],
+          changelog: releaseFeatures,
+          addedByCreator: true,
+        };
+
+        if (existingIdx >= 0) {
+          const existing = catalog[existingIdx];
+          if (compareVersions(cleanVer, existing.version) > 0) {
+            catalog[existingIdx] = {
+              ...existing,
+              ...catalogEntry,
+              status: 'update-available',
+            };
+            sendWindowsNotification(
+              `⚡ Update Available for ${appName}!`,
+              `Version v${cleanVer} is ready to download from GitHub.`,
+              undefined,
+              existing.iconValue,
+              appName
+            );
+          } else {
+            catalog[existingIdx] = { ...existing, ...catalogEntry, status: existing.status || 'not-installed' };
+          }
+        } else {
+          catalog.unshift(catalogEntry);
+          sendWindowsNotification(
+            `🎉 Synced App from GitHub: ${appName}`,
+            `Version v${cleanVer} was automatically added to Anything!`,
+            undefined,
+            undefined,
+            appName
+          );
+        }
+        synced++;
+      } catch (err: any) {
+        errors.push(err.message);
+      }
+    }
+
+    fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
+
+    // Broadcast updated catalog to all Electron windows
+    const allWindows = BrowserWindow.getAllWindows();
+    for (const w of allWindows) {
+      if (!w.isDestroyed()) {
+        w.webContents.send('catalog:updated', catalog);
+      }
+    }
+
+    return { success: true, synced, errors };
+  } catch (err: any) {
+    console.error('syncAppsFromSourcesFile failed:', err);
+    return { success: false, synced: 0, errors: [err.message] };
+  }
+}
+
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
+const getAppIconPath = () => {
+  const root = getProjectRoot();
+  const icoPath = path.join(root, 'public', 'icon.ico');
+  if (fs.existsSync(icoPath)) return icoPath;
+  const pngPath = path.join(root, 'public', 'app-logo.png');
+  if (fs.existsSync(pngPath)) return pngPath;
+  return undefined;
+};
 
 function createWindow() {
+  const appIconPath = getAppIconPath();
+
   mainWindow = new BrowserWindow({
     title: 'Anything',
+    icon: appIconPath,
     width: 1280,
     height: 840,
     minWidth: 980,
@@ -1133,10 +1425,18 @@ function createWindow() {
     show: false, // Hidden on startup: ONLY the loader box appears first!
   });
 
+  if (process.platform === 'win32' && appIconPath) {
+    try {
+      mainWindow.setIcon(appIconPath);
+    } catch (e) {}
+  }
+
   const win = mainWindow;
 
   // Standalone Adobe Splash Window: Centered, frameless, 100% transparent desktop background
   splashWindow = new BrowserWindow({
+    title: 'Anything',
+    icon: appIconPath,
     width: 740,
     height: 480,
     frame: false,
@@ -1155,9 +1455,15 @@ function createWindow() {
     },
   });
 
+  if (process.platform === 'win32' && appIconPath) {
+    try {
+      splashWindow.setIcon(appIconPath);
+    } catch (e) {}
+  }
+
   // Security: Restrict navigation & popups
   for (const targetWin of [win, splashWindow]) {
-    targetWin.webContents.setWindowOpenHandler(({ url }) => {
+    targetWin.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
       try {
         const parsed = new URL(url);
         if (parsed.protocol === 'http:' || parsed.protocol === 'https:' || parsed.protocol === 'mailto:') {
@@ -1167,7 +1473,7 @@ function createWindow() {
       return { action: 'deny' };
     });
 
-    targetWin.webContents.on('will-navigate', (event, navigationUrl) => {
+    targetWin.webContents.on('will-navigate', (event: any, navigationUrl: string) => {
       try {
         const parsed = new URL(navigationUrl);
         if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
@@ -1811,6 +2117,62 @@ function createWindow() {
     }
   );
 
+  // App Demo / Trial Mode Launcher
+  ipcMain.handle('app:launch-demo', async (_, appData: any) => {
+    try {
+      const appId = appData?.id || '';
+      const appName = appData?.name || appId;
+      const root = getProjectRoot();
+
+      let demoExe: string | null = null;
+      const possibleDirs = [
+        path.join(getPublishedDir(), appId),
+        path.join(root, 'releases', appId),
+      ];
+
+      for (const dir of possibleDirs) {
+        if (!fs.existsSync(dir)) continue;
+        const allFiles = fs.readdirSync(dir, { recursive: true });
+        const exeFound = allFiles.find((f: any) => {
+          const s = String(f).toLowerCase();
+          return s.endsWith('.exe') && !s.includes('setup') && !s.includes('unins');
+        });
+        if (exeFound) {
+          demoExe = path.join(dir, String(exeFound));
+          break;
+        }
+      }
+
+      if (demoExe && fs.existsSync(demoExe)) {
+        const globalLoader = path.join(app.getPath('userData'), 'loaders', `${appId}.json`);
+        const args = ['--demo', '--trial', `--loader-config=${globalLoader}`];
+        const child = spawn(demoExe, args, {
+          detached: true,
+          stdio: 'ignore',
+          cwd: path.dirname(demoExe),
+        });
+        child.unref();
+
+        sendWindowsNotification(
+          `⚡ Free Trial Mode Active`,
+          `Launching ${appName} in evaluation mode.`,
+          undefined,
+          appData?.iconValue,
+          appName
+        );
+        return { success: true, mode: 'executable', path: demoExe };
+      }
+
+      return {
+        success: false,
+        noBinary: true,
+        error: `No standalone binary found for ${appName}. You can try the interactive in-app demo simulator.`,
+      };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
   // Resolve Installed Path IPC
   ipcMain.handle(
     'app:resolve-installed-path',
@@ -2029,6 +2391,98 @@ function createWindow() {
       }
       sendWindowsNotification('App Renamed', `Application renamed to ${trimmedName}`);
       return { success: true, catalog, newName: trimmedName };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  // Update App Details (Name, Category, Description, Icon)
+  ipcMain.handle('app:update', async (_, data) => {
+    try {
+      const { appId, name, newName, category, description, iconType, iconValue } = data || {};
+      if (!appId) {
+        return { success: false, error: 'Valid appId is required.' };
+      }
+      const safeAppId = path.basename(appId.trim());
+      const normSafeId = safeAppId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      const trimmedName = (newName || name || '').trim();
+      const publishedDir = getPublishedDir();
+      const catalogFile = path.join(publishedDir, 'catalog.json');
+      let catalog: any[] = [];
+      if (fs.existsSync(catalogFile)) {
+        try { catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8')); } catch (e) {}
+      }
+
+      let oldName = safeAppId;
+      const idx = catalog.findIndex((a: any) => {
+        const aNorm = (a.id || '').toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+        return a.id === safeAppId || aNorm === normSafeId;
+      });
+      if (idx >= 0) {
+        oldName = catalog[idx].name || safeAppId;
+        if (trimmedName) catalog[idx].name = trimmedName;
+        if (category) catalog[idx].category = category.trim();
+        if (description !== undefined) catalog[idx].description = description.trim();
+        if (iconType) catalog[idx].iconType = iconType;
+        if (iconValue) {
+          catalog[idx].iconValue = iconValue;
+          catalog[idx].hasRealIcon = true;
+        }
+      }
+
+      // If iconValue is a base64 image or local path, save as app-logo.png inside the app folder
+      const scanRoots = getAllReleaseDirs();
+      let targetFolder = '';
+      for (const root of scanRoots) {
+        if (!fs.existsSync(root)) continue;
+        const subdirs = fs.readdirSync(root, { withFileTypes: true });
+        for (const d of subdirs) {
+          if (!d.isDirectory()) continue;
+          const fullPath = path.join(root, d.name);
+          if (matchesApp(d.name, safeAppId, oldName, fullPath)) {
+            targetFolder = fullPath;
+            break;
+          }
+        }
+        if (targetFolder) break;
+      }
+
+      if (targetFolder && fs.existsSync(targetFolder)) {
+        if (iconType === 'image' && typeof iconValue === 'string' && iconValue.startsWith('data:image/')) {
+          try {
+            const base64Data = iconValue.replace(/^data:image\/\w+;base64,/, '');
+            const logoPath = path.join(targetFolder, 'app-logo.png');
+            fs.writeFileSync(logoPath, Buffer.from(base64Data, 'base64'));
+          } catch (e) {
+            console.warn('Failed writing app-logo.png to disk:', e);
+          }
+        }
+
+        const appJsonPath = path.join(targetFolder, 'app.json');
+        if (fs.existsSync(appJsonPath)) {
+          try {
+            const manifest = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
+            if (trimmedName) manifest.name = trimmedName;
+            if (category) manifest.category = category.trim();
+            if (description !== undefined) manifest.description = description.trim();
+            if (iconType) manifest.iconType = iconType;
+            if (iconValue) manifest.iconValue = iconValue.startsWith('data:image/') ? 'app-logo.png' : iconValue;
+            fs.writeFileSync(appJsonPath, JSON.stringify(manifest, null, 2), 'utf-8');
+          } catch (e) {}
+        }
+      }
+
+      if (fs.existsSync(catalogFile)) {
+        fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
+      }
+
+      // Broadcast updated catalog
+      const allWindows = BrowserWindow.getAllWindows();
+      for (const w of allWindows) {
+        w.webContents.send('catalog:updated', catalog);
+      }
+      sendWindowsNotification('App Updated', `${trimmedName || oldName} details and icon updated.`);
+      return { success: true, catalog };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
@@ -2276,18 +2730,29 @@ function createWindow() {
 
       // 4. Live sync directly to child application directories on disk
       const liveSyncTargets: string[] = [];
+
+      // Check catalog for installed path or configured path
+      const pubCatalogFile = path.join(getPublishedDir(), 'catalog.json');
+      if (fs.existsSync(pubCatalogFile)) {
+        try {
+          const curCat = JSON.parse(fs.readFileSync(pubCatalogFile, 'utf-8'));
+          const found = curCat.find((c: any) => c.id === targetAppId);
+          if (found?.installedPath) {
+            const appBaseDir = path.dirname(found.installedPath);
+            liveSyncTargets.push(
+              path.join(appBaseDir, 'loader-config.json'),
+              path.join(appBaseDir, 'resources', 'loader-config.json')
+            );
+          }
+        } catch {}
+      }
+
       if (targetAppId === 'mediaflow-studio') {
         liveSyncTargets.push(
           'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\loader-config.json',
           'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\dist\\loader-config.json',
           'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\loader-config.json',
           'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\resources\\loader-config.json'
-        );
-      } else if (targetAppId === 'tap-studio') {
-        liveSyncTargets.push(
-          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Tap Studio\\loader-config.json',
-          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\loader-config.json',
-          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\resources\\loader-config.json'
         );
       }
 
@@ -2300,6 +2765,14 @@ function createWindow() {
         } catch {}
       }
 
+      // 5. Real-Time Broadcast: Notify all open windows immediately
+      const allWindows = BrowserWindow.getAllWindows();
+      for (const w of allWindows) {
+        if (!w.isDestroyed()) {
+          w.webContents.send('loader:updated', { appId: targetAppId, config });
+        }
+      }
+
       return { success: true, releaseConfigPath, globalPath };
     } catch (err: any) {
       return { success: false, error: err.message };
@@ -2308,7 +2781,7 @@ function createWindow() {
 
   ipcMain.handle('loader:load-child-config', async (_, appId: string) => {
     try {
-      const targetAppId = appId || 'tap-studio';
+      const targetAppId = appId || 'mediaflow-studio';
       const rootDir = getProjectRoot();
       const releaseConfigPath = path.join(rootDir, 'releases', targetAppId, 'loader-config.json');
       if (fs.existsSync(releaseConfigPath)) {
@@ -2321,6 +2794,34 @@ function createWindow() {
       return { success: false, notFound: true };
     } catch (err: any) {
       return { success: false, error: err.message };
+    }
+  });
+
+  // ================= APP SOURCES REGISTRY IPC HANDLERS =================
+  ipcMain.handle('sources:sync', async () => {
+    return await syncAppsFromSourcesFile();
+  });
+
+  ipcMain.handle('sources:get', async () => {
+    try {
+      const sourcesPath = path.join(getProjectRoot(), 'app-sources.json');
+      if (fs.existsSync(sourcesPath)) {
+        return { success: true, sources: JSON.parse(fs.readFileSync(sourcesPath, 'utf-8')) };
+      }
+      return { success: true, sources: [] };
+    } catch (e: any) {
+      return { success: false, error: e.message, sources: [] };
+    }
+  });
+
+  ipcMain.handle('sources:save', async (_, sources) => {
+    try {
+      const sourcesPath = path.join(getProjectRoot(), 'app-sources.json');
+      fs.writeFileSync(sourcesPath, JSON.stringify(sources, null, 2), 'utf-8');
+      const syncRes = await syncAppsFromSourcesFile();
+      return syncRes;
+    } catch (e: any) {
+      return { success: false, error: e.message };
     }
   });
 
@@ -2811,6 +3312,36 @@ function createWindow() {
   } catch (err) {
     console.error('Error starting releases folder watcher:', err);
   }
+
+  // Live Auto-Watcher on app-sources.json: changes to repo links are synced immediately
+  try {
+    const sourcesFile = path.join(getProjectRoot(), 'app-sources.json');
+    if (fs.existsSync(sourcesFile)) {
+      let sourcesDebounce: NodeJS.Timeout | null = null;
+      fs.watch(sourcesFile, () => {
+        if (sourcesDebounce) clearTimeout(sourcesDebounce);
+        sourcesDebounce = setTimeout(async () => {
+          console.log('🔄 Detected update in app-sources.json, syncing apps...');
+          await syncAppsFromSourcesFile();
+        }, 1500);
+      });
+    }
+  } catch (err) {
+    console.error('Error starting app-sources watcher:', err);
+  }
+
+  // Initial scan on startup to sync newly placed child app releases and app sources immediately
+  setTimeout(async () => {
+    try {
+      const res = await scanAndCollectReleases();
+      if (win && !win.isDestroyed() && res.catalog) {
+        win.webContents.send('catalog:updated', res.catalog);
+      }
+      await syncAppsFromSourcesFile();
+    } catch (e) {
+      console.error('Initial startup releases & sources scan error:', e);
+    }
+  }, 1200);
 
   if (isDev) {
     const devUrl = 'http://127.0.0.1:5173';

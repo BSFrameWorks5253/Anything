@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { X, Play, Download, Trash2, Cpu, HardDrive, Monitor, CheckCircle, Sparkles, AlertTriangle, Wrench, RefreshCw, GitBranch, ExternalLink, Copy, Check, Cloud } from 'lucide-react';
+import { X, Play, Download, Trash2, Cpu, HardDrive, Monitor, CheckCircle, Sparkles, AlertTriangle, Wrench, RefreshCw, GitBranch, ExternalLink, Copy, Check, Cloud, Pencil } from 'lucide-react';
 import type { CatalogApp } from '../../../types/app.types';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { AppIconRenderer } from './CrazyAppStudio/AppIconRenderer';
 import { VersionHistoryTab } from './AppDetailModal/VersionHistoryTab';
+import { EditAppModal } from './EditAppModal';
 import { useTheme } from '../../../context/ThemeContext';
 
 interface AppDetailModalProps {
@@ -19,6 +20,7 @@ interface AppDetailModalProps {
   onFixPath: (app: CatalogApp) => void;
   onUninstall: (appId: string) => void;
   onDeleteApp?: (appId: string) => void;
+  onEditApp?: (appId: string, updates: Partial<CatalogApp>) => Promise<void> | void;
 }
 
 export const AppDetailModal: React.FC<AppDetailModalProps> = ({
@@ -32,13 +34,28 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
   onFixPath,
   onUninstall,
   onDeleteApp,
+  onEditApp,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
   const [confirmAction, setConfirmAction] = useState<'uninstall' | 'delete' | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
   if (!isOpen || !app) return null;
+
+  const handleSaveEdit = async (appId: string, updates: Partial<CatalogApp>) => {
+    Object.assign(app, updates);
+    (app as any).hasRealIcon = true;
+    if (onEditApp) {
+      await onEditApp(appId, updates);
+    } else {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.updateApp) {
+        await electronAPI.updateApp({ appId, ...updates });
+      }
+    }
+  };
 
   const defaultReqs = app.systemRequirements || {
     os: 'Windows 11 / macOS Tahoe 16+',
@@ -77,7 +94,20 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           }`}
         >
           <div className="flex items-center gap-4">
-            <AppIconRenderer app={app} size="lg" />
+            <div className="relative group/modal-icon">
+              <div className="p-0.5 rounded-2xl relative overflow-hidden">
+                <AppIconRenderer app={app} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/modal-icon:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-2xl backdrop-blur-xs cursor-pointer z-10"
+                  title="Change App Icon"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-cyan-400 mb-0.5" />
+                  <span className="text-[8px] font-bold">Edit</span>
+                </button>
+              </div>
+            </div>
 
             <div>
               <div className="flex items-center gap-2">
@@ -88,6 +118,14 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                 >
                   {app.name}
                 </h2>
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors"
+                  title="Edit Application & Icon"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 {(app.status === 'installed' || app.status === 'ready') && (
                   <GlassBadge variant="emerald" dot>Installed</GlassBadge>
                 )}
@@ -607,6 +645,14 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           </div>
         </div>
       </GlassCard>
+
+      {/* Edit Application & Icon Modal */}
+      <EditAppModal
+        app={app}
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 };

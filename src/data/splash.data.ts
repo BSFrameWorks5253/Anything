@@ -66,6 +66,15 @@ export interface SplashSettings {
   artworkPosition?: 'center' | 'top' | 'bottom';
 }
 
+export const cleanVersionText = (ver?: string): string => {
+  if (!ver) return 'v1.0.0';
+  const cleaned = ver
+    .replace(/\s*\((?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\)/gi, '')
+    .replace(/\s*[-_.]?\s*(?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\b/gi, '')
+    .trim();
+  return cleaned || 'v1.0.0';
+};
+
 export const defaultSplashSettings: SplashSettings = {
   appId: 'anything',
   enabled: true,
@@ -73,7 +82,7 @@ export const defaultSplashSettings: SplashSettings = {
   artistName: 'Anything Creation',
   artworkTitle: '-Designed by Burhanuddin',
   productName: 'Anything',
-  versionText: '2026.1 Release · v1.0.0 (x64)',
+  versionText: '2026.1 Release · v1.0.0',
   tagline: 'Creative & Productivity Master Hub',
   durationMs: 2800,
   logoText: 'An',
@@ -90,7 +99,7 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     artistName: 'Anything Creation',
     artworkTitle: '-Designed by Burhanuddin',
     productName: 'Tap Studio',
-    versionText: 'v1.0.0 (x64)',
+    versionText: 'v1.0.0',
     tagline: 'Macro Automation & Stream Deck Companion',
     durationMs: 2800,
     logoText: 'Ts',
@@ -105,7 +114,7 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     artistName: 'Anything Creation',
     artworkTitle: '-Designed by Burhanuddin',
     productName: 'MediaFlow Studio',
-    versionText: 'v6.0.0 (x64)',
+    versionText: 'v6.0.0',
     tagline: 'Professional Media Ingestion, Synchronization and Report Fusion Desktop Suite',
     durationMs: 2800,
     logoText: 'Ms',
@@ -123,23 +132,39 @@ export const saveSplashSettings = (settings: SplashSettings) => {
   saveAppSplashSettings('anything', settings);
 };
 
-export const loadAppSplashSettings = (appId: string = 'anything'): SplashSettings => {
+export const loadAppSplashSettings = (
+  appId: string = 'anything',
+  currentApp?: { name?: string; version?: string; shortName?: string }
+): SplashSettings => {
   try {
     const key =
       appId === 'anything'
         ? 'anything_splash_screen_settings_v1'
         : `anything_splash_screen_settings_${appId}`;
     const saved = localStorage.getItem(key);
-    const defaults =
+
+    const appCleanVersion = currentApp?.version
+      ? (currentApp.version.startsWith('v') || currentApp.version.startsWith('V') || currentApp.version.includes('Release')
+          ? cleanVersionText(currentApp.version)
+          : `v${cleanVersionText(currentApp.version)}`)
+      : undefined;
+
+    const baseDefaults = defaultChildAppSplashSettings[appId] || {
+      ...defaultSplashSettings,
+      appId,
+      productName: currentApp?.name || appId.charAt(0).toUpperCase() + appId.slice(1).replace(/-/g, ' '),
+      logoText: currentApp?.shortName || appId.slice(0, 2).toUpperCase(),
+      tagline: 'Integrated Workspace Application',
+      versionText: appCleanVersion || 'v1.0.0',
+    };
+
+    const defaults: SplashSettings =
       appId === 'anything'
         ? defaultSplashSettings
-        : defaultChildAppSplashSettings[appId] || {
-            ...defaultSplashSettings,
-            appId,
-            productName: appId.charAt(0).toUpperCase() + appId.slice(1).replace(/-/g, ' '),
-            logoText: appId.slice(0, 2).toUpperCase(),
-            tagline: 'Integrated Workspace Application',
-            versionText: 'v1.0.0 (x64)',
+        : {
+            ...baseDefaults,
+            productName: currentApp?.name || baseDefaults.productName,
+            versionText: appCleanVersion || cleanVersionText(baseDefaults.versionText),
           };
 
     if (saved) {
@@ -150,6 +175,14 @@ export const loadAppSplashSettings = (appId: string = 'anything'): SplashSetting
       }
       if (parsed.artworkTitle === 'Refractive Glass in Motion' || !parsed.artworkTitle) {
         parsed.artworkTitle = '-Designed by Burhanuddin';
+      }
+      // Always sanitize versionText from saved cache to remove x64/x86
+      if (parsed.versionText) {
+        parsed.versionText = cleanVersionText(parsed.versionText);
+      }
+      // If currentApp exists and saved version was a generic placeholder with x64/x86 or stale default, sync it
+      if (appCleanVersion && (!parsed.versionText || parsed.versionText.includes('x64') || parsed.versionText.includes('x86') || parsed.versionText === 'v1.0.0 (x64)')) {
+        parsed.versionText = appCleanVersion;
       }
       return { ...defaults, ...parsed };
     }
@@ -168,7 +201,12 @@ export const saveAppSplashSettings = (appId: string = 'anything', settings: Spla
       appId === 'anything'
         ? 'anything_splash_screen_settings_v1'
         : `anything_splash_screen_settings_${appId}`;
-    localStorage.setItem(key, JSON.stringify({ ...settings, appId }));
+    const cleanSettings = {
+      ...settings,
+      appId,
+      versionText: cleanVersionText(settings.versionText),
+    };
+    localStorage.setItem(key, JSON.stringify(cleanSettings));
   } catch (e) {
     console.error('Failed to save splash settings:', e);
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Download, RefreshCw, AlertTriangle, MoreHorizontal, Wrench, Trash2, FolderOpen, Sparkles } from 'lucide-react';
+import { Play, Download, RefreshCw, AlertTriangle, MoreHorizontal, Wrench, Trash2, FolderOpen, Sparkles, Pencil } from 'lucide-react';
 import type { CatalogApp } from '../../../types/app.types';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { useTheme } from '../../../context/ThemeContext';
@@ -13,6 +13,8 @@ interface AppCardActionsProps {
   onUninstall: (appId: string) => void;
   onDeleteApp?: (appId: string) => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
+  onEditApp?: (app: CatalogApp) => void;
+  onTryDemo?: (app: CatalogApp) => void;
 }
 
 export const AppCardActions: React.FC<AppCardActionsProps> = ({
@@ -24,6 +26,8 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
   onUninstall,
   onDeleteApp,
   onCustomizeLoader,
+  onEditApp,
+  onTryDemo,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
   const { theme } = useTheme();
@@ -81,6 +85,8 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
             ? `v${app.localVersion || 'old'} → v${app.version}`
             : app.status === 'path-broken'
             ? 'Path Missing'
+            : app.status === 'trial'
+            ? `${app.trialInfo?.daysRemaining ?? 7}d Trial Active`
             : app.size || 'Ready'}
         </span>
 
@@ -101,6 +107,38 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
             </GlassButton>
           )}
 
+          {app.status === 'trial' && (
+            <div className="flex items-center gap-1.5">
+              <GlassButton
+                variant="accent"
+                size="sm"
+                icon={<Play className="w-3 h-3 fill-current" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onTryDemo) onTryDemo(app);
+                  else onLaunch(app);
+                }}
+                className="text-xs px-2.5 font-semibold bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                title="Launch Trial Sandbox / Demo"
+              >
+                Open Demo
+              </GlassButton>
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-3 h-3" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInstall(app);
+                }}
+                className="text-xs px-2.5 font-semibold"
+                title="Install Full Version"
+              >
+                Install
+              </GlassButton>
+            </div>
+          )}
+
           {app.status === 'update-available' && (
             <GlassButton
               variant="accent"
@@ -117,18 +155,35 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
           )}
 
           {app.status === 'not-installed' && (
-            <GlassButton
-              variant="primary"
-              size="sm"
-              icon={<Download className="w-3 h-3" />}
-              onClick={(e) => {
-                e.stopPropagation();
-                onInstall(app);
-              }}
-              className="text-xs px-3 font-semibold"
-            >
-              Install
-            </GlassButton>
+            <div className="flex items-center gap-1.5">
+              {onTryDemo && (
+                <GlassButton
+                  variant="glass"
+                  size="sm"
+                  icon={<Sparkles className="w-3 h-3 text-cyan-400" />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTryDemo(app);
+                  }}
+                  className="text-xs px-2.5 font-medium border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
+                  title="Try 7-Day Free Demo / Sandbox"
+                >
+                  Try
+                </GlassButton>
+              )}
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-3 h-3" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInstall(app);
+                }}
+                className="text-xs px-3 font-semibold"
+              >
+                Install
+              </GlassButton>
+            </div>
           )}
 
           {app.status === 'path-broken' && (
@@ -164,6 +219,32 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 className="absolute right-0 bottom-full mb-1.5 w-48 rounded-xl bg-slate-900/95 border border-white/15 backdrop-blur-2xl shadow-2xl py-1.5 z-30 text-xs text-white/80 select-none animate-fadeIn"
               >
+                {onTryDemo && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onTryDemo(app);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-cyan-500/15 text-cyan-300 flex items-center gap-2 transition-colors font-medium border-b border-white/10 pb-2 mb-1"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Try / Demo Mode</span>
+                  </button>
+                )}
+
+                {onEditApp && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onEditApp(app);
+                    }}
+                    className="w-full px-3 py-2 text-left hover:bg-cyan-500/15 text-cyan-300 flex items-center gap-2 transition-colors font-medium border-b border-white/10 pb-2 mb-1"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Edit App & Icon</span>
+                  </button>
+                )}
+
                 {onCustomizeLoader && (
                   <button
                     onClick={() => {

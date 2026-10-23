@@ -8,13 +8,15 @@ import { AdobeSplashScreen } from '../../components/ui/AdobeSplashScreen';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GlassBadge } from '../../components/ui/GlassBadge';
 import { type SplashSettings } from '../../data/splash.data';
+import type { CatalogApp } from '../../types/app.types';
 
 interface SettingsPageProps {
   onPreviewSplash?: (settings: SplashSettings) => void;
   initialAppId?: string;
+  apps?: CatalogApp[];
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, initialAppId = 'anything' }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, initialAppId = 'anything', apps = [] }) => {
   const [previewSettings, setPreviewSettings] = useState<SplashSettings | null>(null);
 
   const handlePreview = (settings: SplashSettings) => {
@@ -31,7 +33,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, ini
       <AccountSection />
 
       {/* Adobe Splash Screen & Loader Customizer */}
-      <SplashScreenSection initialAppId={initialAppId} onPreview={handlePreview} />
+      <SplashScreenSection initialAppId={initialAppId} apps={apps} onPreview={handlePreview} />
 
       {/* GitHub Releases Auto-Update Section */}
       <AutoUpdateSection />

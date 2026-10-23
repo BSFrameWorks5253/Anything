@@ -1,33 +1,36 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "appId": "mediaflow-studio",
   "appName": "MediaFlow Studio",
   "version": "6.0.0",
   "executableName": "Mediaflow_studio_6.0.0.exe",
   "setupExecutableName": "Mediaflow_studio_6.0.0_Setup.exe",
   "releaseDate": "2026-10-23",
-  "releaseType": "minor",
-  "tagline": "Apple WWDC26 Liquid Glass UI, Mf Monogram & Anything Child App Ecosystem",
-  "summary": "MediaFlow Studio v6.0.0 introduces an Apple WWDC26 Liquid Glass UI redesign, native Anything ecosystem loader sync, interactive Action Center toast notifications, and automated GitHub release publishing.",
+  "releaseType": "major",
+  "tagline": "MediaFlow Studio v6.0.0 Official GitHub Release",
+  "summary": "MediaFlow Studio v6.0.0 Release",
   "newFeatures": [
-    "Integrated into Anything Ecosystem with customized startup loader and diagnostic telemetry",
-    "Apple WWDC26 Liquid Glass UI with dynamic chromatic ambient lighting and squircle insignia",
-    "Automated release packaging generating version-wise Mediaflow_studio_<version> binaries",
-    "Seamless auto-sync directly into the Anything releases catalog"
+    "Professional Media Ingestion, Synchronization and Report Fusion Desktop Suite.",
+    "**Standalone Frameless Adobe Splash Window**: Instant transparent zero-backdrop boot screen with live telemetry.",
+    "**1:1 Anything Ecosystem Synchronization**: Native loader configuration and cross-app launcher integration.",
+    "**PV Separation Engine**: High-performance photo and video grouping and verification.",
+    "**Automated Windows Installer**: Clean NSIS desktop and start menu shortcuts with auto-updater support.",
+    "**[Mediaflow_studio_6.0.0_Setup.exe](https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v6.0.0/Mediaflow_studio_6.0.0_Setup.exe)** (Recommended Windows 10/11 Installer)"
   ],
   "improvements": [
-    "Crisp vector Mf monogram insignia with specular rim matching Anything & Tap Studio",
-    "Enhanced multi-camera PV separation pipeline and thumbnail memory management",
-    "Native Action Center interactive toast banners for background ingestions and updates"
+    "Low latency event loop execution",
+    "Anything parent ecosystem integration",
+    "Liquid Glass styling"
   ],
   "fixes": [
-    "Resolved premature window maximize flicker during startup via splash handoff",
-    "Unified storage headroom verification and clean process termination"
+    "Stability enhancements and Windows 11 compatibility"
   ],
   "emailNotification": {
-    "subject": "🚀 MediaFlow Studio v6.0.0: Apple WWDC26 Liquid Glass UI & Anything Ecosystem!",
-    "preview": "Discover all the new features, performance boosts, and fixes in v6.0.0.",
+    "subject": "🚀 MediaFlow Studio v6.0.0 is Available!",
+    "preview": "Download or evaluate MediaFlow Studio v6.0.0 now in Anything.",
     "ctaText": "Open in Anything",
-    "heroGradient": "from-cyan-500 via-blue-600 to-indigo-700"
-  }
+    "heroGradient": "from-blue-600 to-indigo-700"
+  },
+  "sizeFormatted": "76.5 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v6.0.0/Mediaflow_studio_6.0.0_Setup.exe",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases"
 }

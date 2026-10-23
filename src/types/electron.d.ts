@@ -3,6 +3,7 @@ export interface ElectronAPI {
   launchApp: (
     target: string | { path?: string; name?: string; id?: string; executableName?: string }
   ) => Promise<{ success: boolean; error?: string; resolvedPath?: string }>;
+  launchAppDemo?: (appData: any) => Promise<{ success: boolean; error?: string; mode?: string; path?: string }>;
   resolveInstalledPath?: (data: {
     appId?: string;
     name?: string;
@@ -43,6 +44,10 @@ export interface ElectronAPI {
     error?: string;
   }>;
   onCatalogUpdated: (callback: (catalog: any[]) => void) => () => void;
+  onLoaderUpdated?: (callback: (data: { appId: string; config: any }) => void) => () => void;
+  syncAppSources?: () => Promise<{ success: boolean; synced: number; errors: string[] }>;
+  getAppSources?: () => Promise<{ success: boolean; sources: any[] }>;
+  saveAppSources?: (sources: any[]) => Promise<{ success: boolean; synced: number; errors: string[] }>;
 
   // App Lifecycle
   uninstallApp: (appId: string) => Promise<any>;

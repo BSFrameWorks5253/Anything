@@ -1,75 +1,60 @@
-# 🚀 GitHub Releases Auto-Update Guide (No Custom Domain Needed)
+# 🚀 GitHub Releases Auto-Update Guide for Anything & Child Apps
 
-This application has `electron-updater` built-in. Whenever you make changes to your code, users' installed apps will **automatically update in the background** without them needing to download a new `.exe`!
-
----
-
-## 🛠️ Step 1: Link Your GitHub Repository
-
-In [`package.json`](./package.json), update the `publish` field with your actual GitHub username and repository name:
-
-```json
-"build": {
-  "appId": "com.burhanuddin.creativehub",
-  "productName": "Creative Hub",
-  "publish": {
-    "provider": "github",
-    "owner": "YOUR_GITHUB_USERNAME",
-    "repo": "YOUR_REPOSITORY_NAME"
-  }
-}
-```
+**Detailed Specification**: See [DOCS/AUTO_UPDATE_AND_CHILD_APP_LIFECYCLE.md](file:///c:/Users/Burhanuddin/OneDrive/Desktop/New%20folder%20(2)/Anything/DOCS/AUTO_UPDATE_AND_CHILD_APP_LIFECYCLE.md)
 
 ---
 
-## 📦 Step 2: How to Release an Update to All Users
+## ⚡ Quick Start: Zero-Touch App Registration
 
-Whenever you make any change (even a 1-line code tweak):
+To add any new child app to Anything so it automatically lists, tracks releases, and updates without manual manifest creation:
 
-### 1. Bump the version number in `package.json`:
-```json
-"version": "1.0.1"
-```
+1. Open [`app-sources.json`](file:///c:/Users/Burhanuddin/OneDrive/Desktop/New%20folder%20(2)/Anything/app-sources.json) in the Anything root folder.
+2. Paste the app's GitHub repository URL:
+   ```json
+   [
+     "https://github.com/BSFrameWorks5253/MediaFlow-Studio",
+     "https://github.com/BSFrameWorks5253/AnotherCreativeTool"
+   ]
+   ```
+3. Save the file! Anything's live watcher immediately queries GitHub, registers the latest setup executable, and adds it to the catalog.
 
-### 2. Generate your GitHub Token:
-1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)**.
-2. Generate a token with the **`repo`** scope checked.
-3. In PowerShell, set your token:
+---
+
+## 📦 How to Publish a Release Version-Wise to GitHub
+
+Whenever you build a new version of Anything or a child app:
+
+### 1. Set your GitHub Token (once):
 ```powershell
 $env:GH_TOKEN="ghp_yourGeneratedTokenHere"
 ```
+*(Or save it into a `.env` file in the Anything root directory)*
 
-### 3. Run the automated release command:
+### 2. Run the Automated Release Publisher:
 ```powershell
-npm run release
+# Publish Anything:
+npm run release:github
+
+# Publish a specific child app:
+node scripts/publish-github-release.cjs --app=mediaflow-studio
+
+# Publish all child apps and Anything:
+npm run release:all
 ```
 
-`electron-builder` will:
-- Build the optimized Vite web bundle.
-- Compile the Electron main process.
-- Package the Windows NSIS installer and delta blockmaps (`latest.yml`).
-- Automatically create a new Release draft on your GitHub repository with the update files attached!
-- Publish the release so it is live immediately.
+The script will:
+- Read the version and repository information.
+- Locate the built `<AppName>_<version>_Setup.exe` installer.
+- Create or update the release tag (`v<version>`) on GitHub.
+- Format release notes with new features, improvements, and bug fixes.
+- Upload the setup executable asset directly to GitHub Releases.
 
 ---
 
-## 🔄 What Happens on the User's PC?
+## 🎨 Real-Time Loader Customization
 
-1. When the user opens Creative Hub, `electron-updater` checks GitHub in the background.
-2. It detects that version `1.0.1` is newer than their installed `1.0.0`.
-3. It downloads only the **delta patch** in the background (usually just 5–15 MB rather than the full installer).
-4. The user sees a frosted glass pill: **"Update Ready to Install · Version 1.0.1"**.
-5. They click **"Restart & Apply"** (or it updates automatically next time they close the app).
-6. **Done! No website, no server, and no manual `.exe` downloading required.**
-
----
-
-## ⚙️ Automated GitHub Actions (Optional 100% Cloud Workflow)
-
-You can also automate this completely with GitHub Actions:
-Whenever you push a tag like `v1.0.1`:
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
-A GitHub Action will build the Windows `.exe` on GitHub's cloud runners and publish the update automatically!
+Customizing the splash screen loader for Anything or any child app happens in **real time**:
+1. Open Anything → **Settings → Splash Screen Loader**.
+2. Select **Anything** or any child app (e.g. **MediaFlow Studio**).
+3. Adjust presets, monograms, phrases, background art, or gradients.
+4. Changes are broadcast live to all open windows with **zero latency** and synced directly to disk (`loader-config.json`).

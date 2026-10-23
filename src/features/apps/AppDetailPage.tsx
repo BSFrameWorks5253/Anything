@@ -30,6 +30,8 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { GlassBadge } from '../../components/ui/GlassBadge';
 import { AppIconRenderer } from './components/CrazyAppStudio/AppIconRenderer';
 import { VersionHistoryTab } from './components/AppDetailModal/VersionHistoryTab';
+import { EditAppModal } from './components/EditAppModal';
+import { AppDemoModal } from './components/AppDemoModal';
 import { useTheme } from '../../context/ThemeContext';
 
 interface AppDetailPageProps {
@@ -44,7 +46,9 @@ interface AppDetailPageProps {
   onCustomizeLoader?: (app: CatalogApp) => void;
   onDeleteApp?: (appId: string) => void;
   onRenameApp?: (appId: string, newName: string) => void;
+  onEditApp?: (appId: string, updates: Partial<CatalogApp>) => Promise<void> | void;
   onVersionDeleted?: (appId: string, version: string) => void;
+  onStartTrial?: (app: CatalogApp) => void;
 }
 
 export const AppDetailPage: React.FC<AppDetailPageProps> = ({
@@ -59,16 +63,20 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   onCustomizeLoader,
   onDeleteApp,
   onRenameApp,
+  onEditApp,
   onVersionDeleted,
+  onStartTrial,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
   const [currentAppName, setCurrentAppName] = useState(app.name);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameInput, setRenameInput] = useState(app.name);
   const [isRenaming, setIsRenaming] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uninstallModalOpen, setUninstallModalOpen] = useState(false);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
   const [copiedReleaseUrl, setCopiedReleaseUrl] = useState(false);
   const [copiedTagUrl, setCopiedTagUrl] = useState(false);
@@ -171,6 +179,34 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
       console.error('Failed to rename app:', err);
     } finally {
       setIsRenaming(false);
+    }
+  };
+
+  const handleSaveEdit = async (appId: string, updates: Partial<CatalogApp>) => {
+    if (updates.name) {
+      setCurrentAppName(updates.name);
+      app.name = updates.name;
+    }
+    if (updates.category) app.category = updates.category;
+    if (updates.description !== undefined) app.description = updates.description;
+    if (updates.iconType) app.iconType = updates.iconType;
+    if (updates.iconValue) app.iconValue = updates.iconValue;
+    if (updates.shortName) app.shortName = updates.shortName;
+    if (updates.gradient) app.gradient = updates.gradient;
+    if (updates.textColor) app.textColor = updates.textColor;
+    if (updates.glowColor) app.glowColor = updates.glowColor;
+    (app as any).hasRealIcon = true;
+
+    if (onEditApp) {
+      await onEditApp(appId, updates);
+    } else {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.updateApp) {
+        await electronAPI.updateApp({ appId, ...updates });
+      }
+      if (updates.name && onRenameApp) {
+        onRenameApp(appId, updates.name);
+      }
     }
   };
 
@@ -285,15 +321,49 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
           )}
 
           {app.status === 'not-installed' && (
-            <GlassButton
-              variant="primary"
-              size="sm"
-              icon={<Download className="w-3.5 h-3.5" />}
-              onClick={() => onInstall(app)}
-              className="font-bold"
-            >
-              Download & Install
-            </GlassButton>
+            <div className="flex items-center gap-2">
+              <GlassButton
+                variant="accent"
+                size="sm"
+                icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+                onClick={() => setIsDemoModalOpen(true)}
+                className="font-semibold border-cyan-500/40 text-cyan-300"
+              >
+                Try Free Demo
+              </GlassButton>
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-3.5 h-3.5" />}
+                onClick={() => onInstall(app)}
+                className="font-bold"
+              >
+                Download & Install
+              </GlassButton>
+            </div>
+          )}
+
+          {app.status === 'trial' && (
+            <div className="flex items-center gap-2">
+              <GlassButton
+                variant="accent"
+                size="sm"
+                icon={<Play className="w-3.5 h-3.5 fill-current" />}
+                onClick={() => setIsDemoModalOpen(true)}
+                className="font-bold bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/40 text-emerald-300"
+              >
+                Open Demo ({app.trialInfo?.daysRemaining ?? 7}d Trial)
+              </GlassButton>
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-3.5 h-3.5" />}
+                onClick={() => onInstall(app)}
+                className="font-bold"
+              >
+                Install Full Version
+              </GlassButton>
+            </div>
           )}
 
           {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
@@ -322,14 +392,28 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-start sm:items-center gap-5">
-            <div className="relative shrink-0 p-1 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg group/icon">
-              <AppIconRenderer app={app} size="lg" />
+            <div className="relative shrink-0 group/icon">
+              <div className="p-1 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg relative overflow-hidden">
+                <AppIconRenderer app={{ ...app, name: currentAppName }} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/icon:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-2xl backdrop-blur-xs cursor-pointer z-10"
+                  title="Change / Edit App Icon"
+                >
+                  <Pencil className="w-4 h-4 text-cyan-400 mb-0.5" />
+                  <span className="text-[9px] font-bold tracking-tight">Edit Icon</span>
+                </button>
+              </div>
               {!(app as any).hasRealIcon && !(app.id?.includes('tap-studio')) && !(app.name?.toLowerCase().includes('mediaflow')) && (
-                <div className="absolute -bottom-1.5 -right-1.5 bg-amber-500 rounded-full p-0.5 shadow-md" title="No icon detected — add logo.png to your release folder">
-                  <svg viewBox="0 0 16 16" fill="white" className="w-3 h-3">
-                    <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-5h1.5v5zm0-6.5h-1.5V3.5h1.5V5z"/>
-                  </svg>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="absolute -bottom-1.5 -right-1.5 bg-amber-500 hover:bg-amber-400 rounded-full p-1 shadow-md cursor-pointer transition-transform hover:scale-110 z-20"
+                  title="No custom icon — Click to set app icon"
+                >
+                  <Pencil className="w-2.5 h-2.5 text-slate-950" />
+                </button>
               )}
             </div>
 
@@ -340,18 +424,20 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 </h1>
                 <button
                   type="button"
-                  onClick={() => {
-                    setRenameInput(currentAppName);
-                    setRenameModalOpen(true);
-                  }}
-                  className="p-1 rounded-lg text-zinc-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors"
-                  title="Rename Application"
+                  onClick={() => setEditModalOpen(true)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
+                  title="Edit Application & Icon"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
+                  <Pencil className="w-4 h-4" />
                 </button>
                 {app.status === 'installed' && (
                   <GlassBadge variant="emerald" dot>
                     Installed & Ready
+                  </GlassBadge>
+                )}
+                {app.status === 'trial' && (
+                  <GlassBadge variant="emerald" dot className="bg-emerald-500/15 border-emerald-500/30 text-emerald-300">
+                    ⚡ {app.trialInfo?.daysRemaining ?? 7}d Free Trial Active
                   </GlassBadge>
                 )}
                 {app.status === 'update-available' && (
@@ -383,6 +469,17 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
           {/* Action Row */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <GlassButton
+              variant="glass"
+              size="sm"
+              icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+              onClick={() => setIsDemoModalOpen(true)}
+              className="text-cyan-400 border-cyan-500/30 hover:border-cyan-400 font-medium"
+              title="Interactive Demo Simulator & Free Trial"
+            >
+              Try / Demo
+            </GlassButton>
+
             <GlassButton
               variant="glass"
               size="sm"
@@ -454,12 +551,78 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 <p className="opacity-80">
                   Anything couldn't extract an icon from the EXE or find a logo image in your release folder.
                   To show the real app icon, add a <code className="font-mono bg-amber-500/15 rounded px-1">logo.png</code> or <code className="font-mono bg-amber-500/15 rounded px-1">app-logo.png</code> (512×512 px recommended) inside{' '}
-                  <code className="font-mono bg-amber-500/15 rounded px-1">releases/{app.id}/</code>.
-                  Alternatively, Anything will automatically read the icon embedded in the <code className="font-mono bg-amber-500/15 rounded px-1">.exe</code> next time it scans.
+                  <code className="font-mono bg-amber-500/15 rounded px-1">releases/{app.id}/</code>, or set an icon directly using the button below.
                 </p>
+                <div className="mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Upload / Set App Icon Now</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
+          {/* Creative Cloud Style Demo & 7-Day Free Trial Spotlight */}
+          <GlassCard
+            variant="interactive"
+            className="p-6 border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-emerald-500/5 to-transparent relative overflow-hidden"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded-lg bg-cyan-500/20 text-cyan-400">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
+                    Experience {app.name} in Trial Sandbox / Interactive Demo
+                  </h4>
+                  <GlassBadge variant="cyan" size="sm" className="font-mono text-[10px]">
+                    Adobe Creative Cloud Style
+                  </GlassBadge>
+                </div>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
+                  Test-drive the full UI, real-time macro event engine, and child app loader handoff with zero commitment. Launch the interactive video & multi-camera timeline simulator or evaluate with a 7-day full license.
+                </p>
+                {app.status === 'trial' && (
+                  <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-emerald-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Free Evaluation Mode: {app.trialInfo?.daysRemaining ?? 7} days remaining</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <GlassButton
+                  variant="glass"
+                  size="sm"
+                  icon={<Play className="w-3.5 h-3.5 fill-current text-cyan-400" />}
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="font-semibold text-xs border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
+                >
+                  Try Demo Simulator
+                </GlassButton>
+                {app.status !== 'trial' && app.status !== 'installed' && (
+                  <GlassButton
+                    variant="accent"
+                    size="sm"
+                    icon={<Sparkles className="w-3.5 h-3.5" />}
+                    onClick={() => {
+                      if (onStartTrial) onStartTrial(app);
+                      setIsDemoModalOpen(true);
+                    }}
+                    className="font-bold text-xs"
+                  >
+                    Start 7-Day Free Trial
+                  </GlassButton>
+                )}
+              </div>
+            </div>
+          </GlassCard>
+
           <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-4">
             <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
               About {app.name}
@@ -924,6 +1087,29 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* Edit Application & Icon Modal */}
+      <EditAppModal
+        app={app}
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onSave={handleSaveEdit}
+      />
+
+      {/* Interactive Demo Simulator & 7-Day Trial Modal */}
+      <AppDemoModal
+        app={app}
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        onInstall={(appToInstall) => {
+          onInstall(appToInstall);
+          setIsDemoModalOpen(false);
+        }}
+        onStartTrial={(appToTrial) => {
+          if (onStartTrial) onStartTrial(appToTrial);
+          setIsDemoModalOpen(false);
+        }}
+      />
     </div>
   );
 };

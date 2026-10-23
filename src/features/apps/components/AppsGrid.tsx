@@ -14,6 +14,8 @@ interface AppsGridProps {
   onUninstall: (appId: string) => void;
   onDeleteApp?: (appId: string) => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
+  onEditApp?: (app: CatalogApp) => void;
+  onTryDemo?: (app: CatalogApp) => void;
 }
 
 export const AppsGrid: React.FC<AppsGridProps> = ({
@@ -26,6 +28,8 @@ export const AppsGrid: React.FC<AppsGridProps> = ({
   onUninstall,
   onDeleteApp,
   onCustomizeLoader,
+  onEditApp,
+  onTryDemo,
 }) => {
   if (apps.length === 0) {
     return (
@@ -53,6 +57,8 @@ export const AppsGrid: React.FC<AppsGridProps> = ({
           onUninstall={onUninstall}
           onDeleteApp={onDeleteApp}
           onCustomizeLoader={onCustomizeLoader}
+          onEditApp={onEditApp}
+          onTryDemo={onTryDemo}
         />
       ))}
     </div>

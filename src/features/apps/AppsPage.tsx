@@ -7,6 +7,7 @@ import { AppsGrid } from './components/AppsGrid';
 import { CrazyAddAppModal } from './components/CrazyAppStudio/CrazyAddAppModal';
 import { EmptyHubHero } from './components/CrazyAppStudio/EmptyHubHero';
 import { AppDetailModal } from './components/AppDetailModal';
+import { EditAppModal } from './components/EditAppModal';
 import { useViewMode } from '../../context/ViewModeContext';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -27,6 +28,8 @@ interface AppsPageProps {
   onNavigateToPublisher?: () => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
   onOpenDetailApp?: (app: CatalogApp) => void;
+  onEditApp?: (appId: string, updates: Partial<CatalogApp>) => Promise<void> | void;
+  onTryDemoApp?: (app: CatalogApp) => void;
   isCheckingUpdates?: boolean;
   onCheckUpdates?: () => void;
 }
@@ -46,6 +49,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   onNavigateToPublisher,
   onCustomizeLoader,
   onOpenDetailApp,
+  onEditApp,
+  onTryDemoApp,
   isCheckingUpdates,
   onCheckUpdates,
 }) => {
@@ -53,6 +58,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailApp, setDetailApp] = useState<CatalogApp | null>(null);
+  const [editingApp, setEditingApp] = useState<CatalogApp | null>(null);
   const { viewMode } = useViewMode();
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -137,6 +143,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
             onUninstall={onUninstallApp}
             onDeleteApp={onDeleteApp}
             onCustomizeLoader={onCustomizeLoader}
+            onEditApp={(targetApp) => setEditingApp(targetApp)}
+            onTryDemo={onTryDemoApp}
           />
         </>
       )}
@@ -162,6 +170,19 @@ export const AppsPage: React.FC<AppsPageProps> = ({
         onFixPath={onFixPathApp}
         onUninstall={onUninstallApp}
         onDeleteApp={onDeleteApp}
+        onEditApp={onEditApp}
+      />
+
+      {/* Quick Edit App & Icon Modal */}
+      <EditAppModal
+        app={editingApp}
+        isOpen={Boolean(editingApp)}
+        onClose={() => setEditingApp(null)}
+        onSave={async (id, updates) => {
+          if (onEditApp) {
+            await onEditApp(id, updates);
+          }
+        }}
       />
     </div>
   );

@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Always pass string to maintain 100% compatibility with running main process
     return ipcRenderer.invoke('app:launch', pathString);
   },
+  launchAppDemo: (appData: any) => ipcRenderer.invoke('app:launch-demo', appData),
   resolveInstalledPath: (data: { appId?: string; name?: string; currentPath?: string; executableName?: string }) =>
     ipcRenderer.invoke('app:resolve-installed-path', data),
   selectExecutable: () => ipcRenderer.invoke('app:select-executable'),
@@ -53,10 +54,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('catalog:updated', subscription);
     return () => ipcRenderer.removeListener('catalog:updated', subscription);
   },
+  onLoaderUpdated: (callback: (data: { appId: string; config: any }) => void) => {
+    const subscription = (_: any, data: any) => callback(data);
+    ipcRenderer.on('loader:updated', subscription);
+    return () => ipcRenderer.removeListener('loader:updated', subscription);
+  },
+  syncAppSources: () => ipcRenderer.invoke('sources:sync'),
+  getAppSources: () => ipcRenderer.invoke('sources:get'),
+  saveAppSources: (sources: any[]) => ipcRenderer.invoke('sources:save', sources),
 
   // App Lifecycle: Uninstall, Path Fixing, Path Verification, Rename, Delete
   uninstallApp: (appId: string) => ipcRenderer.invoke('app:uninstall', appId),
   renameApp: (data: { appId: string; newName: string }) => ipcRenderer.invoke('app:rename', data),
+  updateApp: (data: {
+    appId: string;
+    name?: string;
+    category?: string;
+    description?: string;
+    iconType?: 'monogram' | 'emoji' | 'image';
+    iconValue?: string;
+  }) => ipcRenderer.invoke('app:update', data),
   deleteAppVersion: (data: { appId: string; version: string }) => ipcRenderer.invoke('app:delete-version', data),
   deleteApp: (appId: string) => ipcRenderer.invoke('app:delete', appId),
   pushReleaseEmail: (data: { appId: string; version: string; payload?: any }) =>

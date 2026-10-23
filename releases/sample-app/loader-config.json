@@ -1,0 +1,15 @@
+{
+  "appId": "sample-app",
+  "enabled": true,
+  "artworkUrl": "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1400&q=85",
+  "artistName": "Maya Lin Studios",
+  "artworkTitle": "Bioluminescent Petals & Glass",
+  "productName": "Sample app",
+  "versionText": "v1.0.0 (x64)",
+  "tagline": "Integrated Workspace Application",
+  "durationMs": 2800,
+  "logoText": "SA",
+  "badgeGradient": "from-red-600 via-rose-500 to-amber-500",
+  "artworkFit": "cover",
+  "artworkPosition": "center"
+}

@@ -14,6 +14,8 @@
     "collect-releases:watch": "node scripts/collect-releases.cjs --watch",
     "build": "npm run build:vite && npm run build:electron",
     "release": "npm run build && electron-builder --publish always",
+    "release:github": "node scripts/publish-github-release.cjs",
+    "release:all": "node scripts/publish-github-release.cjs --all",
     "start": "electron .",
     "preview": "vite preview"
   },
@@ -30,6 +32,7 @@
     },
     "artifactName": "${productName}_${version}.${ext}",
     "win": {
+      "icon": "public/icon.ico",
       "target": [
         "nsis"
       ],

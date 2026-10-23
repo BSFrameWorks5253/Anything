@@ -23,31 +23,47 @@ import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { AnythingBrandEmblem } from '../../../components/ui/AdobeSplashScreen';
 import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
 import {
-  TAP_STUDIO_LOGO_BASE64,
   MEDIAFLOW_STUDIO_LOGO_BASE64,
 } from '../../apps/constants/appLogos';
+import type { CatalogApp } from '../../../types/app.types';
 import {
   splashArtworkPresets,
   loadAppSplashSettings,
   saveAppSplashSettings,
   defaultSplashSettings,
   defaultChildAppSplashSettings,
+  cleanVersionText,
   type SplashSettings,
 } from '../../../data/splash.data';
 
 interface SplashScreenSectionProps {
   onPreview: (settings: SplashSettings) => void;
   initialAppId?: string;
+  apps?: CatalogApp[];
 }
 
 export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
   onPreview,
   initialAppId = 'anything',
+  apps = [],
 }) => {
+  // Helper to find an app by ID from the catalog
+  const getAppById = (id: string): CatalogApp | undefined => {
+    if (id === 'anything') return undefined;
+    const norm = id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    return apps.find(
+      (a) =>
+        a.id === id ||
+        a.id === `app-${id}` ||
+        a.id.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '') === norm
+    );
+  };
+
   const [selectedAppId, setSelectedAppId] = useState<string>(initialAppId);
-  const [settings, setSettings] = useState<SplashSettings>(() =>
-    loadAppSplashSettings(initialAppId)
-  );
+  const [settings, setSettings] = useState<SplashSettings>(() => {
+    const initApp = getAppById(initialAppId);
+    return loadAppSplashSettings(initialAppId, initApp);
+  });
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [cropSourceImage, setCropSourceImage] = useState<string | null>(null);
@@ -56,15 +72,26 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync when initialAppId prop changes
+  useEffect(() => {
+    if (initialAppId && initialAppId !== selectedAppId) {
+      handleSelectApp(initialAppId);
+    }
+  }, [initialAppId]);
+
   // Switch active app loader
   const handleSelectApp = (appId: string) => {
     setSelectedAppId(appId);
-    const loaded = loadAppSplashSettings(appId);
+    const targetApp = getAppById(appId);
+    const loaded = loadAppSplashSettings(appId, targetApp);
     setSettings(loaded);
     setSyncStatus(null);
   };
 
   const updateSettings = async (partial: Partial<SplashSettings>) => {
+    if (partial.versionText) {
+      partial.versionText = cleanVersionText(partial.versionText);
+    }
     const next = { ...settings, ...partial, appId: selectedAppId };
     setSettings(next);
     saveAppSplashSettings(selectedAppId, next);
@@ -130,24 +157,38 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
   };
 
   const handleResetDefaults = () => {
-    const defaults =
+    const targetApp = getAppById(selectedAppId);
+    const appCleanVersion = targetApp?.version
+      ? (targetApp.version.startsWith('v') || targetApp.version.startsWith('V') || targetApp.version.includes('Release')
+          ? cleanVersionText(targetApp.version)
+          : `v${cleanVersionText(targetApp.version)}`)
+      : undefined;
+
+    const defaults: SplashSettings =
       selectedAppId === 'anything'
         ? defaultSplashSettings
-        : defaultChildAppSplashSettings[selectedAppId] || {
-            ...defaultSplashSettings,
+        : {
+            ...(defaultChildAppSplashSettings[selectedAppId] || defaultSplashSettings),
             appId: selectedAppId,
             productName:
-              selectedAppId.charAt(0).toUpperCase() +
-              selectedAppId.slice(1).replace(/-/g, ' '),
-            logoText: selectedAppId.slice(0, 2).toUpperCase(),
+              targetApp?.name ||
+              (defaultChildAppSplashSettings[selectedAppId]?.productName ||
+                selectedAppId.charAt(0).toUpperCase() + selectedAppId.slice(1).replace(/-/g, ' ')),
+            logoText:
+              targetApp?.shortName ||
+              (defaultChildAppSplashSettings[selectedAppId]?.logoText || selectedAppId.slice(0, 2).toUpperCase()),
+            versionText:
+              appCleanVersion || cleanVersionText(defaultChildAppSplashSettings[selectedAppId]?.versionText || 'v1.0.0'),
           };
     setSettings(defaults);
     saveAppSplashSettings(selectedAppId, defaults);
     updateSettings(defaults);
   };
 
+  const currentApp = getAppById(selectedAppId);
   const emblemLetters =
     settings.logoText ||
+    currentApp?.shortName ||
     (settings.productName?.toLowerCase().includes('tap')
       ? 'Ts'
       : settings.productName?.toLowerCase().includes('mediaflow')
@@ -206,11 +247,11 @@ function getLoaderConfig() {
       >
         {/* App Selection Tabs Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-white/[0.08]">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 font-semibold uppercase">
               Target Application:
             </span>
-            <div className="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700">
+            <div className="inline-flex flex-wrap p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 gap-1">
               <button
                 onClick={() => handleSelectApp('anything')}
                 className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -222,37 +263,54 @@ function getLoaderConfig() {
                 <span>Anything Core</span>
               </button>
 
-              <button
-                onClick={() => handleSelectApp('tap-studio')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  selectedAppId === 'tap-studio'
-                    ? 'bg-cyan-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                <img
-                  src={TAP_STUDIO_LOGO_BASE64}
-                  alt="Tap Studio"
-                  className="w-3.5 h-3.5 object-contain rounded-xs"
-                />
-                <span>Tap Studio</span>
-              </button>
-
-              <button
-                onClick={() => handleSelectApp('mediaflow-studio')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  selectedAppId === 'mediaflow-studio'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                <img
-                  src={MEDIAFLOW_STUDIO_LOGO_BASE64}
-                  alt="MediaFlow Studio"
-                  className="w-3.5 h-3.5 object-cover rounded-xs"
-                />
-                <span>MediaFlow Studio</span>
-              </button>
+              {apps && apps.length > 0 ? (
+                apps.map((app) => {
+                  const isSelected =
+                    selectedAppId === app.id ||
+                    selectedAppId === app.id.replace(/^app-/, '') ||
+                    selectedAppId.toLowerCase().replace(/[^a-z0-9]/g, '') === app.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+                  return (
+                    <button
+                      key={app.id}
+                      onClick={() => handleSelectApp(app.id)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        isSelected
+                          ? 'bg-cyan-600 text-white shadow-xs font-bold'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {app.iconType === 'image' && app.iconValue ? (
+                        <img
+                          src={app.iconValue}
+                          alt={app.name}
+                          className="w-3.5 h-3.5 object-contain rounded-xs"
+                        />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center text-[10px] font-bold bg-white/20 rounded-xs">
+                          {app.shortName || app.name.slice(0, 2)}
+                        </span>
+                      )}
+                      <span>{app.name}</span>
+                    </button>
+                  );
+                })
+              ) : (
+                <button
+                  onClick={() => handleSelectApp('mediaflow-studio')}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    selectedAppId === 'mediaflow-studio'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  <img
+                    src={MEDIAFLOW_STUDIO_LOGO_BASE64}
+                    alt="MediaFlow Studio"
+                    className="w-3.5 h-3.5 object-cover rounded-xs"
+                  />
+                  <span>MediaFlow Studio</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -309,7 +367,7 @@ function getLoaderConfig() {
                   {settings.productName}
                 </span>
                 <span className="text-[10px] text-zinc-300 font-mono">
-                  {settings.versionText}
+                  {cleanVersionText(settings.versionText)}
                 </span>
               </div>
             </div>
@@ -465,14 +523,34 @@ function getLoaderConfig() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold mb-1">
-                  Version Subtitle
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
+                    Version Subtitle
+                  </label>
+                  {currentApp && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetVer = currentApp.version || currentApp.localVersion || '1.0.0';
+                        const cv = cleanVersionText(targetVer);
+                        const finalVer = cv.startsWith('v') || cv.startsWith('V') || cv.includes('Release')
+                          ? cv
+                          : `v${cv}`;
+                        updateSettings({ versionText: finalVer });
+                      }}
+                      className="text-[10px] text-cyan-600 dark:text-cyan-400 hover:underline font-mono"
+                      title="Sync subtitle to this app's current version"
+                    >
+                      Use App Ver ({cleanVersionText(currentApp.version || currentApp.localVersion || '1.0.0')})
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
-                  value={settings.versionText}
-                  onChange={(e) => updateSettings({ versionText: e.target.value })}
+                  value={cleanVersionText(settings.versionText)}
+                  onChange={(e) => updateSettings({ versionText: cleanVersionText(e.target.value) })}
                   className="w-full px-3 py-1.5 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white font-mono"
+                  placeholder="e.g. v1.0.0"
                 />
               </div>
             </div>

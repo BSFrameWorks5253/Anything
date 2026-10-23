@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Loader2, Cpu } from 'lucide-react';
 import type { SplashSettings } from '../../data/splash.data';
+import { cleanVersionText } from '../../data/splash.data';
 
 interface AdobeSplashScreenProps {
   settings: SplashSettings;
@@ -28,14 +29,17 @@ export const AnythingBrandEmblem: React.FC<{
   glow = false,
 }) => {
   const lower = letters.toLowerCase();
+  const isOneTap = lower === 'ot';
   const isTap = lower === 'ts';
   const isMediaFlow = lower === 'ms' || lower === 'mf';
 
-  const defaultFrom = isTap ? '#06B6D4' : isMediaFlow ? '#0066EE' : '#FF2A2A';
-  const defaultTo = isTap ? '#4F46E5' : isMediaFlow ? '#003399' : '#BA0000';
+  const defaultFrom = isOneTap ? '#E11D48' : isTap ? '#06B6D4' : isMediaFlow ? '#0066EE' : '#FF2A2A';
+  const defaultTo = isOneTap ? '#9F1239' : isTap ? '#4F46E5' : isMediaFlow ? '#003399' : '#BA0000';
   const fromColor = gradientFrom || defaultFrom;
   const toColor = gradientTo || defaultTo;
-  const shadowColor = isTap
+  const shadowColor = isOneTap
+    ? 'rgba(225, 29, 72, 0.45)'
+    : isTap
     ? 'rgba(6, 182, 212, 0.45)'
     : isMediaFlow
     ? 'rgba(0, 102, 238, 0.45)'
@@ -95,6 +99,16 @@ export const AnythingBrandEmblem: React.FC<{
 
 const getInitializationSteps = (name: string = '') => {
   const lower = name.toLowerCase();
+  if (lower.includes('one tap') || lower.includes('onetap')) {
+    return [
+      'Initializing Direct3D 12 GPU hardware pipeline...',
+      'Scanning media ingestion devices & high-speed storage...',
+      'Mounting sequential batch rendering engine...',
+      'Calibrating Premiere Pro & After Effects CEP bridges...',
+      'Syncing with Anything Ecosystem...',
+      'Starting One Tap...',
+    ];
+  }
   if (lower.includes('tap')) {
     return [
       'Initializing Direct3D 12 low-latency driver...',
@@ -185,7 +199,9 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
   const stepsList = getInitializationSteps(settings.productName);
   const emblemLetters =
     settings.logoText ||
-    (settings.productName?.toLowerCase().includes('tap')
+    (settings.productName?.toLowerCase().includes('one tap') || settings.productName?.toLowerCase().includes('onetap')
+      ? 'Ot'
+      : settings.productName?.toLowerCase().includes('tap')
       ? 'Ts'
       : settings.productName?.toLowerCase().includes('mediaflow')
       ? 'Ms'
@@ -264,7 +280,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
                     {settings.productName || 'Anything'}
                   </h1>
                   <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-white/10 text-white border border-white/20 backdrop-blur-md shadow-xs">
-                    {settings.versionText || '2026.1'}
+                    {cleanVersionText(settings.versionText) || '2026.1'}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-200/90 font-medium drop-shadow-sm mt-0.5">

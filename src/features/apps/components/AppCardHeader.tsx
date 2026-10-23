@@ -34,6 +34,11 @@ export const AppCardHeader: React.FC<AppCardHeaderProps> = ({ app }) => {
               Update
             </GlassBadge>
           )}
+          {app.status === 'trial' && (
+            <GlassBadge variant="emerald" dot className="shrink-0 text-[10px] bg-emerald-500/15 border-emerald-500/30 text-emerald-300">
+              {app.trialInfo?.daysRemaining ?? 7}d Trial
+            </GlassBadge>
+          )}
         </div>
 
         <div className="flex items-center gap-2 mt-0.5">

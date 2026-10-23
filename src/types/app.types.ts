@@ -21,7 +21,8 @@ export type AppLifecycleStatus =
   | 'extracting'        // Unpacking & configuring
   | 'installed'         // Ready to launch
   | 'update-available'  // Remote version > local version
-  | 'path-broken';      // Executable missing from disk
+  | 'path-broken'       // Executable missing from disk
+  | 'trial';            // Free trial / Demo mode active
 
 export interface DownloadProgress {
   percent: number;
@@ -73,6 +74,12 @@ export interface CatalogApp {
   /** true when iconValue is an actual app icon (EXE extracted or PNG/SVG provided by creator) */
   hasRealIcon?: boolean;
   status: AppLifecycleStatus;
+  trialInfo?: {
+    active: boolean;
+    startedAt: number;
+    daysTotal: number;
+    daysRemaining: number;
+  };
   downloadProgress?: DownloadProgress;
   changelog?: string[];
   releaseInfo?: AppReleaseMetadata;
