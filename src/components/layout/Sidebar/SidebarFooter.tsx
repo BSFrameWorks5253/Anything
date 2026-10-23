@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HelpCircle } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { useTheme } from '../../../context/ThemeContext';
+import { useAuth } from '../../../context/AuthContext';
+import { getProfileInitial, getInitialGradient } from '../../../utils/userInitials';
 
 interface SidebarFooterProps {
   onNavigate: (page: NavigationPage) => void;
@@ -9,6 +11,7 @@ interface SidebarFooterProps {
 
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const isLight = theme === 'light';
 
   const [avatar, setAvatar] = useState<string | null>(() => {
@@ -22,6 +25,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
+
+  const activeAvatar = user?.avatar || avatar;
+  const initial = getProfileInitial(user);
+  const gradient = getInitialGradient(initial);
 
   return (
     <div
@@ -46,7 +53,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
       <button
         onClick={() => onNavigate('settings')}
         className="relative group p-0.5 rounded-full transition-transform active:scale-95"
-        title="Burhanuddin Sounasath · 8369811201 · Architect"
+        title={user ? `${user.name} (${user.email})` : 'Burhanuddin Sounasath · 8369811201 · Architect'}
       >
         <div
           className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold border transition-colors ${
@@ -55,10 +62,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
               : 'bg-zinc-800 border-zinc-700 text-zinc-100'
           }`}
         >
-          {avatar ? (
-            <img src={avatar} alt="Burhanuddin Sounasath" className="w-full h-full object-cover" />
+          {activeAvatar ? (
+            <img src={activeAvatar} alt={user?.name || 'Profile'} className="w-full h-full object-cover" />
           ) : (
-            'B'
+            <div className={`w-full h-full flex items-center justify-center bg-gradient-to-tr ${gradient} text-white font-black`}>
+              {initial}
+            </div>
           )}
         </div>
         <span

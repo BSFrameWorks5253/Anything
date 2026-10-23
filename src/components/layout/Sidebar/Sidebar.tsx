@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Compass, CloudUpload, FolderClosed, Sliders } from 'lucide-react';
+import { LayoutGrid, Compass, CloudUpload, FolderClosed, Sliders, Sparkles } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNavItem } from './SidebarNavItem';
@@ -34,6 +34,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Apps',
       icon: <Compass className="w-4 h-4" />,
       badge: updateCount > 0 ? updateCount : undefined,
+      creatorOnly: false,
+    },
+    {
+      id: 'creator' as NavigationPage,
+      label: 'Creator',
+      icon: <Sparkles className="w-4 h-4 text-cyan-500" />,
       creatorOnly: false,
     },
     {

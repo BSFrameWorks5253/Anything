@@ -16,6 +16,7 @@ import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
 import { useAuth } from '../../../context/AuthContext';
+import { getProfileInitial } from '../../../utils/userInitials';
 
 export const AccountSection: React.FC = () => {
   const { user, isAuthenticated, logout, openAuthModal, updateUser } = useAuth();
@@ -90,12 +91,12 @@ export const AccountSection: React.FC = () => {
                   {avatar ? (
                     <img
                       src={avatar}
-                      alt="Burhanuddin Sounasath"
+                      alt={user?.name || 'Profile'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="bg-gradient-to-br from-white via-cyan-100 to-sky-300 bg-clip-text text-transparent">
-                      B
+                      {getProfileInitial(user)}
                     </span>
                   )}
 

@@ -29,8 +29,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('catalog:updated', subscription);
   },
 
-  // App Lifecycle: Uninstall, Path Fixing, Path Verification
+  // App Lifecycle: Uninstall, Path Fixing, Path Verification, Rename, Delete
   uninstallApp: (appId: string) => ipcRenderer.invoke('app:uninstall', appId),
+  renameApp: (data: { appId: string; newName: string }) => ipcRenderer.invoke('app:rename', data),
+  deleteAppVersion: (data: { appId: string; version: string }) => ipcRenderer.invoke('app:delete-version', data),
+  deleteApp: (appId: string) => ipcRenderer.invoke('app:delete', appId),
+  pushReleaseEmail: (data: { appId: string; version: string; payload?: any }) =>
+    ipcRenderer.invoke('email:push-release', data),
   fixAppPath: (appName: string) => ipcRenderer.invoke('app:fix-path', appName),
   verifyAppPath: (targetPath: string) => ipcRenderer.invoke('app:verify-path', targetPath),
   onCatalogDownloadProgress: (callback: (data: any) => void) => {

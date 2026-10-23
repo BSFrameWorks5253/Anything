@@ -13,6 +13,9 @@ import {
   Zap,
   Wrench,
   Package,
+  Trash2,
+  Send,
+  Check,
 } from 'lucide-react';
 import type { CatalogApp, AppReleaseMetadata } from '../../../../types/app.types';
 import { GlassButton } from '../../../../components/ui/GlassButton';
@@ -47,6 +50,9 @@ export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRol
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [rollingBackTag, setRollingBackTag] = useState<string | null>(null);
   const [emailModalRelease, setEmailModalRelease] = useState<AppReleaseMetadata | null>(null);
+  const [deleteConfirmTag, setDeleteConfirmTag] = useState<string | null>(null);
+  const [pushedTags, setPushedTags] = useState<{ [tag: string]: boolean }>({});
+  const [isDeleting, setIsDeleting] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
@@ -176,6 +182,41 @@ export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRol
     setEmailModalRelease(meta);
   };
 
+  const handleDirectPushEmail = async (rel: GitHubReleaseItem) => {
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.pushReleaseEmail) {
+        await electronAPI.pushReleaseEmail({
+          appId: app.id,
+          version: rel.tag,
+          payload: rel.releaseMetadata,
+        });
+      }
+      setPushedTags((prev) => ({ ...prev, [rel.tag]: true }));
+      setTimeout(() => {
+        setPushedTags((prev) => ({ ...prev, [rel.tag]: false }));
+      }, 4000);
+    } catch (e) {
+      console.error('Failed to push email:', e);
+    }
+  };
+
+  const handleConfirmDeleteVersion = async (tag: string) => {
+    setIsDeleting(true);
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.deleteAppVersion) {
+        await electronAPI.deleteAppVersion({ appId: app.id, version: tag });
+      }
+      setReleases((prev) => prev.filter((r) => r.tag !== tag));
+      setDeleteConfirmTag(null);
+    } catch (e: any) {
+      setError(e.message || 'Failed to delete version.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Banner */}
@@ -289,6 +330,38 @@ export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRol
                     >
                       <Mail className="w-3.5 h-3.5 text-cyan-500" />
                       <span>Release Email</span>
+                    </button>
+
+                    {/* Direct Push Email Button */}
+                    <button
+                      onClick={() => handleDirectPushEmail(rel)}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-all ${
+                        pushedTags[rel.tag]
+                          ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-sm font-bold'
+                          : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-white/[0.06] dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-white/10'
+                      }`}
+                      title="Push Release Email directly to all subscribers"
+                    >
+                      {pushedTags[rel.tag] ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Pushed!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5 text-sky-500" />
+                          <span>Push</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Delete Version Button */}
+                    <button
+                      onClick={() => setDeleteConfirmTag(rel.tag)}
+                      className="p-1.5 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all"
+                      title={`Delete Version ${rel.rawTag} from disk & history`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
 
                     {/* Switch / Upgrade / Rollback Button */}
@@ -409,6 +482,45 @@ export const VersionHistoryTab: React.FC<VersionHistoryTabProps> = ({ app, onRol
             }
           }}
         />
+      )}
+      {/* Delete Version Confirmation Dialog */}
+      {deleteConfirmTag && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-500">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Delete Release v{deleteConfirmTag}?</h4>
+                <p className="text-xs text-zinc-400">This removes the version folder and installer binary from disk.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/60 font-mono">
+              Target: <span className="text-white font-bold">{app.name} (v{deleteConfirmTag})</span>
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTag(null)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => handleConfirmDeleteVersion(deleteConfirmTag)}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5"
+              >
+                {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isDeleting ? 'Deleting...' : 'Delete Version'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

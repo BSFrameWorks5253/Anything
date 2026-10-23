@@ -21,6 +21,10 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
     title: 'Catalog Publisher',
     subtitle: 'Distribute software & manage releases',
   },
+  creator: {
+    title: 'Creator & Lead Architect',
+    subtitle: 'Burhanuddin Sounasath · Frameworks & Child Apps',
+  },
   files: {
     title: 'Cloud Documents',
     subtitle: 'Synchronized assets & cloud storage',

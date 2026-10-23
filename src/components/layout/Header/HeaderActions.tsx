@@ -17,6 +17,7 @@ import { GlassInput } from '../../ui/GlassInput';
 import { useTheme } from '../../../context/ThemeContext';
 import { useViewMode } from '../../../context/ViewModeContext';
 import { useAuth } from '../../../context/AuthContext';
+import { getProfileInitial, getInitialGradient } from '../../../utils/userInitials';
 
 interface HeaderActionsProps {
   searchQuery: string;
@@ -180,12 +181,14 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
                 ? 'bg-zinc-100 border-zinc-300 text-zinc-800'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-200'
             }`}
-            title={`${user.name} (${user.role})`}
+            title={`${user.name} (${user.email || user.role})`}
           >
             {user.avatar ? (
               <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
             ) : (
-              <span>{user.name.charAt(0).toUpperCase()}</span>
+              <span className={`w-full h-full flex items-center justify-center bg-gradient-to-tr ${getInitialGradient(getProfileInitial(user))} text-white font-black`}>
+                {getProfileInitial(user)}
+              </span>
             )}
             <span className="absolute bottom-0 right-0 w-1.5 h-1.5 rounded-full bg-emerald-500 border border-slate-900" />
           </button>
@@ -199,11 +202,11 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
               }`}
             >
               <div className="flex items-center gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                <div className={`w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr ${getInitialGradient(getProfileInitial(user))} flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md`}>
                   {user.avatar ? (
                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
-                    user.name.charAt(0).toUpperCase()
+                    getProfileInitial(user)
                   )}
                 </div>
                 <div className="truncate">

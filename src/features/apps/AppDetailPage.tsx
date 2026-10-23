@@ -18,6 +18,8 @@ import {
   Palette,
   ShieldCheck,
   User,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -51,8 +53,49 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   onCustomizeLoader,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
+  const [currentAppName, setCurrentAppName] = useState(app.name);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [renameInput, setRenameInput] = useState(app.name);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { theme } = useTheme();
   const isLight = theme === 'light';
+
+  const handleSaveRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renameInput.trim()) return;
+    setIsRenaming(true);
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.renameApp) {
+        await electronAPI.renameApp({ appId: app.id, newName: renameInput.trim() });
+      }
+      setCurrentAppName(renameInput.trim());
+      app.name = renameInput.trim();
+      setRenameModalOpen(false);
+    } catch (err) {
+      console.error('Failed to rename app:', err);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleConfirmDeleteApp = async () => {
+    setIsDeleting(true);
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.deleteApp) {
+        await electronAPI.deleteApp(app.id);
+      }
+      setDeleteModalOpen(false);
+      onBack();
+    } catch (err) {
+      console.error('Failed to delete app:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const defaultReqs = app.systemRequirements || {
     os: 'Windows 10 / Windows 11 (64-bit)',
@@ -165,8 +208,19 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                  {app.name}
+                  {currentAppName}
                 </h1>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRenameInput(currentAppName);
+                    setRenameModalOpen(true);
+                  }}
+                  className="p-1 rounded-lg text-zinc-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors"
+                  title="Rename Application"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 {app.status === 'installed' && (
                   <GlassBadge variant="emerald" dot>
                     Installed & Ready
@@ -221,6 +275,16 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 Uninstall
               </GlassButton>
             )}
+
+            <GlassButton
+              variant="glass"
+              size="sm"
+              icon={<Trash2 className="w-3.5 h-3.5 text-rose-600" />}
+              onClick={() => setDeleteModalOpen(true)}
+              className="hover:bg-rose-600/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+            >
+              Delete App
+            </GlassButton>
           </div>
         </div>
       </GlassCard>
@@ -448,6 +512,97 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             }}
           />
         </GlassCard>
+      )}
+      {/* Rename Application Modal */}
+      {renameModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-cyan-600 dark:text-cyan-400">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                <Pencil className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Rename Application</h4>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Updates the display name in Anything and app.json</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveRename} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold mb-1">
+                  Application Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={renameInput}
+                  onChange={(e) => setRenameInput(e.target.value)}
+                  placeholder="App Name"
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRenameModalOpen(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <GlassButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={isRenaming}
+                  icon={<Check className="w-3.5 h-3.5" />}
+                >
+                  {isRenaming ? 'Saving...' : 'Save Name'}
+                </GlassButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Application Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-500">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Delete {currentAppName}?</h4>
+                <p className="text-xs text-zinc-400">Permanently removes all release executables and files from Anything.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/60 font-mono">
+              App ID: <span className="text-white font-bold">{app.id}</span>
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDeleteApp}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5"
+              >
+                {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>{isDeleting ? 'Deleting...' : 'Delete Completely'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

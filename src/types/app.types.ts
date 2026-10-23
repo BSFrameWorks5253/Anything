@@ -2,6 +2,7 @@ export type NavigationPage =
   | 'home' 
   | 'apps' 
   | 'publisher'
+  | 'creator'
   | 'files' 
   | 'settings';
 

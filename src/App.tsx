@@ -8,6 +8,7 @@ import { AppDetailPage } from './features/apps/AppDetailPage';
 import { PublisherPage } from './features/publisher/PublisherPage';
 import { FilesPage } from './features/files/FilesPage';
 import { SettingsPage } from './features/settings/SettingsPage';
+import { CreatorProfilePage } from './features/creator/CreatorProfilePage';
 import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
 import { useAuth } from './context/AuthContext';
@@ -639,6 +640,14 @@ export function App() {
             onAddCatalogApp={handleAddCatalogApp}
             onRemoveCatalogApp={handleRemoveCatalogApp}
             onNavigateToApps={() => setCurrentPage('apps')}
+          />
+        );
+      case 'creator':
+        return (
+          <CreatorProfilePage
+            catalog={apps}
+            onLaunchApp={handleLaunchApp}
+            onOpenAppDetail={(targetApp) => setViewingApp(targetApp)}
           />
         );
       case 'files':
