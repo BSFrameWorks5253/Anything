@@ -2277,6 +2277,32 @@ function createWindow() {
         fs.writeFileSync(path.join(installedDir, 'loader-config.json'), JSON.stringify(config, null, 2), 'utf-8');
       }
 
+      // 4. Live sync directly to child application directories on disk
+      const liveSyncTargets: string[] = [];
+      if (targetAppId === 'mediaflow-studio') {
+        liveSyncTargets.push(
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\loader-config.json',
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\dist\\loader-config.json',
+          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\loader-config.json',
+          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\resources\\loader-config.json'
+        );
+      } else if (targetAppId === 'tap-studio') {
+        liveSyncTargets.push(
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Tap Studio\\loader-config.json',
+          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\loader-config.json',
+          'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\resources\\loader-config.json'
+        );
+      }
+
+      for (const t of liveSyncTargets) {
+        try {
+          const parent = path.dirname(t);
+          if (fs.existsSync(parent)) {
+            fs.writeFileSync(t, JSON.stringify(config, null, 2), 'utf-8');
+          }
+        } catch {}
+      }
+
       return { success: true, releaseConfigPath, globalPath };
     } catch (err: any) {
       return { success: false, error: err.message };

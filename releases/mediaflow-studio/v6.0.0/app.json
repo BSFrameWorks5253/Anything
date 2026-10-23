@@ -5,7 +5,7 @@
   "version": "6.0.0",
   "category": "Media & Video",
   "description": "Professional Media Ingestion, Synchronization and Report Fusion Desktop Suite.",
-  "executableName": "Mediaflow_studio_6.0.0.exe",
+  "executableName": "MediaFlow Studio.exe",
   "setupExecutableName": "Mediaflow_studio_6.0.0_Setup.exe",
   "iconType": "svg",
   "iconValue": "assets/logo.svg",

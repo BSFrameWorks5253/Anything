@@ -524,16 +524,20 @@ export function App() {
     const isTap =
       targetApp.id === 'tap-studio' ||
       Boolean(targetApp.name && targetApp.name.toLowerCase().includes('tap studio'));
+    const isMediaFlow =
+      targetApp.id === 'mediaflow-studio' ||
+      Boolean(targetApp.name && targetApp.name.toLowerCase().includes('mediaflow'));
 
     let launchPath = targetApp.installedPath || '';
     if (
       !launchPath ||
-      launchPath.toLowerCase().includes('tapstudio_') ||
       launchPath.toLowerCase().includes('setup') ||
       launchPath.toLowerCase().includes('published-apps')
     ) {
       if (isTap) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\Tap Studio.exe';
+      } else if (isMediaFlow) {
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
       } else {
         launchPath = targetApp.executableName || '';
       }

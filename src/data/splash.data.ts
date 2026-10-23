@@ -98,6 +98,21 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     artworkFit: 'cover',
     artworkPosition: 'center',
   },
+  'mediaflow-studio': {
+    appId: 'mediaflow-studio',
+    enabled: true,
+    artworkUrl: splashArtworkPresets[0].imageUrl,
+    artistName: 'Anything Creation',
+    artworkTitle: '-Designed by Burhanuddin',
+    productName: 'MediaFlow Studio',
+    versionText: 'v6.0.0 (x64)',
+    tagline: 'Professional Media Ingestion, Synchronization and Report Fusion Desktop Suite',
+    durationMs: 2800,
+    logoText: 'Ms',
+    badgeGradient: 'from-cyan-500 via-blue-600 to-indigo-700',
+    artworkFit: 'cover',
+    artworkPosition: 'center',
+  },
 };
 
 export const loadSplashSettings = (): SplashSettings => {

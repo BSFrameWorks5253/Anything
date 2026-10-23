@@ -146,6 +146,8 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
     settings.logoText ||
     (settings.productName?.toLowerCase().includes('tap')
       ? 'Ts'
+      : settings.productName?.toLowerCase().includes('mediaflow')
+      ? 'Mf'
       : settings.productName?.slice(0, 2) || 'An');
 
   const integrationCodeSnippet = `// Tap Studio / Child App Startup Loader Consumer
@@ -229,14 +231,15 @@ function getLoaderConfig() {
               </button>
 
               <button
-                onClick={() => handleSelectApp('sample-app')}
+                onClick={() => handleSelectApp('mediaflow-studio')}
                 className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  selectedAppId === 'sample-app'
-                    ? 'bg-indigo-600 text-white shadow-xs'
+                  selectedAppId === 'mediaflow-studio'
+                    ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
-                <span>Child App 2</span>
+                <Layers className="w-3 h-3" />
+                <span>MediaFlow Studio</span>
               </button>
             </div>
           </div>
