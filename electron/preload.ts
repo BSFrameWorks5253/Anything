@@ -15,6 +15,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installPublishedPackage: (appData: any) =>
     ipcRenderer.invoke('app:install-published-package', appData),
 
+  // Child App Releases Collector & Folder
+  getReleasesPath: () => ipcRenderer.invoke('releases:get-path'),
+  openReleasesFolder: () => ipcRenderer.invoke('releases:open-folder'),
+  scanAndCollectReleases: () => ipcRenderer.invoke('releases:scan-and-collect'),
+  onCatalogUpdated: (callback: (catalog: any[]) => void) => {
+    const subscription = (_: any, data: any) => callback(data);
+    ipcRenderer.on('catalog:updated', subscription);
+    return () => ipcRenderer.removeListener('catalog:updated', subscription);
+  },
+
   // App Lifecycle: Uninstall, Path Fixing, Path Verification
   uninstallApp: (appId: string) => ipcRenderer.invoke('app:uninstall', appId),
   fixAppPath: (appName: string) => ipcRenderer.invoke('app:fix-path', appName),

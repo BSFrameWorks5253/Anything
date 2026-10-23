@@ -225,7 +225,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
                 Featured Artwork
               </span>
               <span className="text-xs font-bold text-white tracking-tight drop-shadow-xs">
-                {settings.artistName || 'Burhanuddin'}
+                {settings.artistName || 'Burhanuddin Sounasath'}
               </span>
               {settings.artworkTitle && (
                 <span className="text-[10px] text-zinc-300 italic font-medium">
@@ -269,7 +269,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
 
           {/* Footer Metadata & Adobe Spectrum Legal Footer */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-[10px] text-zinc-400 font-mono">
-            <span>© 1990–2026 Anything Systems Inc. All rights reserved.</span>
+            <span>© 1990–2026 Anything Systems Inc. · Architect: Burhanuddin Sounasath (8369811201)</span>
             <div className="flex items-center gap-2 text-zinc-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>DirectX 12 GPU · Build 2026.10</span>

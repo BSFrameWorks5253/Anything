@@ -6,10 +6,23 @@ export interface ElectronAPI {
 
   // Publisher
   openInboxFolder: () => Promise<string>;
-  scanInboxFolder: () => Promise<any[]>;
+  scanInboxFolder: () => Promise<any>;
   pushPackage: (data: { stagedFile: any; appConfig: any }) => Promise<any>;
   loadPublishedCatalog: () => Promise<{ success: boolean; catalog: any[]; error?: string }>;
   installPublishedPackage: (appData: any) => Promise<any>;
+
+  // Releases Collector & Folder
+  getReleasesPath: () => Promise<string>;
+  openReleasesFolder: () => Promise<string>;
+  scanAndCollectReleases: () => Promise<{
+    success: boolean;
+    addedCount: number;
+    updatedCount: number;
+    total: number;
+    catalog: any[];
+    error?: string;
+  }>;
+  onCatalogUpdated: (callback: (catalog: any[]) => void) => () => void;
 
   // App Lifecycle
   uninstallApp: (appId: string) => Promise<any>;

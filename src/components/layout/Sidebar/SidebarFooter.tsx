@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HelpCircle } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { useTheme } from '../../../context/ThemeContext';
@@ -10,6 +10,18 @@ interface SidebarFooterProps {
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
+
+  const [avatar, setAvatar] = useState<string | null>(() => {
+    return localStorage.getItem('anything_user_avatar') || null;
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setAvatar(localStorage.getItem('anything_user_avatar') || null);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return (
     <div
@@ -34,19 +46,23 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
       <button
         onClick={() => onNavigate('settings')}
         className="relative group p-0.5 rounded-full transition-transform active:scale-95"
-        title="Burhanuddin · Creative Cloud Individual"
+        title="Burhanuddin Sounasath · 8369811201 · Architect"
       >
         <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${
+          className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold border transition-colors ${
             isLight
               ? 'bg-zinc-100 border-zinc-300 text-zinc-800'
               : 'bg-zinc-800 border-zinc-700 text-zinc-100'
           }`}
         >
-          B
+          {avatar ? (
+            <img src={avatar} alt="Burhanuddin Sounasath" className="w-full h-full object-cover" />
+          ) : (
+            'B'
+          )}
         </div>
         <span
-          className={`absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border ${
+          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 shadow-xs ${
             isLight ? 'border-white' : 'border-zinc-900'
           }`}
         />

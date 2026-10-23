@@ -43,6 +43,239 @@ const getInstalledAppsDir = () => {
   return baseDir;
 };
 
+const getReleasesDir = () => {
+  const dir = path.join(getProjectRoot(), 'releases');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+};
+
+function formatFileBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return Math.round(bytes / 1024) + ' KB';
+}
+
+function extractVersionSemver(str: string): string {
+  if (!str) return '1.0.0';
+  const match = str.match(/(?:v|version)?[-_]?(\d+\.\d+(?:\.\d+)?)/i);
+  return match ? match[1] : '1.0.0';
+}
+
+const shaderColorPresets = [
+  { gradient: 'from-blue-600 via-sky-500 to-cyan-400', textColor: '#38bdf8', glow: 'rgba(56, 189, 248, 0.45)' },
+  { gradient: 'from-violet-700 via-purple-600 to-indigo-500', textColor: '#c084fc', glow: 'rgba(192, 132, 252, 0.45)' },
+  { gradient: 'from-amber-600 via-orange-500 to-yellow-400', textColor: '#fbbf24', glow: 'rgba(251, 191, 36, 0.45)' },
+  { gradient: 'from-emerald-500 via-teal-400 to-cyan-400', textColor: '#2dd4bf', glow: 'rgba(45, 212, 191, 0.45)' },
+  { gradient: 'from-pink-600 via-rose-500 to-orange-400', textColor: '#fb7185', glow: 'rgba(251, 113, 133, 0.45)' },
+];
+
+function scanAndCollectReleases(): {
+  success: boolean;
+  addedCount: number;
+  updatedCount: number;
+  total: number;
+  catalog: any[];
+  error?: string;
+} {
+  try {
+    const releasesDir = getReleasesDir();
+    const publishedDir = getPublishedDir();
+    const catalogFile = path.join(publishedDir, 'catalog.json');
+
+    let catalog: any[] = [];
+    if (fs.existsSync(catalogFile)) {
+      try {
+        catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf-8'));
+      } catch (e) {}
+    }
+
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    const entries = fs.readdirSync(releasesDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+
+      if (entry.isDirectory()) {
+        const appDir = path.join(releasesDir, entry.name);
+        const appFiles = fs.readdirSync(appDir);
+
+        let manifest: any = {};
+        const manifestFile = appFiles.find(
+          (f) => f.toLowerCase() === 'app.json' || f.toLowerCase() === 'manifest.json'
+        );
+        if (manifestFile) {
+          try {
+            manifest = JSON.parse(fs.readFileSync(path.join(appDir, manifestFile), 'utf-8'));
+          } catch (e) {}
+        }
+
+        const exeFile = appFiles.find((f) => {
+          const ext = path.extname(f).toLowerCase();
+          return ext === '.exe' || ext === '.msix' || ext === '.zip';
+        });
+
+        if (!exeFile) continue;
+
+        const exeFullPath = path.join(appDir, exeFile);
+        const stats = fs.statSync(exeFullPath);
+        const ext = path.extname(exeFile).toLowerCase();
+
+        const appId = manifest.id || `app-${entry.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+        const appName = manifest.name || entry.name.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+        const appVersion = manifest.version || extractVersionSemver(exeFile) || '1.0.0';
+        const category = manifest.category || 'Custom Tools';
+        const description = manifest.description || `Child application ${appName} running inside Anything.`;
+        const githubRepo = manifest.githubRepo || undefined;
+
+        const targetDir = path.join(publishedDir, appId);
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        const destPath = path.join(targetDir, exeFile);
+
+        let isNewFile = true;
+        if (fs.existsSync(destPath)) {
+          const destStats = fs.statSync(destPath);
+          if (destStats.size === stats.size && destStats.mtimeMs === stats.mtimeMs) {
+            isNewFile = false;
+          }
+        }
+
+        if (isNewFile) {
+          fs.copyFileSync(exeFullPath, destPath);
+        }
+
+        const shader =
+          shaderColorPresets[
+            Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
+          ];
+
+        const catalogEntry = {
+          id: appId,
+          name: appName,
+          shortName: (manifest.shortName || appName.slice(0, 2)).toUpperCase(),
+          category,
+          version: appVersion,
+          description,
+          executableName: manifest.executableName || exeFile,
+          packageFileName: exeFile,
+          packageSize: formatFileBytes(stats.size),
+          packageFormat: ext,
+          localPackagePath: destPath,
+          gradient: manifest.gradient || shader.gradient,
+          textColor: manifest.textColor || shader.textColor,
+          glowColor: manifest.glowColor || shader.glow,
+          iconType: manifest.iconType || 'emoji',
+          iconValue: manifest.iconValue || '⚡',
+          status: 'not-installed',
+          githubRepo,
+          publishedAt: Date.now(),
+          changelog: [
+            `Release v${appVersion} collected from releases/${entry.name}`,
+            `Package size: ${formatFileBytes(stats.size)}`,
+            ...(manifest.changelog || []),
+          ],
+          addedByCreator: true,
+        };
+
+        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+        if (existingIndex >= 0) {
+          const existing = catalog[existingIndex];
+          const hasNewer = compareVersions(appVersion, existing.version) > 0;
+          if (hasNewer || isNewFile) {
+            catalog[existingIndex] = {
+              ...existing,
+              ...catalogEntry,
+              status: existing.status === 'ready' ? 'update-available' : existing.status,
+            };
+            updatedCount++;
+            sendWindowsNotification(
+              `⚡ Update Detected for ${appName}!`,
+              `Version v${appVersion} was collected from releases. Ready to launch!`
+            );
+          }
+        } else {
+          catalog.unshift(catalogEntry);
+          addedCount++;
+          sendWindowsNotification(
+            `🎉 New Child App: ${appName}`,
+            `Version v${appVersion} was automatically registered from releases!`
+          );
+        }
+      } else if (entry.isFile()) {
+        const ext = path.extname(entry.name).toLowerCase();
+        if (ext !== '.exe' && ext !== '.msix' && ext !== '.zip') continue;
+
+        const exeFullPath = path.join(releasesDir, entry.name);
+        const stats = fs.statSync(exeFullPath);
+        const cleanBase = entry.name.replace(/\.[^/.]+$/, '').replace(/[-_v0-9.]+$/g, '').trim();
+        const appName = (cleanBase || 'Application').replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+        const appId = `app-${appName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+        const appVersion = extractVersionSemver(entry.name);
+
+        const targetDir = path.join(publishedDir, appId);
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        const destPath = path.join(targetDir, entry.name);
+
+        fs.copyFileSync(exeFullPath, destPath);
+
+        const shader =
+          shaderColorPresets[
+            Math.abs(appId.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0)) % shaderColorPresets.length
+          ];
+
+        const catalogEntry = {
+          id: appId,
+          name: appName,
+          shortName: appName.slice(0, 2).toUpperCase(),
+          category: 'Custom Tools',
+          version: appVersion,
+          description: `Direct release executable ${entry.name}`,
+          executableName: entry.name,
+          packageFileName: entry.name,
+          packageSize: formatFileBytes(stats.size),
+          packageFormat: ext,
+          localPackagePath: destPath,
+          gradient: shader.gradient,
+          textColor: shader.textColor,
+          glowColor: shader.glow,
+          iconType: 'emoji',
+          iconValue: '📦',
+          status: 'not-installed',
+          publishedAt: Date.now(),
+          changelog: [`Collected ${entry.name} (v${appVersion})`],
+          addedByCreator: true,
+        };
+
+        const existingIndex = catalog.findIndex((a: any) => a.id === appId);
+        if (existingIndex >= 0) {
+          const existing = catalog[existingIndex];
+          if (compareVersions(appVersion, existing.version) > 0) {
+            catalog[existingIndex] = { ...existing, ...catalogEntry, status: 'update-available' };
+            updatedCount++;
+            sendWindowsNotification(
+              `⚡ Update Detected for ${appName}!`,
+              `Version v${appVersion} was collected from releases.`
+            );
+          }
+        } else {
+          catalog.unshift(catalogEntry);
+          addedCount++;
+          sendWindowsNotification(
+            `🎉 New Child App: ${appName}`,
+            `Version v${appVersion} is now ready in Anything!`
+          );
+        }
+      }
+    }
+
+    fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
+    return { success: true, addedCount, updatedCount, total: catalog.length, catalog };
+  } catch (err: any) {
+    return { success: false, addedCount: 0, updatedCount: 0, total: 0, catalog: [], error: err.message };
+  }
+}
+
 // Configure Auto-Updater
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -428,7 +661,29 @@ function createWindow() {
     return {
       inboxDir: getInboxDir(),
       publishedDir: getPublishedDir(),
+      releasesDir: getReleasesDir(),
     };
+  });
+
+  // ================= CHILD APP RELEASES COLLECTOR =================
+  ipcMain.handle('releases:get-path', async () => {
+    return getReleasesDir();
+  });
+
+  ipcMain.handle('releases:open-folder', async () => {
+    const relDir = getReleasesDir();
+    await shell.openPath(relDir);
+    return relDir;
+  });
+
+  ipcMain.handle('releases:scan-and-collect', async () => {
+    const result = scanAndCollectReleases();
+    if (result.addedCount > 0 || result.updatedCount > 0) {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('catalog:updated', result.catalog);
+      }
+    }
+    return result;
   });
 
   ipcMain.handle('publisher:scan-inbox', async () => {
@@ -949,6 +1204,33 @@ function createWindow() {
       win.webContents.send('tray:check-updates');
     }
   }, 60 * 60 * 1000);
+
+  // Live Auto-Watcher on releases folder: drops are immediately detected and synced
+  try {
+    const relDir = getReleasesDir();
+    let releasesDebounce: NodeJS.Timeout | null = null;
+    fs.watch(relDir, { recursive: true }, (eventType, filename) => {
+      if (
+        filename &&
+        (filename.endsWith('.exe') ||
+          filename.endsWith('.json') ||
+          filename.endsWith('.msix') ||
+          filename.endsWith('.zip'))
+      ) {
+        if (releasesDebounce) clearTimeout(releasesDebounce);
+        releasesDebounce = setTimeout(() => {
+          const res = scanAndCollectReleases();
+          if (res.addedCount > 0 || res.updatedCount > 0) {
+            if (win && !win.isDestroyed()) {
+              win.webContents.send('catalog:updated', res.catalog);
+            }
+          }
+        }, 1500);
+      }
+    });
+  } catch (err) {
+    console.error('Error starting releases folder watcher:', err);
+  }
 
   if (isDev) {
     const devUrl = 'http://127.0.0.1:5173';

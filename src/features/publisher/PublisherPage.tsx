@@ -6,6 +6,7 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { InboxStagingDock, type StagedFile } from './components/InboxStagingDock';
 import { LiveCardPreview } from './components/LiveCardPreview';
 import { PushFormCustomizer } from './components/PushFormCustomizer';
+import { ReleasesCollectorCard } from './components/ReleasesCollectorCard';
 import { useViewMode } from '../../context/ViewModeContext';
 import { Eye } from 'lucide-react';
 
@@ -83,6 +84,16 @@ export const PublisherPage: React.FC<PublisherPageProps> = ({
 
   useEffect(() => {
     scanInbox();
+
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onCatalogUpdated) {
+      const unsub = electronAPI.onCatalogUpdated((newCatalog: CatalogApp[]) => {
+        if (Array.isArray(newCatalog)) {
+          newCatalog.forEach((app) => onAddCatalogApp(app));
+        }
+      });
+      return () => unsub();
+    }
   }, []);
 
   const handleSelectFile = (file: StagedFile) => {
@@ -229,6 +240,15 @@ export const PublisherPage: React.FC<PublisherPageProps> = ({
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-16">
+      {/* Automated Releases Folder Collector & Live Watcher */}
+      <ReleasesCollectorCard
+        onReleasesSynced={(syncedCatalog) => {
+          if (Array.isArray(syncedCatalog)) {
+            syncedCatalog.forEach((app) => onAddCatalogApp(app));
+          }
+        }}
+      />
+
       {/* Top Banner */}
       <GlassCard
         variant="elevated"

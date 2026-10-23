@@ -8,11 +8,13 @@ import {
   RotateCcw,
   Sliders,
   Palette,
+  Crop,
 } from 'lucide-react';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { AnythingBrandEmblem } from '../../../components/ui/AdobeSplashScreen';
+import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
 import {
   splashArtworkPresets,
   loadSplashSettings,
@@ -28,6 +30,8 @@ interface SplashScreenSectionProps {
 export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPreview }) => {
   const [settings, setSettings] = useState<SplashSettings>(() => loadSplashSettings());
   const [customUrlInput, setCustomUrlInput] = useState('');
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropSourceImage, setCropSourceImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateSettings = (partial: Partial<SplashSettings>) => {
@@ -50,15 +54,21 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string') {
-          updateSettings({
-            artworkUrl: reader.result,
-            artistName: 'Custom Artist',
-            artworkTitle: file.name.replace(/\.[^/.]+$/, ''),
-          });
+          setCropSourceImage(reader.result);
+          setCropModalOpen(true);
         }
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedDataUrl: string) => {
+    updateSettings({
+      artworkUrl: croppedDataUrl,
+      artistName: 'Burhanuddin Sounasath',
+      artworkTitle: 'Custom Edited Visual',
+    });
   };
 
   const handleApplyCustomUrl = () => {
@@ -274,6 +284,17 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
             <GlassButton
               variant="glass"
               size="sm"
+              icon={<Crop className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />}
+              onClick={() => {
+                setCropSourceImage(settings.artworkUrl);
+                setCropModalOpen(true);
+              }}
+            >
+              Adjust & Crop
+            </GlassButton>
+            <GlassButton
+              variant="glass"
+              size="sm"
               icon={<Upload className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -282,6 +303,21 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({ onPrev
           </div>
         </div>
       </GlassCard>
+
+      {/* Instagram-style Crop Modal for Splash Loader Artwork */}
+      {cropModalOpen && cropSourceImage && (
+        <InstagramImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={cropSourceImage}
+          initialShape="square"
+          title="Crop & Rotate Splash Artwork"
+          onClose={() => {
+            setCropModalOpen(false);
+            setCropSourceImage(null);
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </section>
   );
 };
