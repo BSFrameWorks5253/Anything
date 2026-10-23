@@ -11,15 +11,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const isTap =
         target.id === 'tap-studio' ||
         Boolean(target.name && target.name.toLowerCase().includes('tap studio'));
+      const isOneTap =
+        target.id === 'one-tap' ||
+        target.id === 'onetap-workstation' ||
+        Boolean(target.name && target.name.toLowerCase().includes('one tap'));
+      const isMediaFlow =
+        target.id === 'mediaflow-studio' ||
+        Boolean(target.name && target.name.toLowerCase().includes('mediaflow'));
       if (
         !pathString ||
-        pathString.toLowerCase().includes('tapstudio_') ||
         pathString.toLowerCase().includes('setup') ||
-        pathString.toLowerCase().includes('published-apps')
+        pathString.toLowerCase().includes('published-apps') ||
+        pathString.toLowerCase().includes('uni desk')
       ) {
+        const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Local';
         if (isTap) {
-          const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Local';
           pathString = `${localAppData}\\Programs\\Tap Studio\\Tap Studio.exe`;
+        } else if (isOneTap) {
+          pathString = `${localAppData}\\Programs\\One Tap PV Separator\\PV_Separator.exe`;
+        } else if (isMediaFlow) {
+          pathString = `${localAppData}\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe`;
         }
       }
     }
@@ -118,6 +129,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('updater:status', subscription);
     return () => ipcRenderer.removeListener('updater:status', subscription);
   },
+  saveChildAppUpdateSettings: (settings: any) =>
+    ipcRenderer.invoke('settings:save-child-app-updates', settings),
+  loadChildAppUpdateSettings: () =>
+    ipcRenderer.invoke('settings:load-child-app-updates'),
 
   // Native Windows Notifications
   showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) =>

@@ -20,6 +20,7 @@ export type AppLifecycleStatus =
   | 'downloading'       // Currently downloading package
   | 'extracting'        // Unpacking & configuring
   | 'installed'         // Ready to launch
+  | 'ready'             // Ready alias for installed
   | 'update-available'  // Remote version > local version
   | 'path-broken'       // Executable missing from disk
   | 'trial';            // Free trial / Demo mode active
@@ -64,6 +65,7 @@ export interface CatalogApp {
   releasesUrl?: string; // Direct link to GitHub repository releases page
   releasesTagUrl?: string; // Direct link prefix for GitHub release tags (e.g. https://github.com/owner/repo/releases/tag/)
   setupExecutableName?: string; // Remote setup asset name (e.g. Tapstudio_1.2.0_Setup.exe)
+  packageFileName?: string; // Legacy or alternative setup file name
   executableName: string; // e.g. "Tap Studio.exe"
   installedPath?: string; // Resolved full path on disk
   gradient: string;
@@ -76,9 +78,7 @@ export interface CatalogApp {
   status: AppLifecycleStatus;
   trialInfo?: {
     active: boolean;
-    startedAt: number;
-    daysTotal: number;
-    daysRemaining: number;
+    startedAt?: number;
   };
   downloadProgress?: DownloadProgress;
   changelog?: string[];
@@ -106,6 +106,7 @@ export interface CatalogApp {
     assetUrl: string;
     assetName: string;
     assetSize?: string;
+    sizeFormatted?: string;
     publishedAt?: string;
   };
 }
@@ -133,3 +134,16 @@ export interface SplashConfig {
   tagline: string;
   durationMs: number;
 }
+
+export type ChildAppUpdateMode = 'auto' | 'manual';
+export type ChildAppCheckFrequency = '1h' | '6h' | 'startup' | 'manual';
+
+export interface ChildAppUpdateSettings {
+  mode: ChildAppUpdateMode;
+  frequency: ChildAppCheckFrequency;
+  silentInstall: boolean;
+  notifyAvailable: boolean;
+  notifyComplete: boolean;
+  lastCheckedAt?: number;
+}
+

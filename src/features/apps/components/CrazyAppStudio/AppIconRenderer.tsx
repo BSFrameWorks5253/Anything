@@ -4,9 +4,10 @@ import type { CreativeApp } from '../../../../types/app.types';
 import {
   TAP_STUDIO_LOGO_BASE64,
   MEDIAFLOW_STUDIO_LOGO_BASE64,
+  ONE_TAP_LOGO_BASE64,
 } from '../../constants/appLogos';
 
-export { TAP_STUDIO_LOGO_BASE64, MEDIAFLOW_STUDIO_LOGO_BASE64 };
+export { TAP_STUDIO_LOGO_BASE64, MEDIAFLOW_STUDIO_LOGO_BASE64, ONE_TAP_LOGO_BASE64 };
 
 interface AppIconRendererProps {
   app: Partial<CreativeApp>;
@@ -43,11 +44,18 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
     app.id === 'app-mediaflow-studio' ||
     Boolean(app.name && app.name.toLowerCase().includes('mediaflow'));
 
+  const isOneTap =
+    app.id === 'one-tap' ||
+    app.id === 'onetap-workstation' ||
+    app.id === 'app-one-tap' ||
+    Boolean(app.name && app.name.toLowerCase().includes('one tap'));
+
   const rawIconValue = app.iconValue;
 
   const getInitialImageSrc = (): string | null => {
     if (isTapStudio) return TAP_STUDIO_LOGO_BASE64;
     if (isMediaFlowStudio) return MEDIAFLOW_STUDIO_LOGO_BASE64;
+    if (isOneTap) return ONE_TAP_LOGO_BASE64;
 
     if (typeof rawIconValue === 'string') {
       // Embedded data URI or remote URL → use directly
@@ -61,6 +69,9 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
       }
       if (rawIconValue.includes('mediaflow')) {
         return MEDIAFLOW_STUDIO_LOGO_BASE64;
+      }
+      if (rawIconValue.includes('one-tap') || rawIconValue.includes('onetap')) {
+        return ONE_TAP_LOGO_BASE64;
       }
 
       // Relative path (e.g. "icon.png")
@@ -89,6 +100,9 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
       setImgFailed(false);
     } else if (isMediaFlowStudio && imgSrc !== MEDIAFLOW_STUDIO_LOGO_BASE64) {
       setImgSrc(MEDIAFLOW_STUDIO_LOGO_BASE64);
+      setImgFailed(false);
+    } else if (isOneTap && imgSrc !== ONE_TAP_LOGO_BASE64) {
+      setImgSrc(ONE_TAP_LOGO_BASE64);
       setImgFailed(false);
     } else {
       setImgFailed(true);

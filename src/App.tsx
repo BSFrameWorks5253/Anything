@@ -13,10 +13,25 @@ import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
 import {
   MEDIAFLOW_STUDIO_LOGO_BASE64,
+  ONE_TAP_LOGO_BASE64,
 } from './features/apps/components/CrazyAppStudio/AppIconRenderer';
 import { AppDemoModal } from './features/apps/components/AppDemoModal';
 import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
+
+function compareVersions(v1: string, v2: string): number {
+  if (!v1 || !v2) return 0;
+  const p1 = (v1 || '').replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
+  const p2 = (v2 || '').replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
+  const len = Math.max(p1.length, p2.length);
+  for (let i = 0; i < len; i++) {
+    const num1 = p1[i] || 0;
+    const num2 = p2[i] || 0;
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
 
 export function App() {
   const isSplashWindow =
@@ -60,13 +75,53 @@ export function App() {
             })
             .map((a: CatalogApp) => {
               if (
+                a.id === 'one-tap' ||
+                a.id === 'onetap-workstation' ||
+                a.id === 'app-one-tap' ||
+                (a.name && a.name.toLowerCase().includes('one tap'))
+              ) {
+                return {
+                  ...a,
+                  id: 'one-tap',
+                  name: 'One Tap',
+                  shortName: 'OT',
+                  category: 'Media & Production',
+                  gradient: 'from-rose-600 via-red-600 to-amber-500',
+                  textColor: '#f43f5e',
+                  glowColor: 'rgba(225, 29, 72, 0.45)',
+                  executableName: 'PV_Separator.exe',
+                  iconType: 'image' as const,
+                  iconValue: ONE_TAP_LOGO_BASE64,
+                  installedPath: 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe',
+                  status: 'installed' as const,
+                };
+              }
+
+              if (
                 a.id === 'mediaflow-studio' ||
                 a.id === 'app-mediaflow-studio' ||
                 (a.name && a.name.toLowerCase().includes('mediaflow'))
               ) {
-                if (!a.iconValue || a.iconType !== 'image') {
-                  return { ...a, iconType: 'image' as const, iconValue: MEDIAFLOW_STUDIO_LOGO_BASE64 };
-                }
+                const targetPath = a.installedPath || 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
+                const localVer = a.localVersion || '5.0.0';
+                const remoteVer = a.version || '6.0.0';
+                const isOutdated = compareVersions(remoteVer, localVer) > 0;
+                return {
+                  ...a,
+                  id: 'mediaflow-studio',
+                  name: 'MediaFlow Studio',
+                  shortName: 'MS',
+                  category: 'Media & Video',
+                  gradient: 'from-blue-600 to-indigo-700',
+                  iconType: 'image' as const,
+                  iconValue: MEDIAFLOW_STUDIO_LOGO_BASE64,
+                  githubRepo: 'BSFrameWorks5253/MediaFlow-Studio',
+                  executableName: 'MediaFlow Studio.exe',
+                  installedPath: targetPath,
+                  localVersion: localVer,
+                  version: remoteVer,
+                  status: isOutdated ? ('update-available' as const) : a.status,
+                };
               }
               return a;
             });
@@ -123,11 +178,15 @@ export function App() {
                   executableName: item.executableName,
                 });
                 if (detected?.installed && detected?.resolvedPath) {
+                  const activeLocalVer = detected.version || item.localVersion;
+                  const isOutdated = activeLocalVer
+                    ? compareVersions(item.version, activeLocalVer) > 0
+                    : false;
                   item = {
                     ...item,
-                    status: 'installed',
+                    status: isOutdated ? 'update-available' : 'installed',
                     installedPath: detected.resolvedPath,
-                    localVersion: item.localVersion || item.version,
+                    localVersion: activeLocalVer,
                   };
                 }
               }
@@ -147,10 +206,45 @@ export function App() {
                 item.id === 'onetap-workstation' ||
                 item.id === 'one-tap' ||
                 item.id === 'app-one-tap' ||
-                (item.name && (item.name.toLowerCase().includes('one tap') || item.name.toLowerCase().includes('uni desk')))
+                (item.name && item.name.toLowerCase().includes('one tap'))
               ) {
+                item.id = 'one-tap';
                 item.name = 'One Tap';
                 item.shortName = 'OT';
+                item.category = 'Media & Production';
+                item.executableName = 'PV_Separator.exe';
+                item.gradient = 'from-rose-600 via-red-600 to-amber-500';
+                item.textColor = '#f43f5e';
+                item.glowColor = 'rgba(225, 29, 72, 0.45)';
+                if (!item.iconValue || item.iconType !== 'image') {
+                  item.iconType = 'image';
+                  item.iconValue = ONE_TAP_LOGO_BASE64;
+                }
+                if (!item.installedPath || item.installedPath.toLowerCase().includes('uni desk')) {
+                  item.installedPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
+                  item.status = 'installed';
+                }
+              }
+
+              if (item.id === 'mediaflow-studio' || (item.name && item.name.toLowerCase().includes('mediaflow'))) {
+                item.id = 'mediaflow-studio';
+                item.name = 'MediaFlow Studio';
+                item.shortName = 'MS';
+                item.category = 'Media & Video';
+                item.executableName = 'MediaFlow Studio.exe';
+                item.githubRepo = 'BSFrameWorks5253/MediaFlow-Studio';
+                item.gradient = 'from-blue-600 to-indigo-700';
+                item.textColor = '#0066ee';
+                item.glowColor = 'rgba(0, 102, 238, 0.45)';
+                if (!item.installedPath) {
+                  item.installedPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
+                }
+                if (!item.localVersion) {
+                  item.localVersion = '5.0.0';
+                }
+                if (compareVersions(item.version, item.localVersion) > 0) {
+                  item.status = 'update-available';
+                }
               }
 
               return item;
@@ -292,13 +386,27 @@ export function App() {
     }
   }, [apps]);
 
-  // Check GitHub Releases for newer versions
+  // Check GitHub Releases for newer versions of child applications
   const checkAllGitHubUpdates = async () => {
     const electronAPI = (window as any).electronAPI;
     if (!electronAPI?.checkGitHubRelease) return;
 
+    // Load user update preferences
+    let updateSettings = {
+      mode: 'manual',
+      frequency: 'startup',
+      silentInstall: true,
+      notifyAvailable: true,
+      notifyComplete: true,
+    };
+    try {
+      const saved = localStorage.getItem('anything_child_app_update_settings');
+      if (saved) updateSettings = JSON.parse(saved);
+    } catch {}
+
     setIsCheckingUpdates(true);
     try {
+      const appsToAutoUpdate: CatalogApp[] = [];
       const updatedList = await Promise.all(
         apps.map(async (app) => {
           if (!app.githubRepo) return app;
@@ -309,28 +417,12 @@ export function App() {
             );
             if (res.success && res.asset) {
               const hasNewVersion = res.hasUpdate;
-              if (
-                hasNewVersion &&
-                (app.status === 'installed' || app.status === 'update-available') &&
-                electronAPI?.showNotification
-              ) {
-                electronAPI.showNotification({
-                  title: `🚀 Update Available: ${app.name} v${res.remoteVersion || res.rawTag}`,
-                  body: `Version ${res.remoteVersion || res.rawTag} is now available on GitHub (Installed: v${app.localVersion || app.version}). Click to download and install.`,
-                  appId: app.id,
-                  appName: app.name,
-                  icon: app.iconValue,
-                });
-              }
-              return {
+              const remoteVer = res.remoteVersion || res.rawTag || app.version;
+              const appWithRelease: CatalogApp = {
                 ...app,
-                version: res.remoteVersion || app.version,
-                status:
-                  hasNewVersion && (app.status === 'installed' || app.status === 'update-available')
-                    ? ('update-available' as const)
-                    : app.status,
+                version: remoteVer,
                 latestRelease: {
-                  tag: res.remoteVersion || res.rawTag,
+                  tag: remoteVer,
                   name: res.releaseName,
                   body: res.releaseNotes,
                   assetUrl: res.asset.downloadUrl,
@@ -339,6 +431,35 @@ export function App() {
                   publishedAt: res.publishedAt,
                 },
               };
+
+              if (hasNewVersion && (app.status === 'installed' || app.status === 'update-available' || Boolean(app.installedPath))) {
+                // MODE A: AUTO-UPDATE (Background Silent Installation)
+                if (updateSettings.mode === 'auto') {
+                  appsToAutoUpdate.push(appWithRelease);
+                  return {
+                    ...appWithRelease,
+                    status: 'downloading' as const,
+                  };
+                }
+
+                // MODE B: MANUAL (User clicks update when ready)
+                if (updateSettings.notifyAvailable && electronAPI?.showNotification) {
+                  electronAPI.showNotification({
+                    title: `🚀 Update Available: ${app.name} v${remoteVer}`,
+                    body: `Version ${remoteVer} is available on GitHub (Installed: v${app.localVersion || app.version}). Click "Update" in Anything to apply.`,
+                    appId: app.id,
+                    appName: app.name,
+                    icon: app.iconValue,
+                  });
+                }
+
+                return {
+                  ...appWithRelease,
+                  status: 'update-available' as const,
+                };
+              }
+
+              return appWithRelease;
             }
           } catch (e) {
             console.error(`Error checking GitHub for ${app.name}:`, e);
@@ -348,10 +469,43 @@ export function App() {
       );
 
       persistApps(updatedList);
+
+      // Execute auto-updates sequentially if in auto mode
+      if (updateSettings.mode === 'auto' && appsToAutoUpdate.length > 0) {
+        for (const appToUpdate of appsToAutoUpdate) {
+          try {
+            await handleInstallApp(appToUpdate);
+          } catch (err) {
+            console.error(`Auto-update failed for ${appToUpdate.name}:`, err);
+          }
+        }
+      }
     } finally {
       setIsCheckingUpdates(false);
     }
   };
+
+  // Background update check interval according to user frequency preference
+  useEffect(() => {
+    let updateSettings = { frequency: 'startup' };
+    try {
+      const saved = localStorage.getItem('anything_child_app_update_settings');
+      if (saved) updateSettings = JSON.parse(saved);
+    } catch {}
+
+    if (updateSettings.frequency === 'manual') return;
+
+    let intervalMs = 0;
+    if (updateSettings.frequency === '1h') intervalMs = 3600000;
+    else if (updateSettings.frequency === '6h') intervalMs = 21600000;
+
+    if (intervalMs > 0) {
+      const timer = setInterval(() => {
+        checkAllGitHubUpdates();
+      }, intervalMs);
+      return () => clearInterval(timer);
+    }
+  }, []);
 
   useEffect(() => {
     checkAllGitHubUpdates();
@@ -373,11 +527,15 @@ export function App() {
               executableName: app.executableName,
             });
             if (detected?.installed && detected?.resolvedPath) {
+              const activeLocalVer = detected.version || app.localVersion;
+              const isOutdated = activeLocalVer
+                ? compareVersions(app.version, activeLocalVer) > 0
+                : false;
               return {
                 ...app,
-                status: 'installed' as const,
+                status: isOutdated ? ('update-available' as const) : ('installed' as const),
                 installedPath: detected.resolvedPath,
-                localVersion: app.localVersion || app.version,
+                localVersion: activeLocalVer,
               };
             }
           }
@@ -583,20 +741,21 @@ export function App() {
       targetApp.id === 'onetap-workstation' ||
       targetApp.id === 'one-tap' ||
       targetApp.id === 'app-one-tap' ||
-      Boolean(targetApp.name && (targetApp.name.toLowerCase().includes('one tap') || targetApp.name.toLowerCase().includes('uni desk')));
+      Boolean(targetApp.name && targetApp.name.toLowerCase().includes('one tap'));
 
     let launchPath = targetApp.installedPath || '';
     if (
       !launchPath ||
       launchPath.toLowerCase().includes('setup') ||
-      launchPath.toLowerCase().includes('published-apps')
+      launchPath.toLowerCase().includes('published-apps') ||
+      launchPath.toLowerCase().includes('uni desk')
     ) {
       if (isTap) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\Tap Studio.exe';
       } else if (isMediaFlow) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
       } else if (isOneTap) {
-        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Uni Desk\\Uni Desk.exe';
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
       } else {
         launchPath = targetApp.executableName || '';
       }
@@ -873,8 +1032,6 @@ export function App() {
           trialInfo: {
             active: true,
             startedAt: Date.now(),
-            daysTotal: 7,
-            daysRemaining: 7,
           },
         };
       }
@@ -888,8 +1045,6 @@ export function App() {
         trialInfo: {
           active: true,
           startedAt: Date.now(),
-          daysTotal: 7,
-          daysRemaining: 7,
         },
       });
     }
@@ -995,6 +1150,9 @@ export function App() {
             onPreviewSplash={(customSettings) => {
               setPreviewSplash(customSettings);
             }}
+            onUpdateApp={handleUpdateApp}
+            onCheckUpdates={checkAllGitHubUpdates}
+            isCheckingUpdates={isCheckingUpdates}
           />
         );
       default:
@@ -1064,7 +1222,7 @@ export function App() {
         {renderActivePage()}
       </AppLayout>
 
-      {/* Global Interactive Demo Simulator & 7-Day Trial Modal */}
+      {/* Global Interactive Demo Simulator & Free Demo Modal */}
       {demoModalApp && (
         <AppDemoModal
           app={demoModalApp}

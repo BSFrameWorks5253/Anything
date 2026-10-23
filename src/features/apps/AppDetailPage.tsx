@@ -14,15 +14,10 @@ import {
   HardDrive,
   CheckCircle2,
   AlertTriangle,
-  Layers,
-  Palette,
-  ShieldCheck,
-  User,
   Pencil,
   Check,
   Copy,
   Cloud,
-  Globe,
 } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -32,7 +27,6 @@ import { AppIconRenderer } from './components/CrazyAppStudio/AppIconRenderer';
 import { VersionHistoryTab } from './components/AppDetailModal/VersionHistoryTab';
 import { EditAppModal } from './components/EditAppModal';
 import { AppDemoModal } from './components/AppDemoModal';
-import { useTheme } from '../../context/ThemeContext';
 
 interface AppDetailPageProps {
   app: CatalogApp;
@@ -84,8 +78,8 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   const [resolvedExePath, setResolvedExePath] = useState<string | undefined>(
     app.installedPath && !app.installedPath.toLowerCase().includes('setup') ? app.installedPath : undefined
   );
-  const { theme } = useTheme();
-  const isLight = theme === 'light';
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
 
   // Auto-resolve real installed executable on disk
   React.useEffect(() => {
@@ -229,6 +223,49 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     }
   };
 
+  const handleCheckUpdate = async () => {
+    let repo = app.githubRepo;
+    if (!repo) {
+      if (app.id?.includes('mediaflow') || app.name?.toLowerCase().includes('mediaflow')) {
+        repo = 'BSFrameWorks5253/MediaFlow-Studio';
+      } else if (app.id?.includes('one-tap') || app.id?.includes('onetap') || app.name?.toLowerCase().includes('one tap')) {
+        repo = 'BSFrameWorks5253/onetap-workstation';
+      }
+    }
+    if (!repo) return;
+    setIsCheckingUpdate(true);
+    setUpdateFeedback(null);
+    try {
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.checkGitHubRelease) {
+        const res = await electronAPI.checkGitHubRelease(repo, app.localVersion || app.version);
+        if (res.success && res.hasUpdate && res.asset) {
+          app.status = 'update-available';
+          app.version = res.remoteVersion || app.version;
+          app.latestRelease = {
+            tag: res.remoteVersion || res.rawTag,
+            name: res.releaseName,
+            body: res.releaseNotes,
+            assetUrl: res.asset.downloadUrl,
+            assetName: res.asset.name,
+            sizeFormatted: res.asset.sizeFormatted,
+            publishedAt: res.publishedAt,
+          };
+          setUpdateFeedback(`⚡ Version ${res.remoteVersion} is available on GitHub! Click "Update Now" to install directly.`);
+        } else if (res.success) {
+          setUpdateFeedback(`✓ ${app.name} is on the latest release (v${app.localVersion || app.version}).`);
+        } else {
+          setUpdateFeedback(res.error || 'Failed to check GitHub releases.');
+        }
+      }
+    } catch (e: any) {
+      setUpdateFeedback(e.message || 'Error checking releases.');
+    } finally {
+      setIsCheckingUpdate(false);
+      setTimeout(() => setUpdateFeedback(null), 8000);
+    }
+  };
+
   const defaultReqs = app.systemRequirements || {
     os: 'Windows 10 / Windows 11 (64-bit)',
     ram: '8 GB RAM (16 GB Recommended)',
@@ -352,7 +389,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 onClick={() => setIsDemoModalOpen(true)}
                 className="font-bold bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/40 text-emerald-300"
               >
-                Open Demo ({app.trialInfo?.daysRemaining ?? 7}d Trial)
+                Open Demo
               </GlassButton>
               <GlassButton
                 variant="primary"
@@ -437,7 +474,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                 )}
                 {app.status === 'trial' && (
                   <GlassBadge variant="emerald" dot className="bg-emerald-500/15 border-emerald-500/30 text-emerald-300">
-                    ⚡ {app.trialInfo?.daysRemaining ?? 7}d Free Trial Active
+                    ⚡ Demo Mode Active
                   </GlassBadge>
                 )}
                 {app.status === 'update-available' && (
@@ -475,7 +512,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
               onClick={() => setIsDemoModalOpen(true)}
               className="text-cyan-400 border-cyan-500/30 hover:border-cyan-400 font-medium"
-              title="Interactive Demo Simulator & Free Trial"
+              title="Interactive Demo Simulator"
             >
               Try / Demo
             </GlassButton>
@@ -501,6 +538,20 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               </GlassButton>
             )}
 
+            {app.githubRepo && (
+              <GlassButton
+                variant="glass"
+                size="sm"
+                icon={<RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isCheckingUpdate ? 'animate-spin' : ''}`} />}
+                onClick={handleCheckUpdate}
+                disabled={isCheckingUpdate}
+                className="text-cyan-400 border-cyan-500/30 hover:border-cyan-400 font-medium"
+                title="Directly check child app's GitHub repository for latest release .exe"
+              >
+                {isCheckingUpdate ? 'Checking GitHub...' : 'Check GitHub'}
+              </GlassButton>
+            )}
+
             <GlassButton
               variant="glass"
               size="sm"
@@ -512,6 +563,26 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             </GlassButton>
           </div>
         </div>
+
+        {updateFeedback && (
+          <div className="mt-4 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center justify-between z-10 relative">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span>{updateFeedback}</span>
+            </span>
+            {app.status === 'update-available' && (
+              <GlassButton
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-3 h-3" />}
+                onClick={() => onUpdate(app)}
+                className="text-xs ml-3 shrink-0"
+              >
+                Update Now
+              </GlassButton>
+            )}
+          </div>
+        )}
       </GlassCard>
 
       {/* Navigation Tabs */}
@@ -566,7 +637,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
               </div>
             </div>
           )}
-          {/* Creative Cloud Style Demo & 7-Day Free Trial Spotlight */}
+          {/* Creative Cloud Style Demo Spotlight */}
           <GlassCard
             variant="interactive"
             className="p-6 border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-emerald-500/5 to-transparent relative overflow-hidden"
@@ -585,12 +656,12 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                   </GlassBadge>
                 </div>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
-                  Test-drive the full UI, real-time macro event engine, and child app loader handoff with zero commitment. Launch the interactive video & multi-camera timeline simulator or evaluate with a 7-day full license.
+                  Test-drive the full UI, real-time macro event engine, and child app loader handoff with zero commitment. Launch the interactive video & multi-camera timeline simulator or evaluate with a full trial license.
                 </p>
                 {app.status === 'trial' && (
                   <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-emerald-400">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Free Evaluation Mode: {app.trialInfo?.daysRemaining ?? 7} days remaining</span>
+                    <span>Free Demo Mode Active</span>
                   </div>
                 )}
               </div>
@@ -616,7 +687,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                     }}
                     className="font-bold text-xs"
                   >
-                    Start 7-Day Free Trial
+                    Start Free Demo
                   </GlassButton>
                 )}
               </div>
@@ -928,14 +999,14 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
         <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10">
           <VersionHistoryTab
             app={app}
-            onRollback={async (targetApp, release) => {
+            onRollback={async (targetApp: CatalogApp, release: any) => {
               if (onRollback) {
                 onRollback(targetApp, release);
               } else {
                 onUpdate(targetApp);
               }
             }}
-            onVersionDeleted={(ver) => {
+            onVersionDeleted={(ver: string) => {
               if (onVersionDeleted) {
                 onVersionDeleted(app.id, ver);
               }
@@ -1096,16 +1167,16 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
         onSave={handleSaveEdit}
       />
 
-      {/* Interactive Demo Simulator & 7-Day Trial Modal */}
+      {/* Interactive Demo Simulator & Free Demo Modal */}
       <AppDemoModal
         app={app}
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
-        onInstall={(appToInstall) => {
+        onInstall={(appToInstall: CatalogApp) => {
           onInstall(appToInstall);
           setIsDemoModalOpen(false);
         }}
-        onStartTrial={(appToTrial) => {
+        onStartTrial={(appToTrial: CatalogApp) => {
           if (onStartTrial) onStartTrial(appToTrial);
           setIsDemoModalOpen(false);
         }}

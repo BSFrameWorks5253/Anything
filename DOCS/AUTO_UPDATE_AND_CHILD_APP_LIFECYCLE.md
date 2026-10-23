@@ -1,61 +1,106 @@
 # 🚀 Anything Ecosystem: Auto-Update, GitHub Sync & Child App Lifecycle Guide
 
 **Architect & Creator**: Burhanuddin Sounasath  
-**Version**: 2.0 (Windows 11 / Liquid Glass Architecture)  
-**Applicable For**: Anything Parent App & All Child Applications (e.g. MediaFlow Studio)
+**Version**: 2.5 (Windows 11 / Liquid Glass Architecture)  
+**Applicable For**: Anything Parent Hub & All Child Applications (e.g. One Tap, MediaFlow Studio)
 
 ---
 
 ## 📌 Executive Summary
 
-The **Anything** ecosystem features an automated, zero-server auto-update and child application distribution engine powered directly by **GitHub Releases** and local JSON registries.
+The **Anything** ecosystem features an automated, zero-server child application distribution and update engine powered directly by **GitHub Releases** and local JSON registries.
 
-Developers and creators do not need custom backend update servers or complex database configurations. Simply:
-1. Paste the GitHub repository link into `app-sources.json`.
-2. Push your builds to GitHub Releases using our automated script (`npm run release:github`).
-3. Anything automatically discovers, lists, downloads, installs, updates, and synchronizes the child app with live Liquid Glass splash screen loaders in real time!
+Users and developers enjoy two distinct, fully configurable update experiences in **Settings → Auto-Update**:
+1. **⚡ Automatic Updates (Background)**: Anything periodically queries GitHub Releases, detects newer versions, streams setup executables to disk, and executes silent installation without user disruption.
+2. **🖱️ Manual / On-Demand ("Whenever User Clicks Update")**: Anything flags child apps with an **"Update Available"** badge and notifies the user; the installer only downloads and executes when the user explicitly clicks the "Update" button on the app card, in the app detail page, or in the Settings Update Manager.
 
 ---
 
-## 📂 1. The Zero-Touch Registry: `app-sources.json`
+## ⚙️ 1. Dual-Mode Update Engine (In Settings)
 
-Instead of manually editing manifests, you only need to add your app's GitHub repository or release URL into **`app-sources.json`** located in the root of the Anything workspace:
+Users can configure their update preferences under **Settings → Auto-Update**:
+
+### A. Update Modes
+- **Mode 1: Automatic Updates (`auto`)**
+  - Detects new GitHub releases automatically.
+  - Automatically downloads and executes silent installation (`/S`) in the background.
+  - Sequentially updates pending apps without NSIS mutex collisions.
+  - Dispatches an Action Center notification when installation is complete and ready to launch.
+- **Mode 2: Manual / On-Demand (`manual`)**
+  - Queries GitHub Releases for newer semantic tags (`v<remote> > v<local>`).
+  - Flags the app state with `'update-available'` and attaches release notes.
+  - Displays prominent glowing **"Update Available"** buttons across the dashboard and child app pages.
+  - The update process only starts when the user clicks **"Update Now"** or **"Update All Pending"**.
+
+### B. Configurable Settings Parameters
+- **Check Frequency**:
+  - `Startup Only`: Runs a release check when Anything launches.
+  - `Every 1 Hour`: Background recurring check every 60 minutes.
+  - `Every 6 Hours`: Background check every 360 minutes.
+  - `Manual Only`: Only checks when user clicks **"Check All for Updates"**.
+- **Silent Background Installation Toggle**:
+  - Enabled: Uses NSIS `/S` silent flags for seamless background updates.
+  - Disabled: Launches the standard NSIS installer wizard so users can select custom installation directories.
+- **Desktop Notifications Toggle**:
+  - Alerts users when a new child app release is detected or when background installation completes.
+
+### C. Live Child Applications Status & Update Dashboard
+The Settings section renders a real-time table of all registered child applications (One Tap, MediaFlow Studio, etc.):
+- **App Identity**: Icon, Product Name, and GitHub Repository link.
+- **Installed Version**: Local version running on the PC.
+- **Latest Remote Version**: Live version tag fetched from GitHub Releases.
+- **Status Indicator**: Up to Date (green check), Update Available (amber pulse), or Updating (spinning loader).
+- **Individual Update Trigger**: Immediate one-click update for a specific application.
+- **Batch Master Actions**:
+  - **"Check All for Updates"**: Queries GitHub API across all repositories simultaneously.
+  - **"Update All Pending"**: Sequentially downloads and installs every pending update.
+
+---
+
+## 📂 2. The Zero-Touch Registry: `app-sources.json`
+
+Instead of manually configuring endpoints, you only need to add your app's GitHub repository or release URL into **`app-sources.json`** located in the root of the Anything workspace:
 
 ```json
 [
+  {
+    "url": "https://github.com/BSFrameWorks5253/onetap-workstation/releases",
+    "name": "One Tap",
+    "category": "Productivity & Utilities",
+    "autoSync": true
+  },
   {
     "url": "https://github.com/BSFrameWorks5253/MediaFlow-Studio",
     "name": "MediaFlow Studio",
     "category": "Media & Video",
     "autoSync": true
-  },
-  "https://github.com/BSFrameWorks5253/AnotherCreativeTool"
+  }
 ]
 ```
 
 ### How Anything Automates This:
-- **Live File Watcher**: Anything actively watches `app-sources.json`. The moment you save the file, Anything detects the new link without restarting.
+- **Live File Watcher**: Anything actively watches `app-sources.json`. Saving the file triggers automatic synchronization without app restart.
 - **GitHub API Query**: Automatically contacts `https://api.github.com/repos/:owner/:repo/releases/latest`.
-- **Auto-Generates Files**:
+- **Auto-Generates Manifests**:
   - Creates `releases/<app-id>/v<version>/app.json` with identity, category, and styling.
-  - Creates `releases/<app-id>/v<version>/release.json` with features and changelogs extracted from the release notes.
-  - Creates `releases/<app-id>/loader-config.json` with default Apple Ambient Liquid Glass parameters.
-- **Immediate Catalog Listing**: The child app immediately appears on the Anything Apps Page with glass cards, search, and one-click download.
+  - Creates `releases/<app-id>/v<version>/release.json` with features and changelogs.
+  - Creates `releases/<app-id>/loader-config.json` with default Liquid Glass parameters.
+- **Immediate Catalog Listing**: The child app immediately appears on the Anything Apps Page with glass cards, search, demo trial, and one-click install/update.
 
 ---
 
-## 🛠️ 2. What Must Be Done in the Child App
+## 🛠️ 3. What Must Be Done in the Child App
 
 To make any new child app seamlessly integrate and auto-update through Anything, follow these 3 simple conventions:
 
 ### A. Binary Naming Standard
 When building the app's Windows installer/executable, name the release asset:
-- Setup Installer: `<AppName>_<version>_Setup.exe` (e.g. `Mediaflow_studio_6.0.0_Setup.exe` or `PhotoStudio_1.2.0_Setup.exe`)
-- Standalone Binary: `<AppName>_<version>.exe` (e.g. `Mediaflow_studio_6.0.0.exe`)
+- Setup Installer: `<AppName>_<version>_Setup.exe` (e.g. `OneTap_1.0.0_Setup.exe` or `Mediaflow_studio_6.0.0_Setup.exe`)
+- Standalone Binary: `<AppName>_<version>.exe` (e.g. `OneTap_1.0.0.exe`)
 
 ### B. GitHub Release Tagging
 Create releases using standard semantic tags:
-- `v1.0.0`, `v1.0.1`, `v6.0.0`, etc.
+- `v1.0.0`, `v1.0.1`, `v1.2.0`, etc.
 - Attach the setup executable to the release assets.
 
 ### C. (Optional) Synchronized Splash Loader
@@ -68,7 +113,7 @@ In your child app, you can read this JSON file on startup to render a splash scr
 
 ---
 
-## ⚡ 3. Automated Version-Wise Build & Release Publishing
+## ⚡ 4. Automated Version-Wise Build & Release Publishing
 
 To push your setup executable to GitHub Releases version-wise automatically after every build, use the built-in publishing engine:
 
@@ -87,8 +132,8 @@ GH_TOKEN=ghp_yourPersonalAccessTokenHere
 # 1. Publish Anything Setup Executable to GitHub Releases:
 npm run release:github
 
-# 2. Publish a specific Child App (e.g. MediaFlow Studio):
-node scripts/publish-github-release.cjs --app=mediaflow-studio
+# 2. Publish a specific Child App (e.g. One Tap):
+node scripts/publish-github-release.cjs --app=one-tap
 
 # 3. Publish Everything (Anything and all Child Apps):
 npm run release:all
@@ -96,7 +141,7 @@ npm run release:all
 
 ### What the Script Automatically Performs:
 1. Reads `package.json` or `releases/<appId>/v<version>/app.json` to extract version, product name, and GitHub repo.
-2. Locates the built setup executable (`Mediaflow_studio_<version>_Setup.exe` or `Anything_<version>.exe`).
+2. Locates the built setup executable (`OneTap_<version>_Setup.exe` or `Anything_<version>.exe`).
 3. Checks if the release tag (`v<version>`) already exists on GitHub.
 4. Generates formatted markdown release notes with highlights, features, improvements, and fixes.
 5. Uploads the setup executable asset to GitHub Releases.
@@ -104,38 +149,41 @@ npm run release:all
 
 ---
 
-## 🔄 4. How Auto-Update Operates on the User's PC
+## 🔄 5. How Auto-Update Operates on the User's PC
 
 ```mermaid
 graph TD
-    A["User Launches Anything or Clicks Check Updates"] --> B["Anything Checks GitHub Releases API"]
-    B --> C{"Is Remote Version > Local Version?"}
-    C -- No --> D["Up to Date Badge"]
-    C -- Yes --> E["Action Center Toast Notification: Update Available"]
-    E --> F["User Clicks Update"]
-    F --> G["Streams Download to packages-inbox/ with Real-Time Speed & %"]
-    G --> H["Runs Setup Executable & Registers Shortcut"]
-    H --> I["Archives Previous Version to Version History Tab"]
-    I --> J["Notification: Update Complete! Ready to Launch"]
+    A["Scheduled Check (or User Clicks 'Check Updates')"] --> B["Anything Queries GitHub Releases API"]
+    B --> C{"Remote Version > Local Installed Version?"}
+    C -- No --> D["Status: Up to Date"]
+    C -- Yes --> E{"Update Mode Setting"}
+    E -- "Manual ('Whenever Clicked')" --> F["Flag App: 'update-available' + Windows Notification"]
+    F --> G["User Clicks 'Update Now' Button"]
+    E -- "Automatic ('Background')" --> H["Direct Background Download & Install"]
+    G --> H
+    H --> I["Streams Setup Exe with Real-Time Speed & Progress"]
+    I --> J["Runs NSIS Installer Silently (/S) & Refreshes Shortcut"]
+    J --> K["Toast Notification: Update Complete! Ready to Launch"]
 ```
 
 ### Key Advantages:
-1. **Delta Blockmap & Direct Setup Support**: Works with standard NSIS Setup executables, MSIX, and ZIP packages.
-2. **Action Center Notifications**: Windows 11 native interactive banner alerts users when updates are published.
-3. **1-Click Rollback**: Previous versions remain accessible in the **Version History** tab. Users can revert to older versions with one click.
+1. **Zero Downtime / Silent Background Install**: Uses `/S` switch with NSIS installers for seamless upgrades.
+2. **Collision-Proof Sequential Queue**: When multiple apps have updates in `auto` mode, Anything executes them in a clean sequential loop to prevent NSIS installer mutex conflicts.
+3. **Action Center Notifications**: Windows 11 native interactive banner alerts users when updates are ready.
+4. **1-Click Rollback**: Previous versions remain accessible in the **Version History** tab. Users can revert to older versions with one click.
 
 ---
 
-## 🎨 5. Real-Time Loader Customization
+## 🎨 6. Real-Time Loader Customization
 
 The Anything ecosystem allows instant customization of splash screen loaders for both Anything and all child apps on a **live, real-time basis**:
 
 1. Navigate to **Settings → Splash Screen Loader**.
-2. Select **Anything** or any child app (e.g. **MediaFlow Studio**).
+2. Select **Anything** or any child app (e.g. **One Tap**, **MediaFlow Studio**).
 3. Customize:
    - **Artwork Preset & Custom Image**: Upload any 1:1 image or select curated Apple Ambient and Dark Obsidian presets.
-   - **App Monogram & Insignia**: Customize the vector monogram (e.g. `Mf`, `TS`, `An`).
-   - **Boot Phrases**: Edit startup status text (e.g. *"Synchronizing multi-camera pipeline..."*).
+   - **App Monogram & Insignia**: Customize the vector monogram (e.g. `OT`, `Mf`, `An`).
+   - **Boot Phrases**: Edit startup status text (e.g. *"Synchronizing One Tap shortcuts pipeline..."*).
    - **Glow & Accent Colors**: Tailwind gradients with specular reflection.
 4. **Instant Synchronization**:
    - Settings are immediately saved to `releases/<appId>/loader-config.json` and `%APPDATA%/Anything/loaders/<appId>.json`.
@@ -144,7 +192,27 @@ The Anything ecosystem allows instant customization of splash screen loaders for
 
 ---
 
-## 📋 6. Summary Integration Flow
+## ⚡ 7. Adobe Creative Cloud Style "Try / Demo" System
+
+Like Adobe Creative Cloud, Anything allows users to **Try or Demo** any child application before committing to downloading or installing the full package.
+
+### Key Capabilities:
+1. **Interactive Demo Simulator**:
+   - Users can click **"Try"** directly on any child app card or detail page.
+   - An interactive sandbox simulator boots instantly inside Anything.
+   - Users can test live features (hotkeys, multi-camera switching, audio visualizer, GPU hardware acceleration, timeline exports).
+2. **Local Binary Demo Launch**:
+   - If a standalone child app `.exe` is available, Anything invokes it detached in trial mode:
+     ```bash
+     AppName.exe --demo --trial --loader-config="path/to/loader-config.json"
+     ```
+3. **Instant Upgrade to Full Installation**:
+   - Users can test without time limits or restrictions.
+   - When satisfied, users click **"Install Full Version"** with 1 click to get permanent shortcuts and automatic updates.
+
+---
+
+## 📋 8. Summary Integration Flow
 
 | Step | Action | Destination |
 | :--- | :--- | :--- |
@@ -153,32 +221,4 @@ The Anything ecosystem allows instant customization of splash screen loaders for
 | **3. Publish** | Push version-wise release to GitHub | `npm run release:github` or `node scripts/publish-github-release.cjs` |
 | **4. Customize** | Tune live splash loader | **Settings → Splash Screen Loader** |
 | **5. Try / Demo** | Evaluate child app before installing | **"Try" button on App Card & Detail View** |
-| **6. Update** | Users receive automated updates | Anything detects & installs in background |
-
----
-
-## ⚡ 7. Adobe Creative Cloud Style "Try / Demo" System
-
-Like Adobe Creative Cloud, Anything allows users to **Try or Demo** any child application before committing to downloading or installing the full package.
-
-### Key Capabilities:
-1. **Interactive Demo Simulator Modal**:
-   - Users can click **"Try"** directly on any child app card or detail page.
-   - For multimedia applications like **MediaFlow Studio**, an interactive sandbox simulator boots instantly inside Anything.
-   - Users can test:
-     - Multi-Camera Angle switching (CAM A: 4K Master, CAM B: Gimbal, CAM C: Aerial Drone, CAM D: Telephoto).
-     - Live waveform audio visualizer.
-     - NVENC multi-stream ingestion simulation.
-     - DirectX 12 / Direct3D 11 GPU hardware acceleration toggle.
-     - 4K ProRes timeline export speed testing.
-2. **Local Binary Demo Launch**:
-   - If a standalone child app `.exe` is available, Anything invokes it detached in trial mode:
-     ```bash
-     AppName.exe --demo --trial --loader-config="path/to/loader-config.json"
-     ```
-3. **7-Day Free Trial Activation**:
-   - Users can activate an instant 7-Day Free Trial with no credit card or account required.
-   - The app's lifecycle status switches to `trial`, rendering an active countdown badge (e.g. `⚡ 7d Trial Active`).
-   - The primary card action changes to **"Open Demo"** with an accompanying **"Install"** button.
-   - Once users are satisfied, they can upgrade to the permanent full installation with 1 click.
-
+| **6. Update Mode** | Choose Auto-Update or On-Demand Click | **Settings → Auto-Update** |

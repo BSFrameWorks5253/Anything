@@ -24,12 +24,11 @@ const sources = JSON.parse(fs.readFileSync(sourcesFile, 'utf-8'));
 console.log(`\n🔄 Found ${sources.length} app source(s) to sync in app-sources.json:\n`);
 
 function parseRepo(url) {
-  const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
-  if (match) {
-    return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
-  }
-  const parts = url.split('/');
-  if (parts.length === 2) {
+  if (!url) return null;
+  let clean = url.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
+  clean = clean.replace(/\/releases.*$/i, '').replace(/\/+$/, '');
+  const parts = clean.split('/');
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return { owner: parts[0], repo: parts[1] };
   }
   return null;
@@ -133,10 +132,16 @@ async function run() {
         fs.mkdirSync(versionDir, { recursive: true });
       }
 
-      const isOneTap = appId.includes('onetap');
-      const gradient = isOneTap ? 'from-amber-500 via-orange-600 to-rose-700' : 'from-blue-600 to-indigo-700';
-      const textColor = isOneTap ? '#f59e0b' : '#0066ee';
-      const glowColor = isOneTap ? 'rgba(245, 158, 11, 0.45)' : 'rgba(0, 102, 238, 0.45)';
+      const isOneTap =
+        appId.includes('onetap') ||
+        appId.includes('one-tap') ||
+        explicitName.toLowerCase().includes('one tap');
+      const gradient = isOneTap
+        ? 'from-rose-600 via-red-600 to-amber-500'
+        : 'from-blue-600 to-indigo-700';
+      const textColor = isOneTap ? '#f43f5e' : '#0066ee';
+      const glowColor = isOneTap ? 'rgba(225, 29, 72, 0.45)' : 'rgba(0, 102, 238, 0.45)';
+      const appCategory = isOneTap ? 'Media & Production' : category;
 
       // 1. app.json
       const appJsonPath = path.join(versionDir, 'app.json');
@@ -145,11 +150,11 @@ async function run() {
         name: explicitName,
         shortName: isOneTap ? 'OT' : explicitName.slice(0, 2).toUpperCase(),
         version,
-        category,
+        category: appCategory,
         description: isOneTap
-          ? 'One Tap (Uni Desk) high-performance macro automation, low-latency hotkey triggers, multi-action hardware workflow workstation natively integrated into Anything.'
+          ? 'Next-Generation Automated Video Production Workstation, Sequential Multi-Batch Rendering Engine, and Media Asset Management Suite for the Anything ecosystem.'
           : (latestRel.body?.slice(0, 240) || `${explicitName} for the Anything ecosystem.`),
-        executableName: exeName,
+        executableName: isOneTap ? 'One Tap.exe' : exeName,
         setupExecutableName: setupName,
         packageFileName: setupName,
         gradient,
@@ -175,19 +180,21 @@ async function run() {
       const releaseFeatures = (latestRel.body || '')
         .split('\n')
         .map((l) => l.trim().replace(/^[-*•]\s*/, ''))
-        .filter((l) => l && !l.startsWith('#') && l.length > 5)
+        .filter((l) => l && !l.startsWith('#') && l.length > 5 && !l.toLowerCase().includes('uni desk'))
         .slice(0, 6);
 
       const releaseData = {
         appId,
         appName: explicitName,
         version,
-        executableName: exeName,
+        executableName: isOneTap ? 'One Tap.exe' : exeName,
         setupExecutableName: setupName,
         releaseDate: latestRel.published_at ? latestRel.published_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
         releaseType: 'major',
-        tagline: `${explicitName} v${version} Official GitHub Release`,
-        summary: latestRel.name || `Release ${latestRel.tag_name}`,
+        tagline: isOneTap
+          ? 'Automated Batch Rendering Engine & VisionOS Design System'
+          : `${explicitName} v${version} Official GitHub Release`,
+        summary: isOneTap ? `${explicitName} v${version}` : (latestRel.name || `Release ${latestRel.tag_name}`),
         newFeatures: releaseFeatures.length > 0 ? releaseFeatures : [`Automated GitHub Release: ${latestRel.tag_name}`],
         improvements: ['Low latency event loop execution', 'Anything parent ecosystem integration', 'Liquid Glass styling'],
         fixes: ['Stability enhancements and Windows 11 compatibility'],
@@ -236,29 +243,84 @@ async function run() {
         const a = (r.assets || []).find((x) => x.name.toLowerCase().includes('setup') && x.name.endsWith('.exe')) || (r.assets || [])[0];
         return {
           version: v,
-          executableName: exeName,
+          executableName: isOneTap ? 'One Tap.exe' : exeName,
           setupExecutableName: a ? a.name : setupName,
           releaseDate: r.published_at ? r.published_at.slice(0, 10) : '2026-10-23',
           releaseType: 'minor',
           tagline: `${explicitName} v${v}`,
-          summary: r.name || `Release ${r.tag_name}`,
+          summary: isOneTap ? `${explicitName} v${v}` : (r.name || `Release ${r.tag_name}`),
           downloadUrl: a ? a.browser_download_url : `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${r.tag_name}/${setupName}`,
           sizeFormatted: a ? formatBytes(a.size) : 'Release',
         };
       });
 
+      function compareVersions(v1, v2) {
+        if (!v1 || !v2) return 0;
+        const p1 = String(v1).replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map(Number);
+        const p2 = String(v2).replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map(Number);
+        const len = Math.max(p1.length, p2.length);
+        for (let i = 0; i < len; i++) {
+          const n1 = p1[i] || 0;
+          const n2 = p2[i] || 0;
+          if (n1 > n2) return 1;
+          if (n1 < n2) return -1;
+        }
+        return 0;
+      }
+
+      // Check for installed executable on disk and compare versions
+      const isMediaFlow = appId.includes('mediaflow') || explicitName.toLowerCase().includes('mediaflow');
+      let detectedInstalledPath = undefined;
+      let detectedLocalVersion = undefined;
+
+      if (isOneTap) {
+        const otPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
+        if (fs.existsSync(otPath)) {
+          detectedInstalledPath = otPath;
+        }
+      } else if (isMediaFlow) {
+        const mfPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
+        if (fs.existsSync(mfPath)) {
+          detectedInstalledPath = mfPath;
+          detectedLocalVersion = '5.0.0';
+        }
+      }
+      if (!detectedInstalledPath && existingIndex >= 0) {
+        detectedInstalledPath = catalog[existingIndex].installedPath;
+        detectedLocalVersion = catalog[existingIndex].localVersion;
+      }
+
+      let appStatus = 'not-installed';
+      if (detectedInstalledPath) {
+        const hasNewer = detectedLocalVersion ? compareVersions(version, detectedLocalVersion) > 0 : false;
+        appStatus = hasNewer ? 'update-available' : 'installed';
+      } else if (existingIndex >= 0 && catalog[existingIndex].status) {
+        appStatus = catalog[existingIndex].status;
+      }
+
       const catalogItem = {
         ...appData,
         packageSize,
         packageFormat: '.exe',
-        status: existingIndex >= 0 ? (catalog[existingIndex].status || 'not-installed') : 'not-installed',
-        installedPath: existingIndex >= 0 ? catalog[existingIndex].installedPath : undefined,
+        status: appStatus,
+        installedPath: detectedInstalledPath,
+        localVersion: detectedLocalVersion,
         publishedAt: new Date(latestRel.published_at || Date.now()).getTime(),
         releaseInfo: releaseData,
         history: historyItems,
         changelog: releaseFeatures,
         addedByCreator: true
       };
+
+      // Check for local logo PNG to encode as base64 iconValue
+      const logoPng = path.join(appReleasesDir, 'app-logo.png');
+      if (fs.existsSync(logoPng)) {
+        try {
+          const b64 = fs.readFileSync(logoPng).toString('base64');
+          catalogItem.iconType = 'image';
+          catalogItem.iconValue = `data:image/png;base64,${b64}`;
+        } catch (e) {}
+      }
 
       if (existingIndex >= 0) {
         catalog[existingIndex] = { ...catalog[existingIndex], ...catalogItem };

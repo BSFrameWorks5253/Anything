@@ -1,0 +1,16 @@
+{
+  "id": "mediaflow-studio",
+  "name": "One Tap",
+  "shortName": "MS",
+  "version": "6.0.0",
+  "category": "Productivity",
+  "description": "Next-Generation Automated Video Production Workstation, Sequential Multi-Batch Rendering Engine, and Media Asset Management Suite for the Anything ecosystem.",
+  "executableName": "Mediaflow_studio_6.0.0.exe",
+  "setupExecutableName": "Mediaflow_studio_6.0.0_Setup.exe",
+  "gradient": "from-violet-700 via-purple-600 to-indigo-500",
+  "textColor": "#c084fc",
+  "glowColor": "rgba(192, 132, 252, 0.45)",
+  "githubRepo": "BSFrameWorks5253/MediaFlow-Studio",
+  "iconType": "image",
+  "iconValue": "app-logo.png"
+}

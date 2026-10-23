@@ -7,8 +7,9 @@
   },
   {
     "url": "https://github.com/BSFrameWorks5253/onetap-workstation",
+    "id": "one-tap",
     "name": "One Tap",
-    "category": "Productivity",
+    "category": "Media & Production",
     "autoSync": true
   }
 ]

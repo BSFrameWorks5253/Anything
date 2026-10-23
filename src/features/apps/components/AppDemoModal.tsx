@@ -132,7 +132,7 @@ export const AppDemoModal: React.FC<AppDemoModalProps> = ({
                 </GlassBadge>
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
-                {app.category} · v{app.version} · 7-Day Full Feature Evaluation
+                {app.category} · v{app.version} · Interactive Evaluation & Free Demo
               </p>
             </div>
           </div>
@@ -367,7 +367,7 @@ export const AppDemoModal: React.FC<AppDemoModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   {
-                    title: '7-Day Unlimited Access',
+                    title: 'Unlimited Access',
                     desc: 'Zero watermarks, zero feature gating. Experience the complete software exactly like the full release.',
                     icon: <Clock className="w-5 h-5 text-cyan-500" />,
                   },
@@ -425,7 +425,7 @@ export const AppDemoModal: React.FC<AppDemoModalProps> = ({
               icon={<Sparkles className="w-3.5 h-3.5" />}
               onClick={handleActivateTrial}
             >
-              Start 7-Day Trial
+              Start Free Demo
             </GlassButton>
 
             <GlassButton

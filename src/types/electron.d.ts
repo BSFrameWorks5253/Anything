@@ -9,7 +9,7 @@ export interface ElectronAPI {
     name?: string;
     currentPath?: string;
     executableName?: string;
-  }) => Promise<{ installed: boolean; resolvedPath?: string | null; error?: string }>;
+  }) => Promise<{ installed: boolean; resolvedPath?: string | null; version?: string | null; error?: string }>;
   selectExecutable: () => Promise<string | null>;
   openExternal: (url: string) => Promise<void>;
 
@@ -75,6 +75,8 @@ export interface ElectronAPI {
   checkForUpdates: () => Promise<any>;
   installUpdate: () => Promise<any>;
   onUpdateStatus: (callback: (data: any) => void) => () => void;
+  saveChildAppUpdateSettings?: (settings: any) => Promise<{ success: boolean; error?: string }>;
+  loadChildAppUpdateSettings?: () => Promise<any>;
 
   // Notifications
   showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) => Promise<any>;

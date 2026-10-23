@@ -86,7 +86,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
             : app.status === 'path-broken'
             ? 'Path Missing'
             : app.status === 'trial'
-            ? `${app.trialInfo?.daysRemaining ?? 7}d Trial Active`
+            ? 'Demo Active'
             : app.size || 'Ready'}
         </span>
 
@@ -119,7 +119,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                   else onLaunch(app);
                 }}
                 className="text-xs px-2.5 font-semibold bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                title="Launch Trial Sandbox / Demo"
+                title="Launch Software Demo"
               >
                 Open Demo
               </GlassButton>
@@ -166,7 +166,7 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                     onTryDemo(app);
                   }}
                   className="text-xs px-2.5 font-medium border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
-                  title="Try 7-Day Free Demo / Sandbox"
+                  title="Try Software Demo / Sandbox"
                 >
                   Try
                 </GlassButton>

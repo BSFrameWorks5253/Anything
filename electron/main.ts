@@ -13,7 +13,7 @@ import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { exec, spawn } from 'child_process';
+import { exec, spawn, execSync } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
 app.name = 'Anything';
@@ -309,6 +309,11 @@ function isLikelyInstaller(filePath: string): boolean {
   const lower = filePath.toLowerCase();
   const baseName = path.basename(lower);
 
+  // Portable apps are standalone executables, NEVER installers
+  if (baseName.includes('portable')) {
+    return false;
+  }
+
   // If explicitly named uninstaller or setup or installer
   if (
     baseName.includes('setup') ||
@@ -331,18 +336,18 @@ function isLikelyInstaller(filePath: string): boolean {
     return false;
   }
 
-  // Release artifact naming pattern like Tapstudio_1.0.0.exe, TapStudio-V-1.0.0.exe, App_1.2.3.exe
-  if (/^[a-z0-9_-]+[_-]v?\d+(\.\d+)*.*\.exe$/i.test(baseName)) {
+  // Only consider installer if explicitly tagged with setup or installer pattern
+  if (/^[a-z0-9_-]+[_-](setup|installer)[_-]v?\d+/i.test(baseName)) {
     return true;
   }
 
   // Packaging staging or temp directories
   if (
-    lower.includes('published-apps') ||
-    lower.includes('packages-inbox') ||
-    lower.includes('temp-downloads') ||
-    lower.includes('\\releases\\') ||
-    lower.includes('/releases/')
+    (lower.includes('packages-inbox') ||
+      lower.includes('temp-downloads') ||
+      lower.includes('\\releases\\') ||
+      lower.includes('/releases/')) &&
+    (baseName.includes('setup') || baseName.includes('installer'))
   ) {
     return true;
   }
@@ -1121,6 +1126,232 @@ async function downloadAssetWithProgress(
   });
 }
 
+// Helper: extract Windows executable ProductVersion or FileVersion
+function getExecutableVersion(filePath: string): string | null {
+  if (!filePath || !fs.existsSync(filePath)) return null;
+  try {
+    const safePath = filePath.replace(/'/g, "''");
+    const cmd = `powershell.exe -NoProfile -NonInteractive -Command "(Get-Item -LiteralPath '${safePath}').VersionInfo.ProductVersion"`;
+    const raw = execSync(cmd, { encoding: 'utf8', timeout: 4000, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (raw) {
+      return raw.replace(/\.0$/, '');
+    }
+  } catch (err) {}
+  return null;
+}
+
+// Helper: locate actual installed executable on Windows
+function findInstalledExecutable(options: {
+  appName?: string;
+  appId?: string;
+  currentPath?: string;
+  executableName?: string;
+}): string | null {
+  const { appName, appId, currentPath, executableName } = options;
+
+  // 1. If currentPath is given, exists, and is a real installed app (not an installer), keep it!
+  if (currentPath && fs.existsSync(currentPath)) {
+    if (!isLikelyInstaller(currentPath)) {
+      return currentPath;
+    }
+  }
+
+  // Build candidate app names (e.g. "Tap Studio", "tap-studio", "TapStudio")
+  const candidateNames = new Set<string>();
+  if (appName) {
+    const trimmed = appName.trim();
+    candidateNames.add(trimmed);
+    candidateNames.add(trimmed.replace(/\s+/g, ''));
+    candidateNames.add(trimmed.replace(/\s+/g, '-'));
+    candidateNames.add(trimmed.replace(/\s+/g, '_'));
+    candidateNames.add(trimmed.toLowerCase());
+  }
+  if (appId) {
+    const trimmedId = appId.trim().replace(/^app-/, '');
+    candidateNames.add(trimmedId);
+    candidateNames.add(trimmedId.replace(/[-_]/g, ' '));
+    candidateNames.add(trimmedId.replace(/[-_]/g, ''));
+    const titleCase = trimmedId
+      .split(/[-_\s]+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    candidateNames.add(titleCase);
+    candidateNames.add(titleCase.replace(/\s+/g, ''));
+  }
+  if (executableName) {
+    const cleanExe = executableName.replace(/\.exe$/i, '').trim();
+    candidateNames.add(cleanExe);
+    const withoutVer = cleanExe.replace(/[-_]v?\d+(\.\d+)*.*$/i, '').trim();
+    if (withoutVer) {
+      candidateNames.add(withoutVer);
+      candidateNames.add(
+        withoutVer
+          .split(/[-_\s]+/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
+      );
+    }
+  }
+
+  const isOneTapApp =
+    (appName && appName.toLowerCase().includes('one tap')) ||
+    (appId && (appId.toLowerCase().includes('one-tap') || appId.toLowerCase().includes('onetap')));
+  if (isOneTapApp) {
+    candidateNames.add('One Tap PV Separator');
+    candidateNames.add('PV_Separator');
+    candidateNames.add('PV Separator');
+    candidateNames.add('One Tap');
+  }
+
+  const localAppData = process.env.LOCALAPPDATA || '';
+  const appData = process.env.APPDATA || '';
+  const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+  const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+  const allUsersProfile = process.env.ALLUSERSPROFILE || 'C:\\ProgramData';
+
+  // Candidate roots on Windows
+  const searchRoots: string[] = [];
+  if (localAppData) {
+    searchRoots.push(path.join(localAppData, 'Programs'));
+    searchRoots.push(localAppData);
+  }
+  if (programFiles) searchRoots.push(programFiles);
+  if (programFilesX86) searchRoots.push(programFilesX86);
+
+  // 2. Scan candidate directories in program roots
+  for (const root of searchRoots) {
+    if (!fs.existsSync(root)) continue;
+    for (const name of candidateNames) {
+      const appDir = path.join(root, name);
+      if (fs.existsSync(appDir)) {
+        try {
+          const stats = fs.statSync(appDir);
+          if (stats.isDirectory()) {
+            const files = fs.readdirSync(appDir);
+            const exes = files.filter((f) => {
+              const l = f.toLowerCase();
+              return (
+                l.endsWith('.exe') &&
+                !l.includes('uninstall') &&
+                !l.includes('setup') &&
+                !l.includes('installer') &&
+                !l.includes('elevate') &&
+                !l.includes('update') &&
+                !l.includes('crashpad')
+              );
+            });
+
+            if (exes.length > 0) {
+              // Priority A: Exact match with candidate name
+              const exactMatch = exes.find((f) => {
+                const nameWithoutExt = f.replace(/\.exe$/i, '').toLowerCase();
+                return Array.from(candidateNames).some(
+                  (c) => c.toLowerCase() === nameWithoutExt
+                );
+              });
+              if (exactMatch) {
+                return path.join(appDir, exactMatch);
+              }
+
+              // Priority B: Largest binary (main executable vs helper binaries)
+              let largestExe = exes[0];
+              let largestSize = 0;
+              for (const exe of exes) {
+                try {
+                  const s = fs.statSync(path.join(appDir, exe));
+                  if (s.size > largestSize) {
+                    largestSize = s.size;
+                    largestExe = exe;
+                  }
+                } catch (e) {}
+              }
+              return path.join(appDir, largestExe);
+            }
+          } else if (stats.isFile() && appDir.toLowerCase().endsWith('.exe')) {
+            if (!isLikelyInstaller(appDir)) {
+              return appDir;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  // 3. Scan Windows Start Menu shortcuts (.lnk files)
+  const startMenuDirs: string[] = [];
+  if (appData) {
+    startMenuDirs.push(path.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'));
+  }
+  if (allUsersProfile) {
+    startMenuDirs.push(
+      path.join(allUsersProfile, 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+    );
+  }
+
+  for (const smDir of startMenuDirs) {
+    if (!fs.existsSync(smDir)) continue;
+
+    // Direct shortcut check
+    for (const name of candidateNames) {
+      const directLnk = path.join(smDir, `${name}.lnk`);
+      if (fs.existsSync(directLnk)) return directLnk;
+
+      const subLnk = path.join(smDir, name, `${name}.lnk`);
+      if (fs.existsSync(subLnk)) return subLnk;
+    }
+
+    // Shallow recursive scan for .lnk
+    try {
+      const entries = fs.readdirSync(smDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.toLowerCase().endsWith('.lnk')) {
+          const base = entry.name.replace(/\.lnk$/i, '').toLowerCase();
+          if (
+            !base.includes('uninstall') &&
+            Array.from(candidateNames).some((c) => base.includes(c.toLowerCase()))
+          ) {
+            return path.join(smDir, entry.name);
+          }
+        } else if (entry.isDirectory()) {
+          const subDir = path.join(smDir, entry.name);
+          try {
+            const subEntries = fs.readdirSync(subDir);
+            for (const sub of subEntries) {
+              if (sub.toLowerCase().endsWith('.lnk') && !sub.toLowerCase().includes('uninstall')) {
+                const base = sub.replace(/\.lnk$/i, '').toLowerCase();
+                if (Array.from(candidateNames).some((c) => base.includes(c.toLowerCase()))) {
+                  return path.join(subDir, sub);
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Scan getInstalledAppsDir()/<appId> for portable / extracted installations
+  try {
+    const installedAppsDir = getInstalledAppsDir();
+    if (appId) {
+      const targetDir = path.join(installedAppsDir, appId);
+      if (fs.existsSync(targetDir)) {
+        const files = fs.readdirSync(targetDir, { recursive: true });
+        const nonInstallerExes = files.filter((f: any) => {
+          const l = String(f).toLowerCase();
+          return l.endsWith('.exe') && !isLikelyInstaller(l);
+        });
+        if (nonInstallerExes.length > 0) {
+          return path.join(targetDir, String(nonInstallerExes[0]));
+        }
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+
 // ================= AUTOMATED APP SOURCES SYNCHRONIZER =================
 async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: number; errors: string[] }> {
   try {
@@ -1342,26 +1573,51 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
           addedByCreator: true,
         };
 
+        // Check if application is already installed on this machine
+        const localExe = findInstalledExecutable({ appName, appId, executableName: setupExeName });
+        let localVer: string | null = null;
+        if (localExe && fs.existsSync(localExe)) {
+          localVer = getExecutableVersion(localExe);
+        }
+
         if (existingIdx >= 0) {
           const existing = catalog[existingIdx];
-          if (compareVersions(cleanVer, existing.version) > 0) {
-            catalog[existingIdx] = {
-              ...existing,
-              ...catalogEntry,
-              status: 'update-available',
-            };
+          const activeInstalledPath = localExe || existing.installedPath;
+          const activeLocalVer = localVer || existing.localVersion;
+          const isOutdated = activeLocalVer
+            ? compareVersions(cleanVer, activeLocalVer) > 0
+            : compareVersions(cleanVer, existing.version) > 0;
+
+          catalog[existingIdx] = {
+            ...existing,
+            ...catalogEntry,
+            version: cleanVer,
+            installedPath: activeInstalledPath,
+            localVersion: activeLocalVer,
+            status: isOutdated
+              ? 'update-available'
+              : activeInstalledPath
+              ? 'installed'
+              : existing.status || 'not-installed',
+          };
+          if (isOutdated) {
             sendWindowsNotification(
               `⚡ Update Available for ${appName}!`,
-              `Version v${cleanVer} is ready to download from GitHub.`,
+              `Version v${cleanVer} is ready to download from GitHub (Installed: v${activeLocalVer || 'earlier'}).`,
               undefined,
               existing.iconValue,
               appName
             );
-          } else {
-            catalog[existingIdx] = { ...existing, ...catalogEntry, status: existing.status || 'not-installed' };
           }
         } else {
-          catalog.unshift(catalogEntry);
+          const isOutdated = localVer ? compareVersions(cleanVer, localVer) > 0 : false;
+          catalog.unshift({
+            ...catalogEntry,
+            version: cleanVer,
+            installedPath: localExe || undefined,
+            localVersion: localVer || undefined,
+            status: isOutdated ? 'update-available' : (localExe ? 'installed' : 'not-installed'),
+          });
           sendWindowsNotification(
             `🎉 Synced App from GitHub: ${appName}`,
             `Version v${cleanVer} was automatically added to Anything!`,
@@ -1807,7 +2063,7 @@ function createWindow() {
   });
 
   // Helper: execute installers silently in background without any popup
-  function runInstallerSilently(installerPath: string): Promise<boolean> {
+  function runInstallerSilently(installerPath: string, targetAppName?: string): Promise<boolean> {
     return new Promise((resolve) => {
       try {
         if (!fs.existsSync(installerPath)) {
@@ -1815,6 +2071,21 @@ function createWindow() {
         }
         const ext = path.extname(installerPath).toLowerCase();
         const safeInstallerPath = path.resolve(installerPath).replace(/'/g, "''");
+
+        // Terminate any running process that might lock the files
+        const candidateNames = [
+          targetAppName,
+          path.basename(installerPath).replace(/[-_]?(setup|installer|portable|_setup)/gi, '').replace(/\.exe$/i, ''),
+          'MediaFlow Studio',
+          'Tap Studio',
+          'PV_Separator',
+        ].filter(Boolean);
+
+        for (const name of candidateNames) {
+          try {
+            execSync(`taskkill /F /IM "${name}.exe" /T`, { stdio: 'ignore' });
+          } catch {}
+        }
 
         if (ext === '.msi') {
           const cmd = `msiexec /i "${safeInstallerPath}" /quiet /qn /norestart`;
@@ -1836,207 +2107,6 @@ function createWindow() {
   }
 
 
-
-  // Helper: locate actual installed executable on Windows
-  function findInstalledExecutable(options: {
-    appName?: string;
-    appId?: string;
-    currentPath?: string;
-    executableName?: string;
-  }): string | null {
-    const { appName, appId, currentPath, executableName } = options;
-
-    // 1. If currentPath is given, exists, and is a real installed app (not an installer), keep it!
-    if (currentPath && fs.existsSync(currentPath)) {
-      if (!isLikelyInstaller(currentPath)) {
-        return currentPath;
-      }
-    }
-
-    // Build candidate app names (e.g. "Tap Studio", "tap-studio", "TapStudio")
-    const candidateNames = new Set<string>();
-    if (appName) {
-      const trimmed = appName.trim();
-      candidateNames.add(trimmed);
-      candidateNames.add(trimmed.replace(/\s+/g, ''));
-      candidateNames.add(trimmed.replace(/\s+/g, '-'));
-      candidateNames.add(trimmed.replace(/\s+/g, '_'));
-      candidateNames.add(trimmed.toLowerCase());
-    }
-    if (appId) {
-      const trimmedId = appId.trim().replace(/^app-/, '');
-      candidateNames.add(trimmedId);
-      candidateNames.add(trimmedId.replace(/[-_]/g, ' '));
-      candidateNames.add(trimmedId.replace(/[-_]/g, ''));
-      const titleCase = trimmedId
-        .split(/[-_\s]+/)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-      candidateNames.add(titleCase);
-      candidateNames.add(titleCase.replace(/\s+/g, ''));
-    }
-    if (executableName) {
-      const cleanExe = executableName.replace(/\.exe$/i, '').trim();
-      candidateNames.add(cleanExe);
-      const withoutVer = cleanExe.replace(/[-_]v?\d+(\.\d+)*.*$/i, '').trim();
-      if (withoutVer) {
-        candidateNames.add(withoutVer);
-        candidateNames.add(
-          withoutVer
-            .split(/[-_\s]+/)
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ')
-        );
-      }
-    }
-
-    const localAppData = process.env.LOCALAPPDATA || '';
-    const appData = process.env.APPDATA || '';
-    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
-    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
-    const allUsersProfile = process.env.ALLUSERSPROFILE || 'C:\\ProgramData';
-
-    // Candidate roots on Windows
-    const searchRoots: string[] = [];
-    if (localAppData) {
-      searchRoots.push(path.join(localAppData, 'Programs'));
-      searchRoots.push(localAppData);
-    }
-    if (programFiles) searchRoots.push(programFiles);
-    if (programFilesX86) searchRoots.push(programFilesX86);
-
-    // 2. Scan candidate directories in program roots
-    for (const root of searchRoots) {
-      if (!fs.existsSync(root)) continue;
-      for (const name of candidateNames) {
-        const appDir = path.join(root, name);
-        if (fs.existsSync(appDir)) {
-          try {
-            const stats = fs.statSync(appDir);
-            if (stats.isDirectory()) {
-              const files = fs.readdirSync(appDir);
-              const exes = files.filter((f) => {
-                const l = f.toLowerCase();
-                return (
-                  l.endsWith('.exe') &&
-                  !l.includes('uninstall') &&
-                  !l.includes('setup') &&
-                  !l.includes('installer') &&
-                  !l.includes('elevate') &&
-                  !l.includes('update') &&
-                  !l.includes('crashpad')
-                );
-              });
-
-              if (exes.length > 0) {
-                // Priority A: Exact match with candidate name
-                const exactMatch = exes.find((f) => {
-                  const nameWithoutExt = f.replace(/\.exe$/i, '').toLowerCase();
-                  return Array.from(candidateNames).some(
-                    (c) => c.toLowerCase() === nameWithoutExt
-                  );
-                });
-                if (exactMatch) {
-                  return path.join(appDir, exactMatch);
-                }
-
-                // Priority B: Largest binary (main executable vs helper binaries)
-                let largestExe = exes[0];
-                let largestSize = 0;
-                for (const exe of exes) {
-                  try {
-                    const s = fs.statSync(path.join(appDir, exe));
-                    if (s.size > largestSize) {
-                      largestSize = s.size;
-                      largestExe = exe;
-                    }
-                  } catch (e) {}
-                }
-                return path.join(appDir, largestExe);
-              }
-            } else if (stats.isFile() && appDir.toLowerCase().endsWith('.exe')) {
-              if (!isLikelyInstaller(appDir)) {
-                return appDir;
-              }
-            }
-          } catch (e) {}
-        }
-      }
-    }
-
-    // 3. Scan Windows Start Menu shortcuts (.lnk files)
-    const startMenuDirs: string[] = [];
-    if (appData) {
-      startMenuDirs.push(path.join(appData, 'Microsoft', 'Windows', 'Start Menu', 'Programs'));
-    }
-    if (allUsersProfile) {
-      startMenuDirs.push(
-        path.join(allUsersProfile, 'Microsoft', 'Windows', 'Start Menu', 'Programs')
-      );
-    }
-
-    for (const smDir of startMenuDirs) {
-      if (!fs.existsSync(smDir)) continue;
-
-      // Direct shortcut check
-      for (const name of candidateNames) {
-        const directLnk = path.join(smDir, `${name}.lnk`);
-        if (fs.existsSync(directLnk)) return directLnk;
-
-        const subLnk = path.join(smDir, name, `${name}.lnk`);
-        if (fs.existsSync(subLnk)) return subLnk;
-      }
-
-      // Shallow recursive scan for .lnk
-      try {
-        const entries = fs.readdirSync(smDir, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isFile() && entry.name.toLowerCase().endsWith('.lnk')) {
-            const base = entry.name.replace(/\.lnk$/i, '').toLowerCase();
-            if (
-              !base.includes('uninstall') &&
-              Array.from(candidateNames).some((c) => base.includes(c.toLowerCase()))
-            ) {
-              return path.join(smDir, entry.name);
-            }
-          } else if (entry.isDirectory()) {
-            const subDir = path.join(smDir, entry.name);
-            try {
-              const subEntries = fs.readdirSync(subDir);
-              for (const sub of subEntries) {
-                if (sub.toLowerCase().endsWith('.lnk') && !sub.toLowerCase().includes('uninstall')) {
-                  const base = sub.replace(/\.lnk$/i, '').toLowerCase();
-                  if (Array.from(candidateNames).some((c) => base.includes(c.toLowerCase()))) {
-                    return path.join(subDir, sub);
-                  }
-                }
-              }
-            } catch (e) {}
-          }
-        }
-      } catch (e) {}
-    }
-
-    // 4. Scan getInstalledAppsDir()/<appId> for portable / extracted installations
-    try {
-      const installedAppsDir = getInstalledAppsDir();
-      if (appId) {
-        const targetDir = path.join(installedAppsDir, appId);
-        if (fs.existsSync(targetDir)) {
-          const files = fs.readdirSync(targetDir, { recursive: true });
-          const nonInstallerExes = files.filter((f: any) => {
-            const l = String(f).toLowerCase();
-            return l.endsWith('.exe') && !isLikelyInstaller(l);
-          });
-          if (nonInstallerExes.length > 0) {
-            return path.join(targetDir, String(nonInstallerExes[0]));
-          }
-        }
-      }
-    } catch (e) {}
-
-    return null;
-  }
 
   // App Launcher
   ipcMain.handle(
@@ -2154,7 +2224,7 @@ function createWindow() {
         child.unref();
 
         sendWindowsNotification(
-          `⚡ Free Trial Mode Active`,
+          `⚡ Software Demo Active`,
           `Launching ${appName} in evaluation mode.`,
           undefined,
           appData?.iconValue,
@@ -2190,12 +2260,17 @@ function createWindow() {
             }
           } catch (e) {}
         }
+        let detectedVersion: string | null = null;
+        if (resolved && fs.existsSync(resolved)) {
+          detectedVersion = getExecutableVersion(resolved);
+        }
         return {
           installed: !!resolved,
           resolvedPath: resolved || null,
+          version: detectedVersion,
         };
       } catch (err: any) {
-        return { installed: false, resolvedPath: null, error: err.message };
+        return { installed: false, resolvedPath: null, version: null, error: err.message };
       }
     }
   );
@@ -3020,7 +3095,7 @@ function createWindow() {
               });
             }
             // Execute installer completely silently in the background (no popup)
-            await runInstallerSilently(tempDownloadPath);
+            await runInstallerSilently(tempDownloadPath, targetAppName);
             let found = findInstalledExecutable({
               appName: targetAppName,
               appId,
@@ -3076,7 +3151,17 @@ function createWindow() {
             const idx = catalog.findIndex((a: any) => a.id === appId);
             if (idx >= 0) {
               catalog[idx].version = newVersion;
+              catalog[idx].localVersion = newVersion;
+              catalog[idx].status = 'installed';
+              catalog[idx].installedPath = resolvedExePath;
               fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
+
+              const allWindows = BrowserWindow.getAllWindows();
+              for (const w of allWindows) {
+                if (!w.isDestroyed()) {
+                  w.webContents.send('catalog:updated', catalog);
+                }
+              }
             }
           }
         } catch (e) {}
@@ -3208,6 +3293,27 @@ function createWindow() {
 
   ipcMain.handle('updater:install', () => {
     autoUpdater.quitAndInstall();
+  });
+
+  // Child Apps Update Settings Storage
+  ipcMain.handle('settings:load-child-app-updates', () => {
+    try {
+      const p = path.join(app.getPath('userData'), 'child-app-update-settings.json');
+      if (fs.existsSync(p)) {
+        return JSON.parse(fs.readFileSync(p, 'utf-8'));
+      }
+    } catch {}
+    return null;
+  });
+
+  ipcMain.handle('settings:save-child-app-updates', (_, settings) => {
+    try {
+      const p = path.join(app.getPath('userData'), 'child-app-update-settings.json');
+      fs.writeFileSync(p, JSON.stringify(settings, null, 2), 'utf-8');
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
   });
 
   // Windows Native Toast Notification IPC

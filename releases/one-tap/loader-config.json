@@ -1,11 +1,14 @@
 {
+  "appId": "one-tap",
+  "enabled": true,
+  "artworkUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85",
   "artistName": "Anything Creation",
   "artworkTitle": "-Designed by Burhanuddin",
   "productName": "One Tap",
-  "versionText": "v26.10.12",
-  "tagline": "Automated Video Production Workstation",
+  "versionText": "v26.10.20",
+  "tagline": "Integrated Workspace Application",
   "durationMs": 2800,
-  "logoText": "Ot",
+  "logoText": "OT",
   "badgeGradient": "from-red-600 via-rose-500 to-amber-500",
   "artworkFit": "cover",
   "artworkPosition": "center"

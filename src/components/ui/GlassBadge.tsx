@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 interface GlassBadgeProps {
   children: React.ReactNode;
   variant?: 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose' | 'neutral';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   dot?: boolean;
 }
@@ -11,6 +12,7 @@ interface GlassBadgeProps {
 export const GlassBadge: React.FC<GlassBadgeProps> = ({
   children,
   variant = 'neutral',
+  size = 'md',
   className = '',
   dot = false,
 }) => {

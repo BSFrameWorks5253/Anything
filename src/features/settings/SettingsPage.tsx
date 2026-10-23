@@ -14,9 +14,19 @@ interface SettingsPageProps {
   onPreviewSplash?: (settings: SplashSettings) => void;
   initialAppId?: string;
   apps?: CatalogApp[];
+  onUpdateApp?: (app: CatalogApp) => void;
+  onCheckUpdates?: () => Promise<void>;
+  isCheckingUpdates?: boolean;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, initialAppId = 'anything', apps = [] }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({
+  onPreviewSplash,
+  initialAppId = 'anything',
+  apps = [],
+  onUpdateApp,
+  onCheckUpdates,
+  isCheckingUpdates = false,
+}) => {
   const [previewSettings, setPreviewSettings] = useState<SplashSettings | null>(null);
 
   const handlePreview = (settings: SplashSettings) => {
@@ -36,7 +46,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onPreviewSplash, ini
       <SplashScreenSection initialAppId={initialAppId} apps={apps} onPreview={handlePreview} />
 
       {/* GitHub Releases Auto-Update Section */}
-      <AutoUpdateSection />
+      <AutoUpdateSection
+        apps={apps}
+        onUpdateApp={onUpdateApp}
+        onCheckUpdates={onCheckUpdates}
+        isCheckingUpdates={isCheckingUpdates}
+      />
 
       {/* Authentication & Animated Email Release Dispatch */}
       <AuthEmailNotificationSection />
