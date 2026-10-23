@@ -35,11 +35,15 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
         isLight ? 'border-zinc-100' : 'border-zinc-800'
       }`}
     >
-      {/* Downloading / Extracting Progress Bar */}
+      {/* Downloading / Extracting / Installing Progress Bar */}
       {app.status === 'downloading' && (
         <div className="mb-2 space-y-1">
           <div className="flex justify-between text-[10px] font-mono text-zinc-600 dark:text-zinc-400">
-            <span>Downloading... {app.downloadProgress?.percent || 0}%</span>
+            <span>
+              {app.downloadProgress?.percent && app.downloadProgress.percent >= 85
+                ? 'Installing silently...'
+                : `Downloading... ${app.downloadProgress?.percent || 0}%`}
+            </span>
             <span>
               {app.downloadProgress?.speedBytesPerSec
                 ? `${(app.downloadProgress.speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
@@ -48,18 +52,18 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
           </div>
           <div className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
             <div
-              className="h-full rounded-full bg-red-600 transition-all duration-200"
+              className="h-full rounded-full bg-cyan-500 transition-all duration-200"
               style={{ width: `${app.downloadProgress?.percent || 5}%` }}
             />
           </div>
         </div>
       )}
 
-      {app.status === 'extracting' && (
+      {(app.status === 'extracting' || (app as any).status === 'installing') && (
         <div className="mb-2 flex items-center justify-between text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
           <span className="flex items-center gap-1.5">
-            <RefreshCw className="w-3 h-3 animate-spin text-red-600" />
-            <span>Configuring files...</span>
+            <RefreshCw className="w-3 h-3 animate-spin text-cyan-500" />
+            <span>Installing silently...</span>
           </span>
           <span>99%</span>
         </div>

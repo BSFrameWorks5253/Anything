@@ -162,7 +162,10 @@ export function App() {
             if (a.id === data.appId) {
               return {
                 ...a,
-                status: data.status === 'extracting' ? 'extracting' : a.status,
+                status:
+                  data.status === 'extracting' || data.status === 'installing'
+                    ? 'extracting'
+                    : a.status,
                 downloadProgress: {
                   percent: data.percent,
                   transferredBytes: data.transferredBytes || 0,

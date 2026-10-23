@@ -1158,21 +1158,65 @@ function createWindow() {
       fs.copyFileSync(localPackagePath, targetExe);
 
       if (isLikelyInstaller(targetExe)) {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('catalog:download-progress', {
+            appId: id,
+            percent: 99,
+            status: 'installing',
+          });
+        }
+
+        // Run installer completely silently in the background (no popup)
+        await runInstallerSilently(targetExe);
+
+        // Auto-detect installed binary
         const found = findInstalledExecutable({
           appName: appData.name,
           appId: id,
           executableName,
         });
         if (found) {
+          sendWindowsNotification(
+            'Installation Complete',
+            `${appData.name || 'Application'} is installed and ready to open.`
+          );
           return { success: true, installedPath: found, format: 'exe' };
         }
-        await shell.openPath(targetExe);
       }
       return { success: true, installedPath: targetExe, format: 'exe' };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
   });
+
+  // Helper: execute installers silently in background without any popup
+  function runInstallerSilently(installerPath: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      try {
+        if (!fs.existsSync(installerPath)) {
+          return resolve(false);
+        }
+        const ext = path.extname(installerPath).toLowerCase();
+        const safeInstallerPath = path.resolve(installerPath).replace(/'/g, "''");
+
+        if (ext === '.msi') {
+          const cmd = `msiexec /i "${safeInstallerPath}" /quiet /qn /norestart`;
+          exec(cmd, (err) => resolve(!err));
+          return;
+        }
+
+        // NSIS (Electron-builder) uses /S (case-sensitive uppercase).
+        // Inno Setup uses /VERYSILENT /SUPPRESSMSGBOXES /NORESTART.
+        const psCmd = `powershell -NoProfile -NonInteractive -Command "$p = Start-Process -FilePath '${safeInstallerPath}' -ArgumentList '/S' -Wait -PassThru -ErrorAction SilentlyContinue; if ($p -and $p.ExitCode -eq 0) { exit 0 } else { $p2 = Start-Process -FilePath '${safeInstallerPath}' -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru -ErrorAction SilentlyContinue; if ($p2) { exit $p2.ExitCode } else { exit 0 } }"`;
+
+        exec(psCmd, { timeout: 180000 }, (error) => {
+          resolve(!error);
+        });
+      } catch (err) {
+        resolve(false);
+      }
+    });
+  }
 
   // Helper: check if a file is an installer or packaging artifact
   function isLikelyInstaller(filePath: string): boolean {
@@ -2035,7 +2079,15 @@ function createWindow() {
         } else {
           // Direct .EXE installer setup package
           if (isLikelyInstaller(tempDownloadPath)) {
-            await shell.openPath(tempDownloadPath);
+            if (win && !win.isDestroyed()) {
+              win.webContents.send('catalog:download-progress', {
+                appId,
+                percent: 99,
+                status: 'installing',
+              });
+            }
+            // Execute installer completely silently in the background (no popup)
+            await runInstallerSilently(tempDownloadPath);
             const found = findInstalledExecutable({
               appId,
               executableName,
@@ -2043,6 +2095,10 @@ function createWindow() {
             if (found) {
               resolvedExePath = found;
             }
+            sendWindowsNotification(
+              'Installation Complete',
+              `Application was installed successfully and is ready to open.`
+            );
           }
         }
 
