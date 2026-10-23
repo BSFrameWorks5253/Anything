@@ -115,9 +115,21 @@ function findAppLogoImage(dirPath: string): { iconType: 'image'; iconValue: stri
       'icon.svg',
     ];
 
-    // 1. Direct scan in dirPath
+    // 1. Direct scan in dirPath (prioritize high-res PNG logos)
     const files = fs.readdirSync(dirPath);
-    let chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase().trim()));
+    let chosenFile = files.find((f) => {
+      const lower = f.toLowerCase().trim();
+      return (
+        lower === 'app-logo.png' ||
+        lower === 'app_logo.png' ||
+        lower === 'app logo.png' ||
+        lower === 'applogo.png' ||
+        lower === 'logo.png'
+      );
+    });
+    if (!chosenFile) {
+      chosenFile = files.find((f) => preferredNames.includes(f.toLowerCase().trim()));
+    }
     if (!chosenFile) {
       chosenFile = files.find((f) => {
         const ext = path.extname(f).toLowerCase();
@@ -185,6 +197,38 @@ const shaderColorPresets = [
   { gradient: 'from-emerald-500 via-teal-400 to-cyan-400', textColor: '#2dd4bf', glow: 'rgba(45, 212, 191, 0.45)' },
   { gradient: 'from-pink-600 via-rose-500 to-orange-400', textColor: '#fb7185', glow: 'rgba(251, 113, 133, 0.45)' },
 ];
+
+function pickReleaseExecutable(files: string[]): string | undefined {
+  if (!Array.isArray(files) || files.length === 0) return undefined;
+
+  // 1. Take *_setup.exe / *setup*.exe only (highest priority)
+  const setupExe = files.find((f) => {
+    const l = f.toLowerCase();
+    return (
+      l.endsWith('.exe') &&
+      !l.includes('uninstall') &&
+      (l.includes('_setup') || l.includes('-setup') || l.includes('setup') || l.includes('installer'))
+    );
+  });
+  if (setupExe) return setupExe;
+
+  // 2. MSIX / AppX / MSI native packages
+  const msi = files.find((f) => {
+    const l = f.toLowerCase();
+    return l.endsWith('.msix') || l.endsWith('.appx') || l.endsWith('.msi');
+  });
+  if (msi) return msi;
+
+  // 3. Fallback to any other .exe (excluding uninstaller)
+  const exe = files.find((f) => {
+    const l = f.toLowerCase();
+    return l.endsWith('.exe') && !l.includes('uninstall');
+  });
+  if (exe) return exe;
+
+  // 4. Archive format
+  return files.find((f) => f.toLowerCase().endsWith('.zip'));
+}
 
 function scanAndCollectReleases(): {
   success: boolean;
@@ -273,10 +317,7 @@ function scanAndCollectReleases(): {
             const vDirPath = path.join(appDir, vDir.name);
             const vFiles = fs.readdirSync(vDirPath);
 
-            const vExe = vFiles.find((f) => {
-              const ext = path.extname(f).toLowerCase();
-              return ext === '.exe' || ext === '.msix' || ext === '.zip';
-            });
+            const vExe = pickReleaseExecutable(vFiles);
 
             if (vExe) {
               const exeFullPath = path.join(vDirPath, vExe);
@@ -307,10 +348,7 @@ function scanAndCollectReleases(): {
           }
 
           // Also check flat files directly in appDir
-          const flatExe = appFiles.find((f) => {
-            const ext = path.extname(f).toLowerCase();
-            return ext === '.exe' || ext === '.msix' || ext === '.zip';
-          });
+          const flatExe = pickReleaseExecutable(appFiles);
 
           if (flatExe) {
             let releaseMeta: any = {};
@@ -466,16 +504,25 @@ function scanAndCollectReleases(): {
             );
 
             if (appLogo) {
-              existing.iconType = appLogo.iconType;
-              existing.iconValue = appLogo.iconValue;
-              catalogEntry.iconType = appLogo.iconType;
-              catalogEntry.iconValue = appLogo.iconValue;
+              const isCurrentPng = existing.iconValue && existing.iconValue.startsWith('data:image/png');
+              const isNewPng = appLogo.iconValue && appLogo.iconValue.startsWith('data:image/png');
+              if (!isCurrentPng || isNewPng) {
+                existing.iconType = appLogo.iconType;
+                existing.iconValue = appLogo.iconValue;
+                catalogEntry.iconType = appLogo.iconType;
+                catalogEntry.iconValue = appLogo.iconValue;
+              }
             }
 
-            if (hasNewer || isNewFile || logoChanged) {
+            if (hasNewer || isNewFile || logoChanged || catalogEntry.packageFileName !== existing.packageFileName) {
               catalog[existingIndex] = {
                 ...existing,
                 ...catalogEntry,
+                iconType: catalogEntry.iconType,
+                iconValue: catalogEntry.iconValue,
+                executableName: catalogEntry.executableName,
+                packageFileName: catalogEntry.packageFileName,
+                localPackagePath: catalogEntry.localPackagePath,
                 status: existing.status === 'ready' ? 'update-available' : existing.status,
               };
               updatedCount++;
@@ -755,8 +802,8 @@ function pickWindowsAsset(assets: any[]): any {
     if (nameA.endsWith('.zip')) scoreA += 2;
     if (nameB.endsWith('.zip')) scoreB += 2;
 
-    if (nameA.includes('setup') || nameA.includes('portable')) scoreA += 3;
-    if (nameB.includes('setup') || nameB.includes('portable')) scoreB += 3;
+    if (nameA.includes('setup') || nameA.includes('_setup')) scoreA += 50;
+    if (nameB.includes('setup') || nameB.includes('_setup')) scoreB += 50;
 
     return scoreB - scoreA;
   });
