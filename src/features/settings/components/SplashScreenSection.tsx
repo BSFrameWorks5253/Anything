@@ -109,8 +109,8 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
   const handleCropComplete = (croppedDataUrl: string) => {
     updateSettings({
       artworkUrl: croppedDataUrl,
-      artistName: 'Anything Creation',
-      artworkTitle: 'Refractive Glass in Motion',
+      artistName: settings.artistName || 'Anything Creation',
+      artworkTitle: settings.artworkTitle || '-Designed by Burhanuddin',
     });
   };
 
@@ -118,8 +118,8 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
     if (customUrlInput.trim()) {
       updateSettings({
         artworkUrl: customUrlInput.trim(),
-        artistName: 'Anything Creation',
-        artworkTitle: 'Custom Online Graphic',
+        artistName: settings.artistName || 'Anything Creation',
+        artworkTitle: settings.artworkTitle || '-Designed by Burhanuddin',
       });
       setCustomUrlInput('');
     }
@@ -268,7 +268,17 @@ function getLoaderConfig() {
             <img
               src={settings.artworkUrl}
               alt="Active Splash Preview"
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              className={`w-full h-full transition-all duration-500 ${
+                settings.artworkFit === 'contain'
+                  ? 'object-contain bg-zinc-950'
+                  : 'object-cover'
+              } ${
+                settings.artworkPosition === 'top'
+                  ? 'object-top'
+                  : settings.artworkPosition === 'bottom'
+                  ? 'object-bottom'
+                  : 'object-center'
+              } group-hover:scale-105`}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none" />
 
@@ -327,7 +337,7 @@ function getLoaderConfig() {
                   type="text"
                   value={settings.artworkTitle}
                   onChange={(e) => updateSettings({ artworkTitle: e.target.value })}
-                  placeholder="e.g. Refractive Glass in Motion"
+                  placeholder="e.g. -Designed by Burhanuddin"
                   className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium"
                 />
               </div>
@@ -347,6 +357,81 @@ function getLoaderConfig() {
                   <option value={2800}>Standard (2.8 seconds)</option>
                   <option value={4200}>Cinematic (4.2 seconds)</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Framing & Vertical Alignment Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold mb-1">
+                  Framing Mode
+                </label>
+                <div className="flex rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1 border border-zinc-200 dark:border-white/10 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ artworkFit: 'cover' })}
+                    className={`flex-1 py-1 px-2 rounded-lg text-xs font-medium transition-all ${
+                      (settings.artworkFit || 'cover') === 'cover'
+                        ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-xs font-semibold'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Fill (Cover)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ artworkFit: 'contain' })}
+                    className={`flex-1 py-1 px-2 rounded-lg text-xs font-medium transition-all ${
+                      settings.artworkFit === 'contain'
+                        ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-xs font-semibold'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Fit Whole Image
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-semibold mb-1">
+                  Vertical Focus
+                </label>
+                <div className="flex rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1 border border-zinc-200 dark:border-white/10 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ artworkPosition: 'top' })}
+                    className={`flex-1 py-1 px-1.5 rounded-lg text-xs font-medium transition-all ${
+                      settings.artworkPosition === 'top'
+                        ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-xs font-semibold'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-white'
+                    }`}
+                    title="Focus top of image (preserves heads and logos)"
+                  >
+                    Top (Head)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ artworkPosition: 'center' })}
+                    className={`flex-1 py-1 px-1.5 rounded-lg text-xs font-medium transition-all ${
+                      (!settings.artworkPosition || settings.artworkPosition === 'center')
+                        ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-xs font-semibold'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ artworkPosition: 'bottom' })}
+                    className={`flex-1 py-1 px-1.5 rounded-lg text-xs font-medium transition-all ${
+                      settings.artworkPosition === 'bottom'
+                        ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 shadow-xs font-semibold'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Bottom
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -474,7 +559,7 @@ function getLoaderConfig() {
         <InstagramImageCropModal
           isOpen={cropModalOpen}
           imageSrc={cropSourceImage}
-          initialShape="square"
+          initialShape="banner"
           title={`Crop & Rotate ${settings.productName} Artwork`}
           onClose={() => {
             setCropModalOpen(false);

@@ -8,17 +8,20 @@ import {
   Check,
   X,
   RotateCcw,
-  Sparkles,
   Circle,
   Square,
-  Sliders,
+  Layers,
+  Layout,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
-import { GlassButton } from './GlassButton';
+
+export type CropShape = 'banner' | '16:9' | 'square' | 'circle';
 
 interface InstagramImageCropModalProps {
   isOpen: boolean;
   imageSrc: string;
-  initialShape?: 'circle' | 'square';
+  initialShape?: CropShape;
   title?: string;
   onClose: () => void;
   onCropComplete: (croppedDataUrl: string) => void;
@@ -27,7 +30,7 @@ interface InstagramImageCropModalProps {
 export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = ({
   isOpen,
   imageSrc,
-  initialShape = 'circle',
+  initialShape = 'banner',
   title = 'Edit Photo',
   onClose,
   onCropComplete,
@@ -37,7 +40,7 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [cropShape, setCropShape] = useState<'circle' | 'square'>(initialShape);
+  const [cropShape, setCropShape] = useState<CropShape>(initialShape);
   const [fitMode, setFitMode] = useState<'fill' | 'fit'>('fill');
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -87,11 +90,35 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // Touch drag handling for touch screens
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && e.touches.length === 1) {
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   // Wheel zoom
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((prev) => Math.min(3, Math.max(0.8, prev + delta)));
+    const delta = e.deltaY > 0 ? -0.08 : 0.08;
+    setZoom((prev) => Math.min(3, Math.max(0.6, prev + delta)));
   };
 
   const handleRotate = () => {
@@ -101,12 +128,22 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
   const handleToggleFit = () => {
     if (fitMode === 'fill') {
       setFitMode('fit');
-      setZoom(0.85);
+      setZoom(0.9);
       setPan({ x: 0, y: 0 });
     } else {
       setFitMode('fill');
-      setZoom(1.2);
+      setZoom(1.05);
       setPan({ x: 0, y: 0 });
+    }
+  };
+
+  const handleAlignVertical = (pos: 'top' | 'center' | 'bottom') => {
+    if (pos === 'top') {
+      setPan((prev) => ({ ...prev, y: 70 }));
+    } else if (pos === 'bottom') {
+      setPan((prev) => ({ ...prev, y: -70 }));
+    } else {
+      setPan((prev) => ({ ...prev, y: 0 }));
     }
   };
 
@@ -123,9 +160,32 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
 
     const img = imageRef.current;
     const canvas = document.createElement('canvas');
-    const size = 720; // 720x720 high-res output
-    canvas.width = size;
-    canvas.height = size;
+
+    let outWidth = 720;
+    let outHeight = 720;
+    let vpWidth = 340;
+    let vpHeight = 340;
+
+    if (cropShape === 'banner') {
+      // 2.055:1 matches Splash Screen (740px x 360px) in Ultra-HD
+      outWidth = 1480;
+      outHeight = 720;
+      vpWidth = viewportRef.current?.clientWidth || 460;
+      vpHeight = viewportRef.current?.clientHeight || 224;
+    } else if (cropShape === '16:9') {
+      outWidth = 1280;
+      outHeight = 720;
+      vpWidth = viewportRef.current?.clientWidth || 460;
+      vpHeight = viewportRef.current?.clientHeight || 258;
+    } else {
+      outWidth = 720;
+      outHeight = 720;
+      vpWidth = viewportRef.current?.clientWidth || 340;
+      vpHeight = viewportRef.current?.clientHeight || 340;
+    }
+
+    canvas.width = outWidth;
+    canvas.height = outHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -135,17 +195,18 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
     // Circular crop clipping if requested
     if (cropShape === 'circle') {
       ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.arc(outWidth / 2, outHeight / 2, Math.min(outWidth, outHeight) / 2, 0, Math.PI * 2);
       ctx.clip();
     }
 
     // Transform setup
-    ctx.translate(size / 2, size / 2);
+    ctx.translate(outWidth / 2, outHeight / 2);
     ctx.rotate((rotation * Math.PI) / 180);
 
     // Compute aspect ratio scaling
-    const viewportSize = 340; // Size of CSS viewport in px
-    const scaleFactor = size / viewportSize;
+    const scaleFactorX = outWidth / vpWidth;
+    const scaleFactorY = outHeight / vpHeight;
+    const scaleFactor = (scaleFactorX + scaleFactorY) / 2;
 
     // Apply pan & zoom
     const drawX = pan.x * scaleFactor;
@@ -153,25 +214,26 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
 
     // Calculate natural draw dimensions based on fitMode
     const naturalRatio = img.naturalWidth / img.naturalHeight;
-    let baseWidth = size;
-    let baseHeight = size;
+    const targetRatio = outWidth / outHeight;
+    let baseWidth = outWidth;
+    let baseHeight = outHeight;
 
     if (fitMode === 'fit') {
-      if (naturalRatio > 1) {
-        baseWidth = size;
-        baseHeight = size / naturalRatio;
+      if (naturalRatio > targetRatio) {
+        baseWidth = outWidth;
+        baseHeight = outWidth / naturalRatio;
       } else {
-        baseHeight = size;
-        baseWidth = size * naturalRatio;
+        baseHeight = outHeight;
+        baseWidth = outHeight * naturalRatio;
       }
     } else {
       // Fill
-      if (naturalRatio > 1) {
-        baseHeight = size;
-        baseWidth = size * naturalRatio;
+      if (naturalRatio > targetRatio) {
+        baseHeight = outHeight;
+        baseWidth = outHeight * naturalRatio;
       } else {
-        baseWidth = size;
-        baseHeight = size / naturalRatio;
+        baseWidth = outWidth;
+        baseHeight = outWidth / naturalRatio;
       }
     }
 
@@ -193,13 +255,21 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
 
   if (!isOpen) return null;
 
+  // Compute viewport classes based on aspect ratio
+  let vpWidthHeightClass = 'w-[320px] h-[320px] sm:w-[340px] sm:h-[340px]';
+  if (cropShape === 'banner') {
+    vpWidthHeightClass = 'w-[320px] h-[156px] sm:w-[460px] sm:h-[224px]';
+  } else if (cropShape === '16:9') {
+    vpWidthHeightClass = 'w-[320px] h-[180px] sm:w-[460px] sm:h-[258px]';
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div
-        className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+        className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Instagram Header */}
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md">
           <button
             onClick={onClose}
@@ -209,17 +279,17 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
             <span>Cancel</span>
           </button>
 
-          <div className="flex items-center gap-1.5 text-xs font-bold text-white tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600" />
+          <div className="flex items-center gap-2 text-xs font-bold text-white tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600" />
             <span>{title}</span>
           </div>
 
           <button
             onClick={handleApplyCrop}
-            className="px-3.5 py-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 active:scale-95 transition-all flex items-center gap-1"
+            className="px-4 py-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 active:scale-95 transition-all flex items-center gap-1"
           >
             <Check className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Done</span>
+            <span>Apply Crop</span>
           </button>
         </div>
 
@@ -228,8 +298,11 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
           <div
             ref={viewportRef}
             onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             onWheel={handleWheel}
-            className={`relative w-[320px] h-[320px] sm:w-[340px] sm:h-[340px] overflow-hidden cursor-grab active:cursor-grabbing bg-zinc-900 shadow-inner flex items-center justify-center transition-all ${
+            className={`relative ${vpWidthHeightClass} overflow-hidden cursor-grab active:cursor-grabbing bg-zinc-900 shadow-inner flex items-center justify-center transition-all ${
               cropShape === 'circle' ? 'rounded-full' : 'rounded-2xl'
             }`}
           >
@@ -250,7 +323,7 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
               }`}
             />
 
-            {/* Instagram Rule-of-Thirds 3x3 Grid Overlay */}
+            {/* Rule-of-Thirds 3x3 Grid Overlay */}
             <div
               className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
                 isDragging ? 'opacity-70' : 'opacity-20 hover:opacity-50'
@@ -263,8 +336,8 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
                 <div className="border-r border-b border-white/40" />
                 <div className="border-r border-b border-white/40" />
                 <div className="border-b border-white/40" />
-                <div className="border-r border-white/40" />
-                <div className="border-r border-white/40" />
+                <div className="border-r border-b border-white/40" />
+                <div className="border-r border-b border-white/40" />
                 <div className="" />
               </div>
             </div>
@@ -273,95 +346,170 @@ export const InstagramImageCropModal: React.FC<InstagramImageCropModalProps> = (
             {cropShape === 'circle' && (
               <div className="absolute inset-0 rounded-full border-2 border-white/40 pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]" />
             )}
+
+            {/* Splash Banner Guide Indicator */}
+            {cropShape === 'banner' && (
+              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/15 text-[10px] font-mono text-cyan-300 pointer-events-none">
+                Splash Screen Frame (2.05:1)
+              </div>
+            )}
           </div>
+          <p className="text-[11px] font-mono text-zinc-500 mt-2">
+            Drag to pan position • Scroll or slider to zoom • Click &quot;Top&quot; to keep head/upper area visible
+          </p>
         </div>
 
-        {/* Instagram Tooling Bar */}
+        {/* Tooling Bar */}
         <div className="px-5 py-4 bg-zinc-900/90 border-t border-zinc-800 space-y-3.5">
-          {/* Zoom Slider */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setZoom((prev) => Math.max(0.8, prev - 0.2))}
-              className="text-zinc-400 hover:text-white transition-colors"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <input
-              type="range"
-              min="0.8"
-              max="3"
-              step="0.05"
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="flex-1 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-            />
-            <button
-              onClick={() => setZoom((prev) => Math.min(3, prev + 0.2))}
-              className="text-zinc-400 hover:text-white transition-colors"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <span className="text-[11px] font-mono text-zinc-400 w-9 text-right">
-              {Math.round(zoom * 100)}%
-            </span>
+          {/* Zoom Slider & Vertical Alignment */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <button
+                onClick={() => setZoom((prev) => Math.max(0.6, prev - 0.15))}
+                className="text-zinc-400 hover:text-white transition-colors"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <input
+                type="range"
+                min="0.6"
+                max="3"
+                step="0.05"
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              />
+              <button
+                onClick={() => setZoom((prev) => Math.min(3, prev + 0.15))}
+                className="text-zinc-400 hover:text-white transition-colors"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <span className="text-[11px] font-mono text-zinc-400 w-10 text-right">
+                {Math.round(zoom * 100)}%
+              </span>
+            </div>
+
+            {/* Quick Focus / Alignment Buttons */}
+            <div className="flex items-center gap-1.5 self-center">
+              <span className="text-[10px] font-mono text-zinc-500 uppercase mr-1">Focus:</span>
+              <button
+                onClick={() => handleAlignVertical('top')}
+                className="px-2 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 flex items-center gap-1 transition-all"
+                title="Focus on Top of Image (e.g. Character Head / Logo)"
+              >
+                <ArrowUp className="w-3 h-3 text-cyan-400" />
+                <span>Top</span>
+              </button>
+              <button
+                onClick={() => handleAlignVertical('center')}
+                className="px-2 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 transition-all"
+                title="Center Image"
+              >
+                <span>Center</span>
+              </button>
+              <button
+                onClick={() => handleAlignVertical('bottom')}
+                className="px-2 py-1 rounded-lg text-[11px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 flex items-center gap-1 transition-all"
+                title="Focus on Bottom of Image"
+              >
+                <ArrowDown className="w-3 h-3 text-cyan-400" />
+                <span>Bottom</span>
+              </button>
+            </div>
           </div>
 
-          {/* Action Buttons: Fit, Rotate, Shape, Reset */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
+          {/* Ratio & Shape Switcher */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-800/70">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCropShape('banner')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                  cropShape === 'banner'
+                    ? 'bg-cyan-500 text-slate-950 shadow-xs'
+                    : 'text-zinc-400 hover:text-white bg-zinc-800/80 border border-zinc-700'
+                }`}
+              >
+                <Layers className="w-3 h-3" />
+                <span>Banner (Splash 2:1)</span>
+              </button>
+
+              <button
+                onClick={() => setCropShape('16:9')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                  cropShape === '16:9'
+                    ? 'bg-cyan-500 text-slate-950 shadow-xs'
+                    : 'text-zinc-400 hover:text-white bg-zinc-800/80 border border-zinc-700'
+                }`}
+              >
+                <Layout className="w-3 h-3" />
+                <span>16:9</span>
+              </button>
+
+              <button
+                onClick={() => setCropShape('square')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                  cropShape === 'square'
+                    ? 'bg-cyan-500 text-slate-950 shadow-xs'
+                    : 'text-zinc-400 hover:text-white bg-zinc-800/80 border border-zinc-700'
+                }`}
+              >
+                <Square className="w-3 h-3" />
+                <span>Square</span>
+              </button>
+
+              <button
+                onClick={() => setCropShape('circle')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                  cropShape === 'circle'
+                    ? 'bg-cyan-500 text-slate-950 shadow-xs'
+                    : 'text-zinc-400 hover:text-white bg-zinc-800/80 border border-zinc-700'
+                }`}
+              >
+                <Circle className="w-3 h-3" />
+                <span>Circle</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
               {/* Fit / Fill Toggle */}
               <button
                 onClick={handleToggleFit}
-                className={`p-2 rounded-xl text-xs font-medium flex items-center gap-1.5 border transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 border transition-all ${
                   fitMode === 'fit'
-                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300'
+                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold'
                     : 'bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:text-white'
                 }`}
                 title="Toggle Fit / Fill"
               >
                 {fitMode === 'fit' ? (
-                  <Minimize2 className="w-3.5 h-3.5" />
+                  <Minimize2 className="w-3 h-3" />
                 ) : (
-                  <Maximize2 className="w-3.5 h-3.5" />
+                  <Maximize2 className="w-3 h-3" />
                 )}
-                <span>{fitMode === 'fit' ? 'Fit' : 'Fill'}</span>
+                <span>{fitMode === 'fit' ? 'Fit (No Crop)' : 'Fill'}</span>
               </button>
 
               {/* Rotate 90° */}
               <button
                 onClick={handleRotate}
-                className="p-2 rounded-xl text-xs font-medium bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-600 transition-all flex items-center gap-1.5"
-                title="Rotate 90° Clockwise"
+                className="p-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-600 transition-all flex items-center gap-1"
+                title="Rotate 90°"
               >
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>Rotate ({rotation}°)</span>
               </button>
 
-              {/* Shape Switcher (Circle PFP / Square) */}
+              {/* Reset */}
               <button
-                onClick={() => setCropShape((prev) => (prev === 'circle' ? 'square' : 'circle'))}
-                className="p-2 rounded-xl text-xs font-medium bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-600 transition-all flex items-center gap-1.5"
-                title="Switch Circle / Square Frame"
+                onClick={handleReset}
+                className="p-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                title="Reset adjustments"
               >
-                {cropShape === 'circle' ? (
-                  <Circle className="w-3.5 h-3.5 text-cyan-400" />
-                ) : (
-                  <Square className="w-3.5 h-3.5 text-cyan-400" />
-                )}
-                <span>{cropShape === 'circle' ? 'Circle' : 'Square'}</span>
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            {/* Reset */}
-            <button
-              onClick={handleReset}
-              className="p-2 rounded-xl text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-              title="Reset All Adjustments"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>

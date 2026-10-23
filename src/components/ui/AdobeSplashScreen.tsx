@@ -206,7 +206,17 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
           <img
             src={settings.artworkUrl}
             alt="Splash Artwork"
-            className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.95] contrast-[1.04] transition-transform duration-1000 scale-100 hover:scale-102"
+            className={`absolute inset-0 w-full h-full filter brightness-[0.95] contrast-[1.04] transition-all duration-700 ${
+              settings.artworkFit === 'contain'
+                ? 'object-contain bg-zinc-950'
+                : 'object-cover'
+            } ${
+              settings.artworkPosition === 'top'
+                ? 'object-top'
+                : settings.artworkPosition === 'bottom'
+                ? 'object-bottom'
+                : 'object-center'
+            } scale-100 hover:scale-102`}
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85';

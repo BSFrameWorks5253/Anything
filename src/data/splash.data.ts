@@ -12,7 +12,7 @@ export const splashArtworkPresets: SplashArtworkPreset[] = [
     id: 'preset-spectrum',
     name: 'Liquid Spectrum 2026',
     artist: 'Anything Creation',
-    title: 'Refractive Glass in Motion',
+    title: '-Designed by Burhanuddin',
     imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&q=85',
     category: 'Abstract 3D',
   },
@@ -62,6 +62,8 @@ export interface SplashSettings {
   durationMs: number;
   logoText?: string;
   badgeGradient?: string;
+  artworkFit?: 'cover' | 'contain';
+  artworkPosition?: 'center' | 'top' | 'bottom';
 }
 
 export const defaultSplashSettings: SplashSettings = {
@@ -69,13 +71,15 @@ export const defaultSplashSettings: SplashSettings = {
   enabled: true,
   artworkUrl: splashArtworkPresets[0].imageUrl,
   artistName: 'Anything Creation',
-  artworkTitle: 'Refractive Glass in Motion',
+  artworkTitle: '-Designed by Burhanuddin',
   productName: 'Anything',
   versionText: '2026.1 Release · v1.0.0 (x64)',
   tagline: 'Creative & Productivity Master Hub',
   durationMs: 2800,
   logoText: 'An',
   badgeGradient: 'from-red-600 via-rose-500 to-amber-500',
+  artworkFit: 'cover',
+  artworkPosition: 'center',
 };
 
 export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
@@ -84,13 +88,15 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     enabled: true,
     artworkUrl: splashArtworkPresets[0].imageUrl,
     artistName: 'Anything Creation',
-    artworkTitle: 'Refractive Glass in Motion',
+    artworkTitle: '-Designed by Burhanuddin',
     productName: 'Tap Studio',
     versionText: 'v1.0.0 (x64)',
     tagline: 'Macro Automation & Stream Deck Companion',
     durationMs: 2800,
     logoText: 'Ts',
     badgeGradient: 'from-cyan-600 via-sky-500 to-indigo-600',
+    artworkFit: 'cover',
+    artworkPosition: 'center',
   },
 };
 
@@ -123,9 +129,12 @@ export const loadAppSplashSettings = (appId: string = 'anything'): SplashSetting
 
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Automatically migrate legacy 'Adobe Creative Collective' to 'Anything Creation'
+      // Automatically migrate legacy values to Image 1 defaults
       if (parsed.artistName === 'Adobe Creative Collective') {
         parsed.artistName = 'Anything Creation';
+      }
+      if (parsed.artworkTitle === 'Refractive Glass in Motion' || !parsed.artworkTitle) {
+        parsed.artworkTitle = '-Designed by Burhanuddin';
       }
       return { ...defaults, ...parsed };
     }
