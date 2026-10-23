@@ -2,7 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
-  launchApp: (pathOrUrl: string) => ipcRenderer.invoke('app:launch', pathOrUrl),
+  launchApp: (target: string | { path?: string; name?: string; id?: string; executableName?: string }) =>
+    ipcRenderer.invoke('app:launch', target),
+  resolveInstalledPath: (data: { appId?: string; name?: string; currentPath?: string; executableName?: string }) =>
+    ipcRenderer.invoke('app:resolve-installed-path', data),
   selectExecutable: () => ipcRenderer.invoke('app:select-executable'),
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
   

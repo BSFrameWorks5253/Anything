@@ -1,6 +1,14 @@
 export interface ElectronAPI {
   platform: string;
-  launchApp: (pathOrUrl: string) => Promise<{ success: boolean; error?: string }>;
+  launchApp: (
+    target: string | { path?: string; name?: string; id?: string; executableName?: string }
+  ) => Promise<{ success: boolean; error?: string; resolvedPath?: string }>;
+  resolveInstalledPath?: (data: {
+    appId?: string;
+    name?: string;
+    currentPath?: string;
+    executableName?: string;
+  }) => Promise<{ installed: boolean; resolvedPath?: string | null; error?: string }>;
   selectExecutable: () => Promise<string | null>;
   openExternal: (url: string) => Promise<void>;
 

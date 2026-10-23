@@ -66,23 +66,44 @@ export function App() {
         const res = await electronAPI.loadPublishedCatalog();
         if (res.success && res.catalog && res.catalog.length > 0) {
           // Merge with local install state
-          const merged = res.catalog.map((remote: any) => {
-            const normRemoteId = (remote.id || '').toLowerCase().replace(/^app-/, '');
-            const local = apps.find(
-              (a) =>
-                a.id === remote.id ||
-                (a.id || '').toLowerCase().replace(/^app-/, '') === normRemoteId
-            );
-            if (local) {
-              return {
-                ...remote,
-                status: local.status,
-                installedPath: local.installedPath,
-                localVersion: local.localVersion,
-              };
-            }
-            return remote;
-          });
+          const merged = await Promise.all(
+            res.catalog.map(async (remote: any) => {
+              const normRemoteId = (remote.id || '').toLowerCase().replace(/^app-/, '');
+              const local = apps.find(
+                (a) =>
+                  a.id === remote.id ||
+                  (a.id || '').toLowerCase().replace(/^app-/, '') === normRemoteId
+              );
+              let item: CatalogApp = local
+                ? {
+                    ...remote,
+                    status: local.status,
+                    installedPath: local.installedPath,
+                    localVersion: local.localVersion,
+                  }
+                : remote;
+
+              // Auto-resolve installed app location
+              if (electronAPI?.resolveInstalledPath) {
+                const detected = await electronAPI.resolveInstalledPath({
+                  appId: item.id,
+                  name: item.name,
+                  currentPath: item.installedPath,
+                  executableName: item.executableName,
+                });
+                if (detected?.installed && detected?.resolvedPath) {
+                  item = {
+                    ...item,
+                    status: 'installed',
+                    installedPath: detected.resolvedPath,
+                    localVersion: item.localVersion || item.version,
+                  };
+                }
+              }
+
+              return item;
+            })
+          );
           persistApps(merged);
         }
       }
@@ -249,14 +270,31 @@ export function App() {
     checkAllGitHubUpdates();
   }, [apps.length]);
 
-  // Verify installed paths on disk upon launch
+  // Verify installed paths on disk upon launch and auto-resolve existing installations
   useEffect(() => {
     const verifyAllPaths = async () => {
       const electronAPI = (window as any).electronAPI;
-      if (!electronAPI?.verifyAppPath) return;
+      if (!electronAPI?.resolveInstalledPath && !electronAPI?.verifyAppPath) return;
 
       const checked = await Promise.all(
         apps.map(async (app) => {
+          if (electronAPI?.resolveInstalledPath) {
+            const detected = await electronAPI.resolveInstalledPath({
+              appId: app.id,
+              name: app.name,
+              currentPath: app.installedPath,
+              executableName: app.executableName,
+            });
+            if (detected?.installed && detected?.resolvedPath) {
+              return {
+                ...app,
+                status: 'installed' as const,
+                installedPath: detected.resolvedPath,
+                localVersion: app.localVersion || app.version,
+              };
+            }
+          }
+
           if (app.status === 'installed' && app.installedPath) {
             const exists = await electronAPI.verifyAppPath(app.installedPath);
             if (!exists) {
@@ -442,7 +480,12 @@ export function App() {
 
   const handleLaunchApp = async (targetApp: CatalogApp) => {
     const electronAPI = (window as any).electronAPI;
-    const launchTarget = targetApp.installedPath || targetApp.executableName;
+    const launchTarget = {
+      path: targetApp.installedPath || targetApp.executableName,
+      name: targetApp.name,
+      id: targetApp.id,
+      executableName: targetApp.executableName,
+    };
 
     if (electronAPI?.launchApp) {
       const res = await electronAPI.launchApp(launchTarget);
@@ -452,6 +495,19 @@ export function App() {
         );
         persistApps(
           apps.map((a) => (a.id === targetApp.id ? { ...a, status: 'path-broken' } : a))
+        );
+      } else if (res.resolvedPath && res.resolvedPath !== targetApp.installedPath) {
+        persistApps(
+          apps.map((a) =>
+            a.id === targetApp.id
+              ? {
+                  ...a,
+                  status: 'installed',
+                  installedPath: res.resolvedPath,
+                  localVersion: a.localVersion || a.version,
+                }
+              : a
+          )
         );
       }
     } else {
