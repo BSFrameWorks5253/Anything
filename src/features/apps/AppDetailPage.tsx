@@ -322,8 +322,15 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-start sm:items-center gap-5">
-            <div className="shrink-0 p-1 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg">
+            <div className="relative shrink-0 p-1 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg group/icon">
               <AppIconRenderer app={app} size="lg" />
+              {!(app as any).hasRealIcon && !(app.id?.includes('tap-studio')) && !(app.name?.toLowerCase().includes('mediaflow')) && (
+                <div className="absolute -bottom-1.5 -right-1.5 bg-amber-500 rounded-full p-0.5 shadow-md" title="No icon detected — add logo.png to your release folder">
+                  <svg viewBox="0 0 16 16" fill="white" className="w-3 h-3">
+                    <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-5h1.5v5zm0-6.5h-1.5V3.5h1.5V5z"/>
+                  </svg>
+                </div>
+              )}
             </div>
 
             <div>
@@ -435,6 +442,24 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
       {/* Tab 1: Overview & Path */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+
+          {/* ── No Icon Notice for Creator ────────────────────────────────────── */}
+          {!(app as any).hasRealIcon && !(app.id?.includes('tap-studio')) && !(app.name?.toLowerCase().includes('mediaflow')) && (
+            <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 shrink-0 mt-0.5">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd"/>
+              </svg>
+              <div className="text-xs leading-relaxed">
+                <p className="font-bold mb-0.5">No app icon found</p>
+                <p className="opacity-80">
+                  Anything couldn't extract an icon from the EXE or find a logo image in your release folder.
+                  To show the real app icon, add a <code className="font-mono bg-amber-500/15 rounded px-1">logo.png</code> or <code className="font-mono bg-amber-500/15 rounded px-1">app-logo.png</code> (512×512 px recommended) inside{' '}
+                  <code className="font-mono bg-amber-500/15 rounded px-1">releases/{app.id}/</code>.
+                  Alternatively, Anything will automatically read the icon embedded in the <code className="font-mono bg-amber-500/15 rounded px-1">.exe</code> next time it scans.
+                </p>
+              </div>
+            </div>
+          )}
           <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-4">
             <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
               About {app.name}

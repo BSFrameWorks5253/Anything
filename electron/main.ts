@@ -103,142 +103,69 @@ function matchesApp(folderName: string, targetId: string, targetName: string, fo
   return false;
 }
 
-async function findAppLogoImage(dirPath: string): Promise<{ iconType: 'image'; iconValue: string } | null> {
+async function findAppLogoImage(dirPath: string): Promise<{ iconType: 'image'; iconValue: string; hasRealIcon: boolean } | null> {
   try {
     if (!fs.existsSync(dirPath)) return null;
 
+    const lowerDir = dirPath.toLowerCase();
+
+    // ── KNOWN OFFICIAL APPS: Always use their authentic PNG ─────────────────────
+    if (lowerDir.includes('tap-studio') || lowerDir.includes('tapstudio')) {
+      const candidates = [
+        path.join(dirPath, 'logo.png'),
+        path.join(dirPath, 'app-logo.png'),
+        'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Tap Studio\\public\\logo.png',
+        'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\public\\tap-studio-logo.png',
+      ];
+      for (const c of candidates) {
+        if (fs.existsSync(c)) {
+          const b64 = fs.readFileSync(c).toString('base64');
+          return { iconType: 'image', iconValue: `data:image/png;base64,${b64}`, hasRealIcon: true };
+        }
+      }
+    }
+
+    if (lowerDir.includes('mediaflow')) {
+      const candidates = [
+        path.join(dirPath, 'logo.png'),
+        path.join(dirPath, 'app-logo.png'),
+        'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\public\\assets\\logo.png',
+        'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\public\\mediaflow-studio-logo.png',
+      ];
+      for (const c of candidates) {
+        if (fs.existsSync(c)) {
+          const b64 = fs.readFileSync(c).toString('base64');
+          return { iconType: 'image', iconValue: `data:image/png;base64,${b64}`, hasRealIcon: true };
+        }
+      }
+    }
+
     const files = fs.readdirSync(dirPath);
 
-    // 1. High-priority SVG check (as requested: "TAKE THE SVG FROM THE TAP STUDIO FOLDER IN THE RELEASE")
-    const preferredSvgNames = [
-      'logo.svg',
-      'app-logo.svg',
-      'app_logo.svg',
-      'icon.svg',
-    ];
-
-    let chosenSvg = files.find((f) => preferredSvgNames.includes(f.toLowerCase().trim()));
-    if (!chosenSvg) {
-      chosenSvg = files.find((f) => {
-        const lower = f.toLowerCase();
-        return (
-          lower.endsWith('.svg') &&
-          !lower.includes('banner') &&
-          !lower.includes('pattern') &&
-          !lower.includes('splash')
-        );
-      });
-    }
-
-    if (chosenSvg) {
-      const fullPath = path.join(dirPath, chosenSvg);
-      const svgContent = fs.readFileSync(fullPath, 'utf-8');
-      const base64 = Buffer.from(svgContent, 'utf-8').toString('base64');
-      return {
-        iconType: 'image',
-        iconValue: `data:image/svg+xml;base64,${base64}`,
-      };
-    }
-
-    // 2. High-priority PNG check
-    const preferredPngNames = [
-      'app-logo.png',
-      'app_logo.png',
-      'app logo.png',
-      'applogo.png',
-      'logo.png',
-      'icon.png',
-      'app.png',
-    ];
-
-    let chosenPng = files.find((f) => preferredPngNames.includes(f.toLowerCase().trim()));
-    if (!chosenPng) {
-      chosenPng = files.find((f) => {
-        const ext = path.extname(f).toLowerCase();
-        const lower = f.toLowerCase();
-        return (
-          (ext === '.png' || ext === '.webp' || ext === '.jpg') &&
-          !lower.includes('banner') &&
-          !lower.includes('splash') &&
-          !lower.includes('bg')
-        );
-      });
-    }
-
-    if (chosenPng) {
-      const fullPath = path.join(dirPath, chosenPng);
-      const ext = path.extname(chosenPng).toLowerCase().replace('.', '');
-      const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
-      const base64 = fs.readFileSync(fullPath).toString('base64');
-      return {
-        iconType: 'image',
-        iconValue: `data:${mime};base64,${base64}`,
-      };
-    }
-
-    // 3. Scan subdirectories (assets, v1.2.0, etc.)
-    for (const file of files) {
-      const subPath = path.join(dirPath, file);
-      if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
-        const subFiles = fs.readdirSync(subPath);
-
-        // Check subfolder for SVG first
-        const subSvg = subFiles.find((f) => {
-          const lower = f.toLowerCase();
-          return (
-            (preferredSvgNames.includes(lower) || lower.endsWith('.svg')) &&
-            !lower.includes('banner') &&
-            !lower.includes('pattern') &&
-            !lower.includes('splash')
-          );
-        });
-        if (subSvg) {
-          const fullPath = path.join(subPath, subSvg);
-          const svgContent = fs.readFileSync(fullPath, 'utf-8');
-          const base64 = Buffer.from(svgContent, 'utf-8').toString('base64');
-          return {
-            iconType: 'image',
-            iconValue: `data:image/svg+xml;base64,${base64}`,
-          };
-        }
-
-        // Check subfolder for PNG
-        const subPng = subFiles.find((f) => preferredPngNames.includes(f.toLowerCase().trim()));
-        if (subPng) {
-          const fullPath = path.join(subPath, subPng);
-          const ext = path.extname(subPng).toLowerCase().replace('.', '');
-          const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
-          const base64 = fs.readFileSync(fullPath).toString('base64');
-          return {
-            iconType: 'image',
-            iconValue: `data:${mime};base64,${base64}`,
-          };
-        }
-      }
-    }
-
-    // 4. "OR USE EXE THUMBNAIL" - Extract high-resolution Windows icon directly from .exe
+    // ── PRIORITY 1: Extract the actual app icon directly from the .exe ──────────
+    // Collect all EXEs in this dir and one level of subdirs
     const allExes: string[] = [];
     for (const f of files) {
-      if (f.toLowerCase().endsWith('.exe')) {
-        allExes.push(path.join(dirPath, f));
-      }
+      if (f.toLowerCase().endsWith('.exe')) allExes.push(path.join(dirPath, f));
     }
     for (const file of files) {
       const subPath = path.join(dirPath, file);
       if (fs.existsSync(subPath) && fs.statSync(subPath).isDirectory()) {
-        const subFiles = fs.readdirSync(subPath);
-        for (const sf of subFiles) {
-          if (sf.toLowerCase().endsWith('.exe')) {
-            allExes.push(path.join(subPath, sf));
+        try {
+          for (const sf of fs.readdirSync(subPath)) {
+            if (sf.toLowerCase().endsWith('.exe')) allExes.push(path.join(subPath, sf));
           }
-        }
+        } catch { /* skip unreadable subdirs */ }
       }
     }
 
     if (allExes.length > 0) {
+      // Prefer the main app exe over setup / uninstaller
       const chosenExe =
-        allExes.find((e) => e.toLowerCase().includes('_setup') || e.toLowerCase().includes('setup')) ||
+        allExes.find((e) => {
+          const l = path.basename(e).toLowerCase();
+          return !l.includes('setup') && !l.includes('install') && !l.includes('uninstall');
+        }) ||
         allExes.find((e) => !e.toLowerCase().includes('uninstall')) ||
         allExes[0];
 
@@ -249,17 +176,86 @@ async function findAppLogoImage(dirPath: string): Promise<{ iconType: 'image'; i
             return {
               iconType: 'image',
               iconValue: icon.toDataURL(),
+              hasRealIcon: true,
             };
           }
         } catch (err) {
-          console.warn('Failed extracting exe thumbnail for', chosenExe, err);
+          console.warn('[icon] exe thumbnail extraction failed for', chosenExe, err);
         }
       }
     }
+
+    // ── PRIORITY 2: Creator-provided image in the release folder ────────────────
+    const preferredPngNames = [
+      'app-logo.png', 'app_logo.png', 'applogo.png', 'logo.png', 'icon.png', 'app.png',
+    ];
+    const preferredSvgNames = ['logo.svg', 'app-logo.svg', 'icon.svg'];
+
+    // PNG in root of release dir
+    const chosenPng = files.find((f) => preferredPngNames.includes(f.toLowerCase().trim()))
+      || files.find((f) => {
+        const ext = path.extname(f).toLowerCase();
+        const l = f.toLowerCase();
+        return (ext === '.png' || ext === '.webp' || ext === '.jpg')
+          && !l.includes('banner') && !l.includes('splash') && !l.includes('bg');
+      });
+
+    if (chosenPng) {
+      const fullPath = path.join(dirPath, chosenPng);
+      const ext = path.extname(chosenPng).toLowerCase().replace('.', '');
+      const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+      const b64 = fs.readFileSync(fullPath).toString('base64');
+      return { iconType: 'image', iconValue: `data:${mime};base64,${b64}`, hasRealIcon: true };
+    }
+
+    // SVG in root
+    const chosenSvg = files.find((f) => preferredSvgNames.includes(f.toLowerCase().trim()))
+      || files.find((f) => {
+        const l = f.toLowerCase();
+        return l.endsWith('.svg') && !l.includes('banner') && !l.includes('pattern') && !l.includes('splash');
+      });
+
+    if (chosenSvg) {
+      const svgContent = fs.readFileSync(path.join(dirPath, chosenSvg), 'utf-8');
+      const b64 = Buffer.from(svgContent, 'utf-8').toString('base64');
+      return { iconType: 'image', iconValue: `data:image/svg+xml;base64,${b64}`, hasRealIcon: true };
+    }
+
+    // Sub-directory scan (assets/, v1.0.0/, etc.)
+    for (const file of files) {
+      const subPath = path.join(dirPath, file);
+      if (!fs.existsSync(subPath) || !fs.statSync(subPath).isDirectory()) continue;
+      try {
+        const subFiles = fs.readdirSync(subPath);
+
+        const subPng = subFiles.find((f) => preferredPngNames.includes(f.toLowerCase().trim()));
+        if (subPng) {
+          const fullPath = path.join(subPath, subPng);
+          const ext = path.extname(subPng).toLowerCase().replace('.', '');
+          const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+          const b64 = fs.readFileSync(fullPath).toString('base64');
+          return { iconType: 'image', iconValue: `data:${mime};base64,${b64}`, hasRealIcon: true };
+        }
+
+        const subSvg = subFiles.find((f) => {
+          const l = f.toLowerCase();
+          return (preferredSvgNames.includes(l) || l.endsWith('.svg'))
+            && !l.includes('banner') && !l.includes('pattern') && !l.includes('splash');
+        });
+        if (subSvg) {
+          const svgContent = fs.readFileSync(path.join(subPath, subSvg), 'utf-8');
+          const b64 = Buffer.from(svgContent, 'utf-8').toString('base64');
+          return { iconType: 'image', iconValue: `data:image/svg+xml;base64,${b64}`, hasRealIcon: true };
+        }
+      } catch { /* skip unreadable sub */ }
+    }
+
+    // No real icon found → return null so the UI shows the "Add icon" hint
+    return null;
   } catch (e) {
-    console.error('Failed to parse app logo image:', e);
+    console.error('[icon] findAppLogoImage error:', e);
+    return null;
   }
-  return null;
 }
 
 function formatFileBytes(bytes: number): string {
@@ -614,6 +610,7 @@ async function scanAndCollectReleases(): Promise<{
             glowColor: manifest.glowColor || shader.glow,
             iconType: appLogo ? 'image' : manifest.iconType || 'emoji',
             iconValue: appLogo ? appLogo.iconValue : manifest.iconValue || '⚡',
+            hasRealIcon: appLogo ? appLogo.hasRealIcon : Boolean(manifest.iconValue && manifest.iconType === 'image'),
             status: 'not-installed',
             githubRepo,
             endpoints: manifest.endpoints || undefined,

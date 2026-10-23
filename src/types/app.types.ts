@@ -70,6 +70,8 @@ export interface CatalogApp {
   glowColor: string;
   iconType?: 'monogram' | 'emoji' | 'image';
   iconValue?: string;
+  /** true when iconValue is an actual app icon (EXE extracted or PNG/SVG provided by creator) */
+  hasRealIcon?: boolean;
   status: AppLifecycleStatus;
   downloadProgress?: DownloadProgress;
   changelog?: string[];

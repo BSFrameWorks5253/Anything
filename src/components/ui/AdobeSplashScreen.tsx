@@ -23,14 +23,23 @@ export const AnythingBrandEmblem: React.FC<{
   size = 56,
   className = '',
   letters = 'An',
-  gradientFrom = '#FF2A2A',
-  gradientTo = '#BA0000',
+  gradientFrom,
+  gradientTo,
   glow = false,
 }) => {
-  const isTap = letters.toLowerCase() === 'ts';
-  const fromColor = isTap ? '#06B6D4' : gradientFrom;
-  const toColor = isTap ? '#4F46E5' : gradientTo;
-  const shadowColor = isTap ? 'rgba(6, 182, 212, 0.45)' : 'rgba(224, 2, 1, 0.45)';
+  const lower = letters.toLowerCase();
+  const isTap = lower === 'ts';
+  const isMediaFlow = lower === 'ms' || lower === 'mf';
+
+  const defaultFrom = isTap ? '#06B6D4' : isMediaFlow ? '#0066EE' : '#FF2A2A';
+  const defaultTo = isTap ? '#4F46E5' : isMediaFlow ? '#003399' : '#BA0000';
+  const fromColor = gradientFrom || defaultFrom;
+  const toColor = gradientTo || defaultTo;
+  const shadowColor = isTap
+    ? 'rgba(6, 182, 212, 0.45)'
+    : isMediaFlow
+    ? 'rgba(0, 102, 238, 0.45)'
+    : 'rgba(224, 2, 1, 0.45)';
 
   return (
     <div
@@ -85,13 +94,23 @@ export const AnythingBrandEmblem: React.FC<{
 };
 
 const getInitializationSteps = (name: string = '') => {
-  if (name.toLowerCase().includes('tap')) {
+  const lower = name.toLowerCase();
+  if (lower.includes('tap')) {
     return [
       'Initializing Direct3D 12 low-latency driver...',
       'Scanning USB Stream Deck & Macro Devices...',
       'Loading Hotkeys and Dynamic Keymaps...',
       'Syncing with Anything Ecosystem...',
       'Starting Tap Studio...',
+    ];
+  }
+  if (lower.includes('mediaflow')) {
+    return [
+      'Initializing Direct3D 12 media ingestion pipeline...',
+      'Verifying storage volume headroom and I/O threads...',
+      'Loading multi-camera sync & PV separation engine...',
+      'Syncing with Anything Ecosystem...',
+      'Starting MediaFlow Studio...',
     ];
   }
   return [
@@ -168,6 +187,8 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
     settings.logoText ||
     (settings.productName?.toLowerCase().includes('tap')
       ? 'Ts'
+      : settings.productName?.toLowerCase().includes('mediaflow')
+      ? 'Ms'
       : settings.productName?.slice(0, 2) || 'An');
 
   return (

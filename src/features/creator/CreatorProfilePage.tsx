@@ -21,6 +21,7 @@ import {
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GlassButton } from '../../components/ui/GlassButton';
 import { GlassBadge } from '../../components/ui/GlassBadge';
+import { AppIconRenderer } from '../apps/components/CrazyAppStudio/AppIconRenderer';
 import { useViewMode } from '../../context/ViewModeContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { CatalogApp } from '../../types/app.types';
@@ -225,13 +226,7 @@ release/<AppName>/
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-white/10 shadow-sm shrink-0">
-                    {app.iconType === 'image' && app.iconValue ? (
-                      <img src={app.iconValue} alt={app.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-2xl">{app.iconValue || '⚡'}</span>
-                    )}
-                  </div>
+                  <AppIconRenderer app={app} size="sm" />
                   <div>
                     <h4 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-cyan-500 transition-colors">
                       {app.name}

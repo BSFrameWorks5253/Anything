@@ -23,6 +23,10 @@ import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { AnythingBrandEmblem } from '../../../components/ui/AdobeSplashScreen';
 import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
 import {
+  TAP_STUDIO_LOGO_BASE64,
+  MEDIAFLOW_STUDIO_LOGO_BASE64,
+} from '../../apps/constants/appLogos';
+import {
   splashArtworkPresets,
   loadAppSplashSettings,
   saveAppSplashSettings,
@@ -147,7 +151,7 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
     (settings.productName?.toLowerCase().includes('tap')
       ? 'Ts'
       : settings.productName?.toLowerCase().includes('mediaflow')
-      ? 'Mf'
+      ? 'Ms'
       : settings.productName?.slice(0, 2) || 'An');
 
   const integrationCodeSnippet = `// Tap Studio / Child App Startup Loader Consumer
@@ -226,7 +230,11 @@ function getLoaderConfig() {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
-                <Zap className="w-3 h-3" />
+                <img
+                  src={TAP_STUDIO_LOGO_BASE64}
+                  alt="Tap Studio"
+                  className="w-3.5 h-3.5 object-contain rounded-xs"
+                />
                 <span>Tap Studio</span>
               </button>
 
@@ -238,7 +246,11 @@ function getLoaderConfig() {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
-                <Layers className="w-3 h-3" />
+                <img
+                  src={MEDIAFLOW_STUDIO_LOGO_BASE64}
+                  alt="MediaFlow Studio"
+                  className="w-3.5 h-3.5 object-cover rounded-xs"
+                />
                 <span>MediaFlow Studio</span>
               </button>
             </div>

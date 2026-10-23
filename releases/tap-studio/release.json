@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "appId": "tap-studio",
   "appName": "Tap Studio",
-  "version": "1.2.0",
-  "executableName": "Tapstudio_1.2.0.exe",
-  "setupExecutableName": "Tapstudio_1.2.0_Setup.exe",
+  "version": "1.2.1",
+  "executableName": "Tapstudio_1.2.1.exe",
+  "setupExecutableName": "Tapstudio_1.2.1_Setup.exe",
   "releaseDate": "2026-10-23",
-  "releaseType": "minor",
+  "releaseType": "patch",
   "tagline": "Apple WWDC26 Liquid Glass UI & Native Action Center Notifications",
-  "summary": "Tap Studio v1.2.0 introduces a complete Apple WWDC26 Liquid Glass UI redesign, native Windows 10/11 Action Center interactive toast banners, GitHub release update checking, and zero-stick fluid navigation.",
+  "summary": "Tap Studio v1.2.1 introduces a complete Apple WWDC26 Liquid Glass UI redesign, native Windows 10/11 Action Center interactive toast banners, GitHub release update checking, and zero-stick fluid navigation.",
   "newFeatures": [
     "Native Windows 10/11 Action Center interactive banners for batch renders and updates",
     "Apple WWDC26 Liquid Glass UI with dynamic chromatic ambient light orbs",
@@ -27,8 +27,8 @@
     "Resolved premature window maximize display flicker during cold startup"
   ],
   "emailNotification": {
-    "subject": "🚀 Tap Studio v1.2.0: Apple WWDC26 Liquid Glass UI & Native Windows Notifications!",
-    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.0.",
+    "subject": "🚀 Tap Studio v1.2.1: Apple WWDC26 Liquid Glass UI & Native Windows Notifications!",
+    "preview": "Discover all the new features, performance boosts, and fixes in v1.2.1.",
     "ctaText": "Open in Anything",
     "heroGradient": "from-indigo-600 via-purple-600 to-cyan-500"
   }

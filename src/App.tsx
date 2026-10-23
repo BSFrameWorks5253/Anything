@@ -11,7 +11,10 @@ import { SettingsPage } from './features/settings/SettingsPage';
 import { CreatorProfilePage } from './features/creator/CreatorProfilePage';
 import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
-import { TAP_STUDIO_LOGO_BASE64 } from './features/apps/components/CrazyAppStudio/AppIconRenderer';
+import {
+  TAP_STUDIO_LOGO_BASE64,
+  MEDIAFLOW_STUDIO_LOGO_BASE64,
+} from './features/apps/components/CrazyAppStudio/AppIconRenderer';
 import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
 
@@ -55,6 +58,13 @@ export function App() {
               (a.name && a.name.toLowerCase().includes('tap studio'))
             ) {
               return { ...a, iconType: 'image' as const, iconValue: TAP_STUDIO_LOGO_BASE64 };
+            }
+            if (
+              a.id === 'mediaflow-studio' ||
+              a.id === 'app-mediaflow-studio' ||
+              (a.name && a.name.toLowerCase().includes('mediaflow'))
+            ) {
+              return { ...a, iconType: 'image' as const, iconValue: MEDIAFLOW_STUDIO_LOGO_BASE64 };
             }
             return a;
           });
@@ -122,6 +132,14 @@ export function App() {
                 item.iconType = 'image';
                 item.iconValue = TAP_STUDIO_LOGO_BASE64;
               }
+              if (
+                item.id === 'mediaflow-studio' ||
+                item.id === 'app-mediaflow-studio' ||
+                (item.name && item.name.toLowerCase().includes('mediaflow'))
+              ) {
+                item.iconType = 'image';
+                item.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+              }
 
               return item;
             })
@@ -157,6 +175,14 @@ export function App() {
               ) {
                 target.iconType = 'image';
                 target.iconValue = TAP_STUDIO_LOGO_BASE64;
+              }
+              if (
+                target.id === 'mediaflow-studio' ||
+                target.id === 'app-mediaflow-studio' ||
+                (target.name && target.name.toLowerCase().includes('mediaflow'))
+              ) {
+                target.iconType = 'image';
+                target.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
               }
               return target;
             });
