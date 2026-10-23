@@ -247,17 +247,40 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                     </a>
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-black/20 border border-cyan-500/20 font-mono text-[11px] text-cyan-700 dark:text-cyan-300 break-all select-all flex items-center justify-between gap-2">
-                    <span className="truncate">https://github.com/{app.githubRepo}/releases</span>
-                    <button
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(`https://github.com/${app.githubRepo}/releases`);
-                      }}
-                      title="Copy Release Link"
-                      className="p-1 hover:bg-cyan-500/20 rounded text-cyan-600 dark:text-cyan-400 shrink-0"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                      Releases Dashboard:
+                    </span>
+                    <div className="p-2.5 rounded-lg bg-black/20 border border-cyan-500/20 font-mono text-[11px] text-cyan-700 dark:text-cyan-300 break-all select-all flex items-center justify-between gap-2">
+                      <span className="truncate">https://github.com/{app.githubRepo}/releases</span>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(`https://github.com/${app.githubRepo}/releases`);
+                        }}
+                        title="Copy Release Link"
+                        className="p-1 hover:bg-cyan-500/20 rounded text-cyan-600 dark:text-cyan-400 shrink-0"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                      Release Tag Link (v{app.version}):
+                    </span>
+                    <div className="p-2.5 rounded-lg bg-black/20 border border-cyan-500/20 font-mono text-[11px] text-cyan-700 dark:text-cyan-300 break-all select-all flex items-center justify-between gap-2">
+                      <span className="truncate">https://github.com/{app.githubRepo}/releases/tag/v{app.version}</span>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(`https://github.com/${app.githubRepo}/releases/tag/v${app.version}`);
+                        }}
+                        title="Copy Tag Link"
+                        className="p-1 hover:bg-cyan-500/20 rounded text-cyan-600 dark:text-cyan-400 shrink-0"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {app.latestRelease ? (

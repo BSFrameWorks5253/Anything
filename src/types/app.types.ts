@@ -61,6 +61,7 @@ export interface CatalogApp {
   size: string;
   downloadUrl?: string; // Direct link to .zip, .exe, or GitHub Release
   releasesUrl?: string; // Direct link to GitHub repository releases page
+  releasesTagUrl?: string; // Direct link prefix for GitHub release tags (e.g. https://github.com/owner/repo/releases/tag/)
   setupExecutableName?: string; // Remote setup asset name (e.g. Tapstudio_1.2.0_Setup.exe)
   executableName: string; // e.g. "Tap Studio.exe"
   installedPath?: string; // Resolved full path on disk
@@ -85,6 +86,7 @@ export interface CatalogApp {
   endpoints?: {
     repository?: string;
     releasesDashboard?: string;
+    releasesTagUrl?: string;
     latestReleaseApi?: string;
     binaryDownloadPattern?: string;
   };

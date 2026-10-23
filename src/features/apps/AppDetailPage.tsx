@@ -71,6 +71,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   const [uninstallModalOpen, setUninstallModalOpen] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
   const [copiedReleaseUrl, setCopiedReleaseUrl] = useState(false);
+  const [copiedTagUrl, setCopiedTagUrl] = useState(false);
   const [copiedAssetUrl, setCopiedAssetUrl] = useState(false);
   const [resolvedExePath, setResolvedExePath] = useState<string | undefined>(
     app.installedPath && !app.installedPath.toLowerCase().includes('setup') ? app.installedPath : undefined
@@ -103,11 +104,13 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   }, [app.id, app.installedPath, app.executableName, app.name]);
 
   const repoReleasesUrl =
-    app.releasesUrl || (app.githubRepo ? `https://github.com/${app.githubRepo}/releases` : '');
+    app.releasesUrl || (app.githubRepo ? `https://github.com/${app.githubRepo}/releases` : 'https://github.com/BSFrameWorks5253/TapDesk/releases');
+  const releasesTagBaseUrl =
+    app.releasesTagUrl ||
+    app.endpoints?.releasesTagUrl ||
+    (app.githubRepo ? `https://github.com/${app.githubRepo}/releases/tag/` : 'https://github.com/BSFrameWorks5253/TapDesk/releases/tag/');
   const latestTag = `v${app.version || '1.2.0'}`;
-  const tagReleasesUrl = app.githubRepo
-    ? `https://github.com/${app.githubRepo}/releases/tag/${latestTag}`
-    : '';
+  const tagReleasesUrl = `${releasesTagBaseUrl.replace(/\/+$/, '')}/${latestTag}`;
   const setupExeName =
     app.setupExecutableName ||
     (app.packageFileName?.toLowerCase().includes('setup')
@@ -130,12 +133,15 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     }
   };
 
-  const copyToClipboard = async (text: string, type: 'release' | 'asset') => {
+  const copyToClipboard = async (text: string, type: 'release' | 'asset' | 'tag') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'release') {
         setCopiedReleaseUrl(true);
         setTimeout(() => setCopiedReleaseUrl(false), 2000);
+      } else if (type === 'tag') {
+        setCopiedTagUrl(true);
+        setTimeout(() => setCopiedTagUrl(false), 2000);
       } else {
         setCopiedAssetUrl(true);
         setTimeout(() => setCopiedAssetUrl(false), 2000);
@@ -501,8 +507,40 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                   <GlassButton
                     variant="glass"
                     size="sm"
-                    onClick={() => openExternalUrl(tagReleasesUrl || repoReleasesUrl)}
+                    icon={<ExternalLink className="w-3 h-3" />}
+                    onClick={() => openExternalUrl(repoReleasesUrl)}
                     className="font-mono text-xs shrink-0"
+                  >
+                    View All
+                  </GlassButton>
+                </div>
+              </div>
+
+              {/* Specific Release Tag Endpoint Link */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
+                  Release Tag Repository Endpoint ({latestTag}):
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 rounded-xl bg-zinc-100 dark:bg-black/60 border border-cyan-500/30 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold flex items-center justify-between gap-2">
+                    <span className="truncate">{tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`}</span>
+                    <button
+                      onClick={() => copyToClipboard(tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`, 'tag')}
+                      title="Copy Release Tag URL"
+                      className="p-1 rounded-lg hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
+                    >
+                      {copiedTagUrl ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <GlassButton
+                    variant="glass"
+                    size="sm"
+                    onClick={() => openExternalUrl(tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`)}
+                    className="font-mono text-xs shrink-0 text-cyan-600 dark:text-cyan-400 font-bold"
                   >
                     Tag {latestTag}
                   </GlassButton>

@@ -14,6 +14,14 @@
   "glowColor": "rgba(99, 102, 241, 0.45)",
   "githubRepo": "BSFrameWorks5253/TapDesk",
   "releasesUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases",
+  "releasesTagUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/tag/",
   "releasesApiUrl": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
-  "downloadUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v1.2.0/Tapstudio_1.2.0_Setup.exe"
+  "downloadUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/v1.2.0/Tapstudio_1.2.0_Setup.exe",
+  "endpoints": {
+    "repository": "https://github.com/BSFrameWorks5253/TapDesk",
+    "releasesDashboard": "https://github.com/BSFrameWorks5253/TapDesk/releases",
+    "releasesTagUrl": "https://github.com/BSFrameWorks5253/TapDesk/releases/tag/",
+    "latestReleaseApi": "https://api.github.com/repos/BSFrameWorks5253/TapDesk/releases/latest",
+    "binaryDownloadPattern": "https://github.com/BSFrameWorks5253/TapDesk/releases/download/{tag}/{asset}"
+  }
 }
