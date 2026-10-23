@@ -491,15 +491,27 @@ export function App() {
 
   const handleLaunchApp = async (targetApp: CatalogApp) => {
     const electronAPI = (window as any).electronAPI;
-    const launchTarget = {
-      path: targetApp.installedPath || targetApp.executableName,
-      name: targetApp.name,
-      id: targetApp.id,
-      executableName: targetApp.executableName,
-    };
+    const isTap =
+      targetApp.id === 'tap-studio' ||
+      Boolean(targetApp.name && targetApp.name.toLowerCase().includes('tap studio'));
+
+    let launchPath = targetApp.installedPath || '';
+    if (
+      !launchPath ||
+      launchPath.toLowerCase().includes('tapstudio_') ||
+      launchPath.toLowerCase().includes('setup') ||
+      launchPath.toLowerCase().includes('published-apps')
+    ) {
+      if (isTap) {
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\Tap Studio\\Tap Studio.exe';
+      } else {
+        launchPath = targetApp.executableName || '';
+      }
+    }
 
     if (electronAPI?.launchApp) {
-      const res = await electronAPI.launchApp(launchTarget);
+      // Pass a string launch target for complete compatibility with all main process versions
+      const res = await electronAPI.launchApp(launchPath);
       if (!res.success) {
         alert(
           `Could not launch application: ${res.error}\nClick "Fix Path" to locate your executable.`
@@ -507,14 +519,14 @@ export function App() {
         persistApps(
           apps.map((a) => (a.id === targetApp.id ? { ...a, status: 'path-broken' } : a))
         );
-      } else if (res.resolvedPath && res.resolvedPath !== targetApp.installedPath) {
+      } else if (launchPath && launchPath !== targetApp.installedPath) {
         persistApps(
           apps.map((a) =>
             a.id === targetApp.id
               ? {
                   ...a,
                   status: 'installed',
-                  installedPath: res.resolvedPath,
+                  installedPath: launchPath,
                   localVersion: a.localVersion || a.version,
                 }
               : a

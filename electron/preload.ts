@@ -2,8 +2,30 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
-  launchApp: (target: string | { path?: string; name?: string; id?: string; executableName?: string }) =>
-    ipcRenderer.invoke('app:launch', target),
+  launchApp: (target: string | { path?: string; name?: string; id?: string; executableName?: string }) => {
+    let pathString = '';
+    if (typeof target === 'string') {
+      pathString = target;
+    } else if (target && typeof target === 'object') {
+      pathString = target.path || target.executableName || '';
+      const isTap =
+        target.id === 'tap-studio' ||
+        Boolean(target.name && target.name.toLowerCase().includes('tap studio'));
+      if (
+        !pathString ||
+        pathString.toLowerCase().includes('tapstudio_') ||
+        pathString.toLowerCase().includes('setup') ||
+        pathString.toLowerCase().includes('published-apps')
+      ) {
+        if (isTap) {
+          const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Local';
+          pathString = `${localAppData}\\Programs\\Tap Studio\\Tap Studio.exe`;
+        }
+      }
+    }
+    // Always pass string to maintain 100% compatibility with running main process
+    return ipcRenderer.invoke('app:launch', pathString);
+  },
   resolveInstalledPath: (data: { appId?: string; name?: string; currentPath?: string; executableName?: string }) =>
     ipcRenderer.invoke('app:resolve-installed-path', data),
   selectExecutable: () => ipcRenderer.invoke('app:select-executable'),

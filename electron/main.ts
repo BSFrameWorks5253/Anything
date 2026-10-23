@@ -1427,7 +1427,10 @@ function createWindow() {
           return { success: false, error: 'No application or path specified' };
         }
 
-        if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+        if (
+          typeof targetPath === 'string' &&
+          (targetPath.startsWith('http://') || targetPath.startsWith('https://'))
+        ) {
           await shell.openExternal(targetPath);
           return { success: true };
         }
