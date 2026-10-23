@@ -28,7 +28,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
         if (isTap) {
           pathString = `${localAppData}\\Programs\\Tap Studio\\Tap Studio.exe`;
         } else if (isOneTap) {
-          pathString = `${localAppData}\\Programs\\One Tap PV Separator\\PV_Separator.exe`;
+          const appData = process.env.APPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Roaming';
+          pathString = `${appData}\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe`;
         } else if (isMediaFlow) {
           pathString = `${localAppData}\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe`;
         }

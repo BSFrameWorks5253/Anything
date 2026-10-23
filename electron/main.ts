@@ -1193,14 +1193,36 @@ function findInstalledExecutable(options: {
     }
   }
 
+  // 1. Priority: Check Anything's installed-apps folder for child apps managed/downloaded by Anything
+  try {
+    const installedAppsDir = getInstalledAppsDir();
+    if (appId) {
+      const targetDir = path.join(installedAppsDir, appId);
+      if (fs.existsSync(targetDir)) {
+        const files = fs.readdirSync(targetDir, { recursive: true });
+        const nonInstallerExes = files.filter((f: any) => {
+          const l = String(f).toLowerCase();
+          return l.endsWith('.exe') && !isLikelyInstaller(l);
+        });
+        if (nonInstallerExes.length > 0) {
+          if (executableName) {
+            const clean = executableName.toLowerCase().replace(/\.exe$/i, '');
+            const match = nonInstallerExes.find((f: any) => String(f).toLowerCase().includes(clean));
+            if (match) return path.join(targetDir, String(match));
+          }
+          return path.join(targetDir, String(nonInstallerExes[0]));
+        }
+      }
+    }
+  } catch (e) {}
+
   const isOneTapApp =
     (appName && appName.toLowerCase().includes('one tap')) ||
     (appId && (appId.toLowerCase().includes('one-tap') || appId.toLowerCase().includes('onetap')));
   if (isOneTapApp) {
-    candidateNames.add('One Tap PV Separator');
-    candidateNames.add('PV_Separator');
-    candidateNames.add('PV Separator');
     candidateNames.add('One Tap');
+    candidateNames.add('OneTap');
+    candidateNames.add('onetap-workstation');
   }
 
   const localAppData = process.env.LOCALAPPDATA || '';

@@ -274,9 +274,16 @@ async function run() {
       let detectedLocalVersion = undefined;
 
       if (isOneTap) {
-        const otPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
-        if (fs.existsSync(otPath)) {
-          detectedInstalledPath = otPath;
+        const appData = process.env.APPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Roaming';
+        const localAppData = process.env.LOCALAPPDATA || 'C:\\Users\\Burhanuddin\\AppData\\Local';
+        const portablePath = path.join(appData, 'Anything', 'installed-apps', 'one-tap', setupName);
+        const progPath = path.join(localAppData, 'Programs', 'One Tap', 'One Tap.exe');
+        if (fs.existsSync(portablePath)) {
+          detectedInstalledPath = portablePath;
+          detectedLocalVersion = version;
+        } else if (fs.existsSync(progPath)) {
+          detectedInstalledPath = progPath;
+          detectedLocalVersion = version;
         }
       } else if (isMediaFlow) {
         const mfPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';

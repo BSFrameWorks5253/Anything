@@ -89,10 +89,10 @@ export function App() {
                   gradient: 'from-rose-600 via-red-600 to-amber-500',
                   textColor: '#f43f5e',
                   glowColor: 'rgba(225, 29, 72, 0.45)',
-                  executableName: 'PV_Separator.exe',
+                  executableName: 'One Tap.exe',
                   iconType: 'image' as const,
                   iconValue: ONE_TAP_LOGO_BASE64,
-                  installedPath: 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe',
+                  installedPath: 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe',
                   status: 'installed' as const,
                 };
               }
@@ -212,7 +212,7 @@ export function App() {
                 item.name = 'One Tap';
                 item.shortName = 'OT';
                 item.category = 'Media & Production';
-                item.executableName = 'PV_Separator.exe';
+                item.executableName = 'One Tap.exe';
                 item.gradient = 'from-rose-600 via-red-600 to-amber-500';
                 item.textColor = '#f43f5e';
                 item.glowColor = 'rgba(225, 29, 72, 0.45)';
@@ -220,8 +220,9 @@ export function App() {
                   item.iconType = 'image';
                   item.iconValue = ONE_TAP_LOGO_BASE64;
                 }
-                if (!item.installedPath || item.installedPath.toLowerCase().includes('uni desk')) {
-                  item.installedPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
+                const portablePath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe';
+                if (!item.installedPath || item.installedPath.toLowerCase().includes('pv_separator') || item.installedPath.toLowerCase().includes('uni desk')) {
+                  item.installedPath = portablePath;
                   item.status = 'installed';
                 }
               }
@@ -755,7 +756,7 @@ export function App() {
       } else if (isMediaFlow) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
       } else if (isOneTap) {
-        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\One Tap PV Separator\\PV_Separator.exe';
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe';
       } else {
         launchPath = targetApp.executableName || '';
       }
