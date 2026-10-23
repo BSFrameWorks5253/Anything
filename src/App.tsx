@@ -11,6 +11,7 @@ import { SettingsPage } from './features/settings/SettingsPage';
 import { CreatorProfilePage } from './features/creator/CreatorProfilePage';
 import { AdobeSplashScreen } from './components/ui/AdobeSplashScreen';
 import { loadSplashSettings, type SplashSettings } from './data/splash.data';
+import { TAP_STUDIO_LOGO_BASE64 } from './features/apps/components/CrazyAppStudio/AppIconRenderer';
 import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
 
@@ -53,7 +54,7 @@ export function App() {
               a.id === 'app-tap-studio' ||
               (a.name && a.name.toLowerCase().includes('tap studio'))
             ) {
-              return { ...a, iconType: 'image' as const, iconValue: '/tap-studio-logo.png' };
+              return { ...a, iconType: 'image' as const, iconValue: TAP_STUDIO_LOGO_BASE64 };
             }
             return a;
           });
@@ -113,6 +114,15 @@ export function App() {
                 }
               }
 
+              if (
+                item.id === 'tap-studio' ||
+                item.id === 'app-tap-studio' ||
+                (item.name && item.name.toLowerCase().includes('tap studio'))
+              ) {
+                item.iconType = 'image';
+                item.iconValue = TAP_STUDIO_LOGO_BASE64;
+              }
+
               return item;
             })
           );
@@ -132,15 +142,23 @@ export function App() {
           setApps((prevApps) => {
             const merged = newCatalog.map((remote: any) => {
               const local = prevApps.find((a) => a.id === remote.id);
-              if (local) {
-                return {
-                  ...remote,
-                  status: local.status,
-                  installedPath: local.installedPath,
-                  localVersion: local.localVersion,
-                };
+              const target = local
+                ? {
+                    ...remote,
+                    status: local.status,
+                    installedPath: local.installedPath,
+                    localVersion: local.localVersion,
+                  }
+                : remote;
+              if (
+                target.id === 'tap-studio' ||
+                target.id === 'app-tap-studio' ||
+                (target.name && target.name.toLowerCase().includes('tap studio'))
+              ) {
+                target.iconType = 'image';
+                target.iconValue = TAP_STUDIO_LOGO_BASE64;
               }
-              return remote;
+              return target;
             });
             localStorage.setItem('creative_hub_catalog_apps_v4', JSON.stringify(merged));
             return merged;
