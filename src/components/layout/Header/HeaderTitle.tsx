@@ -5,6 +5,7 @@ import { useViewMode } from '../../../context/ViewModeContext';
 
 interface HeaderTitleProps {
   page: NavigationPage;
+  appName?: string;
 }
 
 const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = {
@@ -30,8 +31,10 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
   },
 };
 
-export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page }) => {
-  const meta = pageTitles[page] || pageTitles.apps;
+export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page, appName }) => {
+  const meta = appName
+    ? { title: appName, subtitle: 'Child Application Details & Configuration' }
+    : pageTitles[page] || pageTitles.apps;
   const { theme } = useTheme();
   const { viewMode } = useViewMode();
   const isLight = theme === 'light';

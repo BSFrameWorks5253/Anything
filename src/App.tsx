@@ -4,6 +4,7 @@ import { creativeAppsData } from './data/apps.data';
 import { AppLayout } from './components/layout/AppLayout';
 import { HomePage } from './features/home/HomePage';
 import { AppsPage } from './features/apps/AppsPage';
+import { AppDetailPage } from './features/apps/AppDetailPage';
 import { PublisherPage } from './features/publisher/PublisherPage';
 import { FilesPage } from './features/files/FilesPage';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -21,6 +22,7 @@ export function App() {
   const { isAuthenticated, isAuthModalOpen, closeAuthModal } = useAuth();
 
   const [currentPage, setCurrentPage] = useState<NavigationPage>('apps');
+  const [viewingApp, setViewingApp] = useState<CatalogApp | null>(null);
   const [customizeAppId, setCustomizeAppId] = useState<string>('anything');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [splashSettings, setSplashSettings] = useState<SplashSettings>(() => loadSplashSettings());
@@ -568,12 +570,35 @@ export function App() {
   const updateCount = apps.filter((a) => a.status === 'update-available').length;
 
   const renderActivePage = () => {
+    if (viewingApp) {
+      return (
+        <AppDetailPage
+          app={viewingApp}
+          onBack={() => setViewingApp(null)}
+          onLaunch={handleLaunchApp}
+          onInstall={handleInstallApp}
+          onUpdate={handleUpdateApp}
+          onRollback={handleRollbackApp}
+          onFixPath={handleFixPathApp}
+          onUninstall={handleUninstallApp}
+          onCustomizeLoader={(targetApp) => {
+            setCustomizeAppId(targetApp.id);
+            setViewingApp(null);
+            setCurrentPage('settings');
+          }}
+        />
+      );
+    }
+
     switch (currentPage) {
       case 'home':
         return (
           <HomePage
             apps={apps as any}
-            onNavigate={setCurrentPage}
+            onNavigate={(p) => {
+              setViewingApp(null);
+              setCurrentPage(p);
+            }}
             onOpenApp={(app) => handleLaunchApp(app as any)}
             onUpdateAll={() => {
               apps.filter((a) => a.status === 'update-available').forEach(handleUpdateApp);
@@ -593,9 +618,14 @@ export function App() {
             onUninstallApp={handleUninstallApp}
             onAddCustomApp={(custom) => handleAddCatalogApp(custom as any)}
             onImportApps={(imported) => persistApps(imported)}
-            onNavigateToPublisher={() => setCurrentPage('publisher')}
+            onNavigateToPublisher={() => {
+              setViewingApp(null);
+              setCurrentPage('publisher');
+            }}
+            onOpenDetailApp={(targetApp) => setViewingApp(targetApp)}
             onCustomizeLoader={(targetApp) => {
               setCustomizeAppId(targetApp.id);
+              setViewingApp(null);
               setCurrentPage('settings');
             }}
             isCheckingUpdates={isCheckingUpdates}
@@ -676,7 +706,9 @@ export function App() {
       )}
       <AppLayout
         currentPage={currentPage}
+        appName={viewingApp?.name}
         onNavigate={(page) => {
+          setViewingApp(null);
           setCurrentPage(page);
           setSearchQuery('');
         }}

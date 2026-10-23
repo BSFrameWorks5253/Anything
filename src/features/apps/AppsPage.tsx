@@ -25,6 +25,7 @@ interface AppsPageProps {
   onImportApps: (imported: any[]) => void;
   onNavigateToPublisher?: () => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
+  onOpenDetailApp?: (app: CatalogApp) => void;
   isCheckingUpdates?: boolean;
   onCheckUpdates?: () => void;
 }
@@ -42,6 +43,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   onImportApps,
   onNavigateToPublisher,
   onCustomizeLoader,
+  onOpenDetailApp,
   isCheckingUpdates,
   onCheckUpdates,
 }) => {
@@ -119,7 +121,13 @@ export const AppsPage: React.FC<AppsPageProps> = ({
 
           <AppsGrid
             apps={filteredApps}
-            onOpenDetail={(app) => setDetailApp(app)}
+            onOpenDetail={(app) => {
+              if (onOpenDetailApp) {
+                onOpenDetailApp(app);
+              } else {
+                setDetailApp(app);
+              }
+            }}
             onInstall={onInstallApp}
             onLaunch={onLaunchApp}
             onUpdate={onUpdateApp}

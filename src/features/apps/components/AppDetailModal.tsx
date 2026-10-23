@@ -101,7 +101,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}
               >
-                Version {app.localVersion || app.version} · {app.category} · {app.size}
+                Version {app.localVersion || app.version} · {app.category} · {app.size || '42.8 MB'}
               </p>
             </div>
           </div>
@@ -149,41 +149,79 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
         </div>
 
         {/* Tab Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 text-sm text-white/80">
+        <div
+          className={`flex-1 overflow-y-auto p-6 space-y-5 text-sm ${
+            isLight ? 'text-zinc-700' : 'text-zinc-200'
+          }`}
+        >
           {activeTab === 'overview' && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider text-white/40 mb-1">
+                <h4
+                  className={`text-xs font-mono uppercase tracking-wider mb-1 ${
+                    isLight ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}
+                >
                   Description
                 </h4>
-                <p className="text-sm text-white/70 leading-relaxed font-normal">
-                  {app.description}
+                <p
+                  className={`text-sm leading-relaxed font-normal ${
+                    isLight ? 'text-zinc-800' : 'text-zinc-200'
+                  }`}
+                >
+                  {app.description ||
+                    'High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls integrated natively into the Anything ecosystem.'}
                 </p>
               </div>
 
               {/* Path & Installation Info Card */}
-              <div className="p-4 rounded-xl bg-white/[0.04] border border-white/10 space-y-2">
+              <div
+                className={`p-4 rounded-xl border space-y-2 ${
+                  isLight
+                    ? 'bg-zinc-50 border-zinc-200'
+                    : 'bg-white/[0.04] border-white/10'
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-white/40 block">EXECUTABLE LOCATION</span>
+                  <span
+                    className={`text-[11px] font-mono block ${
+                      isLight ? 'text-zinc-500' : 'text-zinc-400'
+                    }`}
+                  >
+                    EXECUTABLE LOCATION
+                  </span>
                   <button
                     onClick={() => onFixPath(app)}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1"
+                    className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline font-mono flex items-center gap-1 font-semibold"
                   >
                     <Wrench className="w-3 h-3" />
                     <span>Change / Fix Path</span>
                   </button>
                 </div>
-                <div className="p-2.5 rounded-lg bg-black/40 font-mono text-xs text-cyan-300 break-all select-all border border-white/5">
-                  {app.installedPath || `Will install to: %LOCALAPPDATA%\\CreativeHub\\installed-apps\\${app.id}\\${app.executableName}`}
+                <div
+                  className={`p-2.5 rounded-lg font-mono text-xs break-all select-all border ${
+                    isLight
+                      ? 'bg-white border-zinc-200 text-cyan-700 font-semibold'
+                      : 'bg-black/40 border-white/5 text-cyan-300'
+                  }`}
+                >
+                  {app.installedPath ||
+                    `Will install to: %LOCALAPPDATA%\\Anything\\installed-apps\\${app.id}\\${app.executableName}`}
                 </div>
               </div>
 
               {/* GitHub Releases Integration */}
               {app.githubRepo && (
-                <div className="p-4 rounded-xl bg-cyan-500/[0.06] border border-cyan-400/20 space-y-2.5">
+                <div
+                  className={`p-4 rounded-xl border space-y-2.5 ${
+                    isLight
+                      ? 'bg-cyan-50/80 border-cyan-200'
+                      : 'bg-cyan-500/[0.06] border-cyan-400/20'
+                  }`}
+                >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-cyan-300 flex items-center gap-1.5 font-semibold">
-                      <GitBranch className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-[11px] font-mono text-cyan-700 dark:text-cyan-300 flex items-center gap-1.5 font-bold">
+                      <GitBranch className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                       <span>GITHUB AUTO-UPDATER SYNC</span>
                     </span>
                     <a
@@ -199,7 +237,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                           window.open(`https://github.com/${app.githubRepo}`, '_blank');
                         }
                       }}
-                      className="text-xs text-cyan-300/80 hover:text-cyan-200 flex items-center gap-1 font-mono"
+                      className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 font-mono font-semibold"
                     >
                       <span>{app.githubRepo}</span>
                       <ExternalLink className="w-3 h-3" />
@@ -207,11 +245,24 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                   </div>
 
                   {app.latestRelease ? (
-                    <div className="p-2.5 rounded-lg bg-black/40 text-xs border border-cyan-400/20 flex items-center justify-between">
+                    <div
+                      className={`p-2.5 rounded-lg text-xs border flex items-center justify-between ${
+                        isLight
+                          ? 'bg-white border-cyan-200 text-zinc-900'
+                          : 'bg-black/40 border-cyan-400/20 text-white'
+                      }`}
+                    >
                       <div>
-                        <p className="font-semibold text-white">Latest GitHub Release: v{app.latestRelease.tag}</p>
-                        <p className="text-[10px] text-white/50 font-mono">
-                          Asset: {app.latestRelease.assetName} ({app.latestRelease.assetSize || 'N/A'})
+                        <p className="font-semibold">
+                          Latest GitHub Release: v{app.latestRelease.tag}
+                        </p>
+                        <p
+                          className={`text-[10px] font-mono ${
+                            isLight ? 'text-zinc-500' : 'text-zinc-400'
+                          }`}
+                        >
+                          Asset: {app.latestRelease.assetName} (
+                          {app.latestRelease.assetSize || 'N/A'})
                         </p>
                       </div>
                       <GlassButton
@@ -222,13 +273,17 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                           onClose();
                         }}
                         icon={<RefreshCw className="w-3 h-3" />}
-                        className="text-xs"
+                        className="text-xs font-bold"
                       >
                         Update Now
                       </GlassButton>
                     </div>
                   ) : (
-                    <p className="text-[11px] text-white/60">
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        isLight ? 'text-zinc-700' : 'text-zinc-300'
+                      }`}
+                    >
                       This application automatically tracks and receives new releases published to GitHub.
                     </p>
                   )}
@@ -238,15 +293,15 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
               {/* Status Banner */}
               {app.status === 'path-broken' && (
                 <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 text-xs text-amber-200">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200 font-medium">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>Executable is missing or was moved. Please locate the file to launch.</span>
                   </div>
                   <GlassButton
                     variant="glass"
                     size="sm"
                     onClick={() => onFixPath(app)}
-                    icon={<Wrench className="w-3 h-3 text-amber-300" />}
+                    icon={<Wrench className="w-3 h-3 text-amber-500" />}
                   >
                     Locate
                   </GlassButton>
@@ -257,38 +312,95 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
 
           {activeTab === 'requirements' && (
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                <Monitor className="w-4 h-4 text-cyan-400 mb-2" />
-                <span className="text-[11px] font-mono text-white/40 block">OPERATING SYSTEM</span>
-                <span className="text-xs font-semibold text-white mt-0.5 block">{defaultReqs.os}</span>
+              <div
+                className={`p-4 rounded-xl border ${
+                  isLight
+                    ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                    : 'bg-white/[0.03] border-white/10 text-white'
+                }`}
+              >
+                <Monitor className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mb-2" />
+                <span
+                  className={`text-[11px] font-mono block font-bold ${
+                    isLight ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}
+                >
+                  OPERATING SYSTEM
+                </span>
+                <span className="text-xs font-bold mt-0.5 block">{defaultReqs.os}</span>
               </div>
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                <Cpu className="w-4 h-4 text-purple-400 mb-2" />
-                <span className="text-[11px] font-mono text-white/40 block">MEMORY</span>
-                <span className="text-xs font-semibold text-white mt-0.5 block">{defaultReqs.ram}</span>
+              <div
+                className={`p-4 rounded-xl border ${
+                  isLight
+                    ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                    : 'bg-white/[0.03] border-white/10 text-white'
+                }`}
+              >
+                <Cpu className="w-4 h-4 text-purple-600 dark:text-purple-400 mb-2" />
+                <span
+                  className={`text-[11px] font-mono block font-bold ${
+                    isLight ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}
+                >
+                  MEMORY
+                </span>
+                <span className="text-xs font-bold mt-0.5 block">{defaultReqs.ram}</span>
               </div>
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                <Sparkles className="w-4 h-4 text-amber-400 mb-2" />
-                <span className="text-[11px] font-mono text-white/40 block">GRAPHICS</span>
-                <span className="text-xs font-semibold text-white mt-0.5 block">{defaultReqs.gpu}</span>
+              <div
+                className={`p-4 rounded-xl border ${
+                  isLight
+                    ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                    : 'bg-white/[0.03] border-white/10 text-white'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 mb-2" />
+                <span
+                  className={`text-[11px] font-mono block font-bold ${
+                    isLight ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}
+                >
+                  GRAPHICS
+                </span>
+                <span className="text-xs font-bold mt-0.5 block">{defaultReqs.gpu}</span>
               </div>
-              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                <HardDrive className="w-4 h-4 text-emerald-400 mb-2" />
-                <span className="text-[11px] font-mono text-white/40 block">DISK SPACE</span>
-                <span className="text-xs font-semibold text-white mt-0.5 block">{defaultReqs.storage}</span>
+              <div
+                className={`p-4 rounded-xl border ${
+                  isLight
+                    ? 'bg-zinc-50 border-zinc-200 text-zinc-900'
+                    : 'bg-white/[0.03] border-white/10 text-white'
+                }`}
+              >
+                <HardDrive className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mb-2" />
+                <span
+                  className={`text-[11px] font-mono block font-bold ${
+                    isLight ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}
+                >
+                  DISK SPACE
+                </span>
+                <span className="text-xs font-bold mt-0.5 block">{defaultReqs.storage}</span>
               </div>
             </div>
           )}
 
           {activeTab === 'release-notes' && (
             <div className="space-y-3">
-              <h4 className="text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
+              <h4
+                className={`text-xs font-mono uppercase tracking-wider mb-2 font-bold ${
+                  isLight ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
                 Changelog · Version {app.version}
               </h4>
               <ul className="space-y-2">
                 {defaultNotes.map((note, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-xs text-white/70">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1.5" />
+                  <li
+                    key={i}
+                    className={`flex items-start gap-2.5 text-xs font-medium leading-relaxed ${
+                      isLight ? 'text-zinc-800' : 'text-zinc-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 mt-1" />
                     <span>{note}</span>
                   </li>
                 ))}

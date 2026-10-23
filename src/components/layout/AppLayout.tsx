@@ -9,6 +9,7 @@ import { useViewMode } from '../../context/ViewModeContext';
 
 interface AppLayoutProps {
   currentPage: NavigationPage;
+  appName?: string;
   onNavigate: (page: NavigationPage) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -18,6 +19,7 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   currentPage,
+  appName,
   onNavigate,
   searchQuery,
   onSearchChange,
@@ -51,6 +53,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <div className="flex flex-col flex-1 h-full overflow-hidden relative">
         <Header
           page={currentPage}
+          appName={appName}
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
         />

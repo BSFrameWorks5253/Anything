@@ -3,8 +3,9 @@
   "name": "Tap Studio",
   "shortName": "TS",
   "version": "1.0.0",
+  "size": "42.8 MB",
   "category": "Productivity",
-  "description": "Desktop companion, macro launcher, and hardware automation suite.",
+  "description": "Hardware companion, low-latency stream deck macro controller, and desktop automation suite for the Anything ecosystem.",
   "executableName": "Tapstudio_1.0.0.exe",
   "iconType": "emoji",
   "iconValue": "🖲️",
@@ -12,6 +13,19 @@
   "textColor": "#2dd4bf",
   "glowColor": "rgba(45, 212, 191, 0.45)",
   "githubRepo": "BSFrameWorks5253/TapDesk",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "ram": "8 GB RAM (16 GB Recommended)",
+    "gpu": "DirectX 12 / Direct3D 11 Compatible GPU",
+    "storage": "45 MB Available SSD · USB HID / Macro Support"
+  },
+  "changelog": [
+    "Ultra low-latency global macro and hotkey triggers",
+    "USB Stream Deck & hardware peripheral dynamic keymaps",
+    "Automatic Anything Ecosystem background release updater",
+    "Customizable startup loader and splash screen receiver",
+    "Windows 11 Start Menu shortcut & NSIS packaging"
+  ],
   "endpoints": {
     "repository": "https://github.com/BSFrameWorks5253/TapDesk",
     "releasesDashboard": "https://github.com/BSFrameWorks5253/TapDesk/releases",

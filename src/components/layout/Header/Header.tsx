@@ -4,15 +4,18 @@ import { WindowControls } from './WindowControls';
 import { HeaderTitle } from './HeaderTitle';
 import { HeaderActions } from './HeaderActions';
 import { useTheme } from '../../../context/ThemeContext';
+import { AnythingBrandEmblem } from '../../ui/AdobeSplashScreen';
 
 interface HeaderProps {
   page: NavigationPage;
+  appName?: string;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   page,
+  appName,
   searchQuery,
   onSearchChange,
 }) => {
@@ -35,12 +38,13 @@ export const Header: React.FC<HeaderProps> = ({
       }`}
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left: Active Page Title */}
+      {/* Left: Active Page Title with Logo */}
       <div
-        className="flex items-center gap-3 shrink-0 py-1"
+        className="flex items-center gap-2.5 shrink-0 py-1"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        <HeaderTitle page={page} />
+        <AnythingBrandEmblem size={24} className="rounded-lg shrink-0 shadow-xs" />
+        <HeaderTitle page={page} appName={appName} />
       </div>
 
       {/* Center Draggable Spacer */}
