@@ -45,7 +45,18 @@ export function App() {
     const saved = localStorage.getItem('creative_hub_catalog_apps_v4');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((a: CatalogApp) => {
+            if (
+              (a.id === 'tap-studio' || (a.name && a.name.toLowerCase().includes('tap studio'))) &&
+              (!a.iconValue || a.iconValue === 'app-logo.png' || a.iconValue === '/app-logo.png')
+            ) {
+              return { ...a, iconType: 'image' as const, iconValue: '/tap-studio-logo.png' };
+            }
+            return a;
+          });
+        }
       } catch (e) {
         console.error(e);
       }

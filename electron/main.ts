@@ -233,6 +233,20 @@ function scanAndCollectReleases(): {
           if (manifestFile) {
             try {
               manifest = JSON.parse(fs.readFileSync(path.join(appDir, manifestFile), 'utf-8'));
+              if (
+                manifest.iconValue &&
+                typeof manifest.iconValue === 'string' &&
+                !manifest.iconValue.startsWith('data:') &&
+                !manifest.iconValue.startsWith('http')
+              ) {
+                const candidateIconPath = path.join(appDir, manifest.iconValue);
+                if (fs.existsSync(candidateIconPath)) {
+                  const ext = path.extname(candidateIconPath).toLowerCase();
+                  const mime = ext === '.svg' ? 'image/svg+xml' : 'image/png';
+                  manifest.iconType = 'image';
+                  manifest.iconValue = `data:${mime};base64,${fs.readFileSync(candidateIconPath).toString('base64')}`;
+                }
+              }
             } catch (e) {}
           }
 
