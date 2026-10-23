@@ -1,5 +1,175 @@
 [
   {
+    "id": "anything",
+    "name": "Anything",
+    "shortName": "AN",
+    "category": "Ecosystem Hub",
+    "version": "1.0.0",
+    "description": "Official 1.0.0 release of Anything — featuring integrated app management, live release feeds, in-app updating, and high-performance workstation workflows.",
+    "executableName": "Anything_1.0.0.exe",
+    "packageFileName": "Anything_1.0.0.exe",
+    "packageSize": "526.2 MB",
+    "packageFormat": ".exe",
+    "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\anything\\published-apps\\anything\\Anything_1.0.0.exe",
+    "gradient": "from-red-600 via-rose-500 to-amber-500",
+    "textColor": "#ef4444",
+    "glowColor": "rgba(239, 68, 68, 0.45)",
+    "iconType": "image",
+    "iconValue": "app-logo.png",
+    "status": "not-installed",
+    "githubRepo": "BSFrameWorks5253/onetap-workstation",
+    "endpoints": {
+      "repository": "https://github.com/BSFrameWorks5253/onetap-workstation",
+      "releasesDashboard": "https://github.com/BSFrameWorks5253/onetap-workstation/releases",
+      "latestReleaseApi": "https://api.github.com/repos/BSFrameWorks5253/onetap-workstation/releases/latest",
+      "binaryDownloadPattern": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v{version}/Anything_{version}.exe"
+    },
+    "publishedAt": 1792778293356,
+    "releaseInfo": {
+      "version": "1.0.0",
+      "executableName": "Anything_1.0.0.exe",
+      "releaseDate": "2026-10-23",
+      "releaseType": "major",
+      "tagline": "Next-Gen Creative & Productivity Master Suite",
+      "summary": "Official 1.0.0 release of Anything — featuring integrated app management, live release feeds, in-app updating, and high-performance workstation workflows.",
+      "newFeatures": [
+        "Unified app catalog with automatic GitHub releases detection and sync",
+        "Real-time update download, background install, and splash screen system",
+        "Independent child app update pipeline without full suite reinstall",
+        "Modern glassmorphism UI with customized theme palettes and system tray integration"
+      ],
+      "improvements": [
+        "Ultra-responsive app launching and window state persistence",
+        "Instant dynamic version checking and auto-fetching releases",
+        "Enhanced security with sandboxed child processes and integrity checks"
+      ],
+      "fixes": [
+        "Fixed child app release tag parsing and version synchronization",
+        "Resolved duplicate update prompt states across workstation apps",
+        "Optimized resource caching and memory footprint"
+      ],
+      "emailNotification": {
+        "subject": "🎉 Anything v1.0.0 is Live: Master Workstation Suite!",
+        "preview": "Discover all the features, independent child app updates, and sleek new hub experience in v1.0.0.",
+        "ctaText": "Launch Anything",
+        "heroGradient": "from-red-600 via-rose-500 to-amber-500"
+      },
+      "sizeFormatted": "526.2 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\anything\\published-apps\\anything\\Anything_1.0.0.exe"
+    },
+    "history": [
+      {
+        "version": "1.0.0",
+        "executableName": "Anything_1.0.0.exe",
+        "releaseDate": "2026-10-23",
+        "releaseType": "major",
+        "tagline": "Next-Gen Creative & Productivity Master Suite",
+        "summary": "Official 1.0.0 release of Anything — featuring integrated app management, live release feeds, in-app updating, and high-performance workstation workflows.",
+        "newFeatures": [
+          "Unified app catalog with automatic GitHub releases detection and sync",
+          "Real-time update download, background install, and splash screen system",
+          "Independent child app update pipeline without full suite reinstall",
+          "Modern glassmorphism UI with customized theme palettes and system tray integration"
+        ],
+        "improvements": [
+          "Ultra-responsive app launching and window state persistence",
+          "Instant dynamic version checking and auto-fetching releases",
+          "Enhanced security with sandboxed child processes and integrity checks"
+        ],
+        "fixes": [
+          "Fixed child app release tag parsing and version synchronization",
+          "Resolved duplicate update prompt states across workstation apps",
+          "Optimized resource caching and memory footprint"
+        ],
+        "emailNotification": {
+          "subject": "🎉 Anything v1.0.0 is Live: Master Workstation Suite!",
+          "preview": "Discover all the features, independent child app updates, and sleek new hub experience in v1.0.0.",
+          "ctaText": "Launch Anything",
+          "heroGradient": "from-red-600 via-rose-500 to-amber-500"
+        },
+        "sizeFormatted": "526.2 MB",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\anything\\published-apps\\anything\\Anything_1.0.0.exe"
+      }
+    ],
+    "changelog": [
+      "Release v1.0.0 collected from releases/anything",
+      "Format: .EXE · Size: 526.2 MB",
+      "Feature: Unified app catalog with automatic GitHub releases detection and sync",
+      "Feature: Real-time update download, background install, and splash screen system",
+      "Feature: Independent child app update pipeline without full suite reinstall",
+      "Feature: Modern glassmorphism UI with customized theme palettes and system tray integration",
+      "Improvement: Ultra-responsive app launching and window state persistence",
+      "Improvement: Instant dynamic version checking and auto-fetching releases",
+      "Improvement: Enhanced security with sandboxed child processes and integrity checks",
+      "Fix: Fixed child app release tag parsing and version synchronization",
+      "Fix: Resolved duplicate update prompt states across workstation apps",
+      "Fix: Optimized resource caching and memory footprint"
+    ],
+    "addedByCreator": true
+  },
+  {
+    "id": "app-win-unpacked",
+    "name": "Win Unpacked",
+    "shortName": "WI",
+    "category": "Productivity",
+    "version": "1.0.0",
+    "size": "238.2 MB",
+    "packageSize": "238.2 MB",
+    "description": "Child application Win Unpacked running inside Anything.",
+    "executableName": "Win Unpacked.exe",
+    "setupExecutableName": "electron.exe",
+    "packageFileName": "electron.exe",
+    "packageFormat": ".exe",
+    "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\app-win-unpacked\\electron.exe",
+    "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\app-win-unpacked\\electron.exe",
+    "gradient": "from-emerald-500 via-teal-400 to-cyan-400",
+    "textColor": "#2dd4bf",
+    "glowColor": "rgba(45, 212, 191, 0.45)",
+    "iconType": "image",
+    "iconValue": "data:image/png;base64,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",
+    "hasRealIcon": true,
+    "status": "not-installed",
+    "publishedAt": 1792777662497,
+    "releaseInfo": {
+      "version": "1.0.0",
+      "executableName": "Win Unpacked.exe",
+      "setupExecutableName": "electron.exe",
+      "releaseDate": "2026-10-23",
+      "releaseType": "minor",
+      "tagline": "Win Unpacked v1.0.0 Update",
+      "summary": "Child application Win Unpacked running inside Anything.",
+      "newFeatures": [],
+      "improvements": [],
+      "fixes": [],
+      "sizeFormatted": "238.2 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\app-win-unpacked\\electron.exe"
+    },
+    "history": [
+      {
+        "version": "1.0.0",
+        "executableName": "Win Unpacked.exe",
+        "setupExecutableName": "electron.exe",
+        "releaseDate": "2026-10-23",
+        "releaseType": "minor",
+        "tagline": "Win Unpacked v1.0.0 Update",
+        "summary": "Child application Win Unpacked running inside Anything.",
+        "newFeatures": [],
+        "improvements": [],
+        "fixes": [],
+        "sizeFormatted": "238.2 MB",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\published-apps\\app-win-unpacked\\electron.exe"
+      }
+    ],
+    "systemRequirements": {
+      "os": "Windows 10 / Windows 11 (64-bit)",
+      "ram": "8 GB RAM (16 GB Recommended)",
+      "gpu": "DirectX 12 / Direct3D 11 GPU Accelerated",
+      "storage": "238.2 MB Available Space"
+    },
+    "changelog": [],
+    "addedByCreator": true
+  },
+  {
     "id": "one-tap",
     "name": "One Tap",
     "shortName": "OT",
@@ -106,7 +276,7 @@
       },
       {
         "version": "26.10.12",
-        "executableName": "OneTap-V-26.10.12.exe",
+        "executableName": "OneTap-V-26.10.20.exe",
         "setupExecutableName": "OneTap-V-26.10.20.exe",
         "releaseDate": "2026-10-23",
         "releaseType": "minor",
@@ -116,7 +286,7 @@
         "improvements": [],
         "fixes": [],
         "sizeFormatted": "91.6 MB",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.12/OneTap-V-26.10.20.exe",
+        "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\anything\\published-apps\\one-tap\\OneTap-V-26.10.20.exe",
         "releasesUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases"
       }
     ],

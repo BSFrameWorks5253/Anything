@@ -2,6 +2,8 @@
   "name": "anything",
   "private": true,
   "version": "1.0.0",
+  "description": "Anything — Professional Creative & Productivity Ecosystem Desktop Suite",
+  "author": "Burhanuddin",
   "type": "module",
   "main": "electron-dist/main.js",
   "scripts": {
@@ -13,6 +15,7 @@
     "collect-releases": "node scripts/collect-releases.cjs",
     "collect-releases:watch": "node scripts/collect-releases.cjs --watch",
     "build": "npm run build:vite && npm run build:electron",
+    "dist": "npm run build && electron-builder --win --publish never",
     "release": "npm run build && electron-builder --publish always",
     "release:github": "node scripts/publish-github-release.cjs",
     "release:all": "node scripts/publish-github-release.cjs --all",
@@ -31,6 +34,14 @@
       "repo": "Anything"
     },
     "artifactName": "${productName}_${version}.${ext}",
+    "files": [
+      "dist/**/*",
+      "electron-dist/**/*",
+      "public/**/*",
+      "published-apps/**/*",
+      "package.json"
+    ],
+    "asar": true,
     "win": {
       "icon": "public/icon.ico",
       "target": [
@@ -51,7 +62,6 @@
   "dependencies": {
     "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
-    "electron": "^45.0.0",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.16.0",
     "react": "^19.3.1",
@@ -64,7 +74,8 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "autoprefixer": "^10.6.1",
-    "electron-builder": "^26.7.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
     "oxlint": "^1.88.0",
     "postcss": "^8.5.31",
     "tailwindcss": "^3.4.19",
