@@ -117,7 +117,7 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({ onFilesDropped }) =>
           Drag & Drop Spatial Assets or Browse
         </p>
         <p className="text-xs text-zinc-600 dark:text-white/60 mt-1 max-w-sm">
-          Drop PSDs, Illustrator vectors, ProRes video cuts, or 3D meshes to sync directly to Creative Cloud.
+          Drop executables, child app builds, package bundles, or media assets to stage and sync directly.
         </p>
 
         <span className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-mono text-cyan-700 dark:text-cyan-300 font-medium">

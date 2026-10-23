@@ -9,22 +9,22 @@ export const WhatIsNewSection: React.FC = () => {
 
   const highlights = [
     {
-      icon: <Sparkles className="w-4 h-4 text-red-600" />,
-      badge: 'Photoshop',
-      title: 'Generative Fill & Expand',
-      desc: 'Insert, remove, or expand content in photos with high-fidelity contextual neural synthesis.',
+      icon: <Zap className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />,
+      badge: 'Tap Studio',
+      title: 'Macro & Hardware Automation',
+      desc: 'Low-latency system triggers, custom hotkeys, and automated updates linked with BSFrameWorks5253/TapDesk.',
     },
     {
-      icon: <Wand2 className="w-4 h-4 text-indigo-600" />,
-      badge: 'Illustrator',
-      title: 'Vector Pattern Synthesis',
-      desc: 'Generate scalable vector patterns, color palettes, and typography presets instantly.',
+      icon: <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+      badge: 'Release Engine',
+      title: 'Automated Child App Sync',
+      desc: 'Drop any <AppName>_<version>.exe into releases/ to auto-catalog, stage setup installers, and archive versions.',
     },
     {
-      icon: <RefreshCw className="w-4 h-4 text-emerald-600" />,
-      badge: 'Anything',
-      title: 'Seamless Background Updates',
-      desc: 'Automatic GitHub Release synchronization and one-click rollback across past releases.',
+      icon: <RefreshCw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+      badge: 'Anything Core',
+      title: 'Animated Email Dispatches & Rollback',
+      desc: 'Automated release notes with fixes, improvements, and features delivered with one-click version rollback.',
     },
   ];
 
@@ -37,14 +37,14 @@ export const WhatIsNewSection: React.FC = () => {
               isLight ? 'text-zinc-600' : 'text-zinc-400'
             }`}
           >
-            What's New in Creative Apps
+            What's New in Anything Ecosystem
           </h3>
           <p
             className={`text-xs mt-0.5 ${
               isLight ? 'text-zinc-500' : 'text-zinc-500'
             }`}
           >
-            Recent capabilities and enhancements across the suite
+            Recent capabilities, child app updates, and enhancements across the suite
           </p>
         </div>
       </div>

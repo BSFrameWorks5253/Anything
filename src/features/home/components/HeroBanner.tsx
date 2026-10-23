@@ -68,7 +68,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onOpenApps }) => {
                 isLight ? 'text-zinc-900' : 'text-zinc-100'
               }`}
             >
-              Creative Cloud All Apps
+              Anything Ecosystem Suite
             </div>
             <div className="text-[11px] text-zinc-500">
               Desktop v1.2.0 · Ready

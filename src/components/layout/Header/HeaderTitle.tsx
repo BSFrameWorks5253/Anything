@@ -9,8 +9,8 @@ interface HeaderTitleProps {
 
 const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = {
   home: {
-    title: 'Creative Cloud',
-    subtitle: 'Quick access, recent projects & updates',
+    title: 'Anything Hub',
+    subtitle: 'Quick access, child apps & ecosystem updates',
   },
   apps: {
     title: 'All Apps',

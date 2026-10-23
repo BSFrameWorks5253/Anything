@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 /**
  * Premium Studio Canvas Background
  * Replaces loud neon gradient blobs with a calm, refined, high-end studio atmosphere
- * inspired by Adobe Creative Cloud and Apple macOS Studio UI.
+ * crafted for the Anything ecosystem.
  */
 export const LiquidBackground: React.FC = () => {
   const { theme } = useTheme();
