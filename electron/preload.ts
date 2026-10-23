@@ -103,7 +103,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Native Windows Notifications
-  showNotification: (data: { title: string; body: string; appId?: string }) =>
+  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) =>
     ipcRenderer.invoke('notification:show', data),
   onNotificationClicked: (callback: (data: any) => void) => {
     const subscription = (_: any, data: any) => callback(data);

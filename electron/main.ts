@@ -16,6 +16,8 @@ import http from 'http';
 import { exec } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
+app.name = 'Anything';
+
 const isDev = process.env.NODE_ENV === 'development';
 
 // Project root and distribution folders
@@ -529,7 +531,10 @@ function scanAndCollectReleases(): {
               if (hasNewer || isNewFile) {
                 sendWindowsNotification(
                   `⚡ Update Detected for ${appName}!`,
-                  `Version v${appVersion} was collected from releases. Ready to launch!`
+                  `Version v${appVersion} was collected from releases. Ready to launch!`,
+                  undefined,
+                  catalogEntry.iconValue,
+                  appName
                 );
               }
             }
@@ -538,7 +543,10 @@ function scanAndCollectReleases(): {
             addedCount++;
             sendWindowsNotification(
               `🎉 New Child App: ${appName}`,
-              `Version v${appVersion} was automatically registered from releases!`
+              `Version v${appVersion} was automatically registered from releases!`,
+              undefined,
+              catalogEntry.iconValue,
+              appName
             );
           }
         } else if (entry.isFile()) {
@@ -594,7 +602,10 @@ function scanAndCollectReleases(): {
               updatedCount++;
               sendWindowsNotification(
                 `⚡ Update Detected for ${appName}!`,
-                `Version v${appVersion} was collected from releases.`
+                `Version v${appVersion} was collected from releases.`,
+                undefined,
+                catalogEntry.iconValue,
+                appName
               );
             }
           } else {
@@ -602,7 +613,10 @@ function scanAndCollectReleases(): {
             addedCount++;
             sendWindowsNotification(
               `🎉 New Child App: ${appName}`,
-              `Version v${appVersion} is now ready in Anything!`
+              `Version v${appVersion} is now ready in Anything!`,
+              undefined,
+              catalogEntry.iconValue,
+              appName
             );
           }
         }
@@ -620,23 +634,120 @@ function scanAndCollectReleases(): {
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
-// Set Windows AppUserModelId for native Action Center toast notifications
-if (process.platform === 'win32') {
-  app.setAppUserModelId('com.burhanuddin.anything');
+// ================= WINDOWS APP USER MODEL ID & SHORTCUT =================
+function ensureWindowsAppRegistration(appId: string, displayName: string, iconPath?: string) {
+  if (process.platform !== 'win32') return;
+  try {
+    const regKey = `HKCU\\Software\\Classes\\AppUserModelId\\${appId}`;
+    const safeDisplay = displayName.replace(/"/g, '\\"');
+    exec(`reg.exe add "${regKey}" /v "DisplayName" /t REG_SZ /d "${safeDisplay}" /f`, () => {});
+    if (iconPath && fs.existsSync(iconPath)) {
+      const safeIcon = iconPath.replace(/"/g, '\\"');
+      exec(`reg.exe add "${regKey}" /v "IconUri" /t REG_SZ /d "${safeIcon}" /f`, () => {});
+      exec(`reg.exe add "${regKey}" /v "IconBackgroundColor" /t REG_SZ /d "FF111827" /f`, () => {});
+    }
+  } catch (e) {
+    console.warn(`ensureWindowsAppRegistration failed for ${appId}:`, e);
+  }
 }
 
-function sendWindowsNotification(title: string, body: string, onClick?: () => void) {
+function ensureWindowsShortcut() {
+  if (process.platform !== 'win32') return;
   try {
-    if (Notification.isSupported()) {
-      const notif = new Notification({
-        title,
-        body,
-        silent: false,
-      });
-      if (onClick) {
-        notif.on('click', onClick);
+    const shortcutPath = path.join(
+      process.env.APPDATA || '',
+      'Microsoft',
+      'Windows',
+      'Start Menu',
+      'Programs',
+      'Anything.lnk'
+    );
+    if (!fs.existsSync(shortcutPath)) {
+      const scriptPath = path.join(getProjectRoot(), 'scripts', 'create-shortcut.ps1');
+      if (fs.existsSync(scriptPath)) {
+        exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, () => {});
       }
-      notif.show();
+    }
+  } catch (e) {
+    console.warn('ensureWindowsShortcut error:', e);
+  }
+}
+
+// Set Windows AppUserModelId for native Action Center toast notifications
+if (process.platform === 'win32') {
+  app.setAppUserModelId('Anything');
+  const defaultAppLogo = path.join(getProjectRoot(), 'public', 'app-logo.png');
+  ensureWindowsAppRegistration('Anything', 'Anything', defaultAppLogo);
+  ensureWindowsAppRegistration('com.burhanuddin.anything', 'Anything', defaultAppLogo);
+  ensureWindowsShortcut();
+}
+
+function sendWindowsNotification(
+  title: string,
+  body: string,
+  onClick?: () => void,
+  iconSource?: string,
+  appName?: string
+) {
+  try {
+    if (!Notification.isSupported()) return;
+
+    const defaultIconPath = path.join(getProjectRoot(), 'public', 'app-logo.png');
+    let resolvedIconPath = defaultIconPath;
+    let iconImg: Electron.NativeImage | undefined;
+
+    if (iconSource) {
+      if (typeof iconSource === 'string' && iconSource.startsWith('data:image/')) {
+        try {
+          iconImg = nativeImage.createFromDataURL(iconSource);
+          if (appName) {
+            const iconCacheDir = path.join(app.getPath('userData'), 'app-icons');
+            if (!fs.existsSync(iconCacheDir)) fs.mkdirSync(iconCacheDir, { recursive: true });
+            const safeName = appName.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const cachedFile = path.join(iconCacheDir, `${safeName}.png`);
+            if (!fs.existsSync(cachedFile)) {
+              const base64Data = iconSource.replace(/^data:image\/\w+;base64,/, '');
+              fs.writeFileSync(cachedFile, Buffer.from(base64Data, 'base64'));
+            }
+            resolvedIconPath = cachedFile;
+          }
+        } catch (e) {
+          console.warn('Failed parsing data URL icon for notification:', e);
+        }
+      } else if (typeof iconSource === 'string' && fs.existsSync(iconSource)) {
+        resolvedIconPath = iconSource;
+        iconImg = nativeImage.createFromPath(iconSource);
+      }
+    }
+
+    if (!iconImg && fs.existsSync(resolvedIconPath)) {
+      iconImg = nativeImage.createFromPath(resolvedIconPath);
+    }
+
+    if (process.platform === 'win32') {
+      const targetAumid = appName || 'Anything';
+      ensureWindowsAppRegistration(targetAumid, targetAumid, resolvedIconPath);
+      app.setAppUserModelId(targetAumid);
+    }
+
+    const notif = new Notification({
+      title,
+      body,
+      icon: iconImg,
+      silent: false,
+    });
+    if (onClick) {
+      notif.on('click', onClick);
+    }
+    notif.show();
+
+    // Reset AUMID back to Anything after showing child notification
+    if (process.platform === 'win32' && appName && appName !== 'Anything') {
+      setTimeout(() => {
+        try {
+          app.setAppUserModelId('Anything');
+        } catch {}
+      }, 1000);
     }
   } catch (e) {
     console.error('Notification error:', e);
@@ -1225,7 +1336,10 @@ function createWindow() {
         if (found) {
           sendWindowsNotification(
             'Installation Complete',
-            `${appData.name || 'Application'} is installed and ready to open.`
+            `${appData.name || 'Application'} is installed and ready to open.`,
+            undefined,
+            appData.iconValue,
+            appData.name
           );
           return { success: true, installedPath: found, format: 'exe' };
         }
@@ -2065,6 +2179,20 @@ function createWindow() {
 
         const tempDownloadPath = path.join(targetAppDir, assetName);
 
+        let targetAppName = appId;
+        let targetIconValue: string | undefined;
+        try {
+          const catFile = path.join(getPublishedDir(), 'catalog.json');
+          if (fs.existsSync(catFile)) {
+            const cat = JSON.parse(fs.readFileSync(catFile, 'utf-8'));
+            const matched = cat.find((a: any) => a.id === appId);
+            if (matched) {
+              if (matched.name) targetAppName = matched.name;
+              if (matched.iconValue) targetIconValue = matched.iconValue;
+            }
+          }
+        } catch {}
+
         // Download with live progress feedback
         await downloadAssetWithProgress(downloadUrl, tempDownloadPath, (prog) => {
           win.webContents.send('catalog:download-progress', {
@@ -2144,7 +2272,10 @@ function createWindow() {
             }
             sendWindowsNotification(
               'Installation Complete',
-              `Application was installed successfully and is ready to open.`
+              `${targetAppName} was installed successfully and is ready to open.`,
+              undefined,
+              targetIconValue,
+              targetAppName
             );
           }
         }
@@ -2292,16 +2423,37 @@ function createWindow() {
   });
 
   // Windows Native Toast Notification IPC
-  ipcMain.handle('notification:show', (_, { title, body, appId }) => {
-    sendWindowsNotification(title, body, () => {
-      if (win) {
-        if (win.isMinimized()) win.restore();
-        win.focus();
-        if (appId) {
-          win.webContents.send('notification:clicked', { appId });
+  ipcMain.handle('notification:show', (_, { title, body, appId, icon, appName }: any) => {
+    let resolvedIcon = icon;
+    let resolvedAppName = appName;
+    if (appId && (!resolvedIcon || !resolvedAppName)) {
+      try {
+        const catFile = path.join(getPublishedDir(), 'catalog.json');
+        if (fs.existsSync(catFile)) {
+          const cat = JSON.parse(fs.readFileSync(catFile, 'utf-8'));
+          const entry = cat.find((a: any) => a.id === appId);
+          if (entry) {
+            if (!resolvedAppName) resolvedAppName = entry.name;
+            if (!resolvedIcon) resolvedIcon = entry.iconValue;
+          }
         }
-      }
-    });
+      } catch {}
+    }
+    sendWindowsNotification(
+      title,
+      body,
+      () => {
+        if (win) {
+          if (win.isMinimized()) win.restore();
+          win.focus();
+          if (appId) {
+            win.webContents.send('notification:clicked', { appId });
+          }
+        }
+      },
+      resolvedIcon,
+      resolvedAppName
+    );
     return { success: true };
   });
 

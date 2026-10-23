@@ -247,6 +247,8 @@ export function App() {
                   title: `🚀 Update Available: ${app.name} v${res.remoteVersion || res.rawTag}`,
                   body: `Version ${res.remoteVersion || res.rawTag} is now available on GitHub (Installed: v${app.localVersion || app.version}). Click to download and install.`,
                   appId: app.id,
+                  appName: app.name,
+                  icon: app.iconValue,
                 });
               }
               return {
@@ -594,6 +596,8 @@ export function App() {
             title: `⏪ Rolled Back ${targetApp.name}`,
             body: `Successfully switched to version v${release.tag}.`,
             appId: targetApp.id,
+            appName: targetApp.name,
+            icon: targetApp.iconValue,
           });
         }
       } else {

@@ -72,7 +72,7 @@ export interface ElectronAPI {
   onUpdateStatus: (callback: (data: any) => void) => () => void;
 
   // Notifications
-  showNotification: (data: { title: string; body: string; appId?: string }) => Promise<any>;
+  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) => Promise<any>;
   onNotificationClicked: (callback: (data: any) => void) => () => void;
 
   // Splash Screen Lifecycle
