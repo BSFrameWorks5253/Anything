@@ -1,15 +1,23 @@
 [
   {
+    "id": "mediaflow-studio",
     "url": "https://github.com/BSFrameWorks5253/MediaFlow-Studio",
     "name": "MediaFlow Studio",
     "category": "Media & Video",
     "autoSync": true
   },
   {
-    "url": "https://github.com/BSFrameWorks5253/onetap-workstation",
     "id": "one-tap",
+    "url": "https://github.com/BSFrameWorks5253/onetap-workstation",
     "name": "One Tap",
     "category": "Media & Production",
+    "autoSync": true
+  },
+  {
+    "id": "docuflow-studio",
+    "url": "https://github.com/BSFrameWorks5253/DocuFlow-",
+    "name": "DocuFlow Studio Pro",
+    "category": "Productivity & Documents",
     "autoSync": true
   }
 ]
