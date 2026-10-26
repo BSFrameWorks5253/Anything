@@ -94,7 +94,7 @@ export function App() {
                   executableName: 'One Tap.exe',
                   iconType: 'image' as const,
                   iconValue: ONE_TAP_LOGO_BASE64,
-                  installedPath: 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe',
+                  installedPath: 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.26.exe',
                   status: 'installed' as const,
                 };
               }
@@ -222,7 +222,7 @@ export function App() {
                   item.iconType = 'image';
                   item.iconValue = ONE_TAP_LOGO_BASE64;
                 }
-                const portablePath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe';
+                const portablePath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.26.exe';
                 if (!item.installedPath || item.installedPath.toLowerCase().includes('pv_separator') || item.installedPath.toLowerCase().includes('uni desk')) {
                   item.installedPath = portablePath;
                   item.status = 'installed';
@@ -758,7 +758,7 @@ export function App() {
       } else if (isMediaFlow) {
         launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Local\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe';
       } else if (isOneTap) {
-        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe';
+        launchPath = 'C:\\Users\\Burhanuddin\\AppData\\Roaming\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.26.exe';
       } else {
         launchPath = targetApp.executableName || '';
       }
