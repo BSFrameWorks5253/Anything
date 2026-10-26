@@ -1,0 +1,13 @@
+{
+  "appId": "anything-data-manage",
+  "appName": "Anything Data Manage",
+  "monogram": "DM",
+  "tagline": "Advanced Data Extraction & Sequence Workspace",
+  "gradient": "from-cyan-500 via-indigo-600 to-purple-700",
+  "presetId": "dark-obsidian",
+  "bootPhrases": [
+    "Initializing Tabular Parsing Kernel...",
+    "Loading Sequence Directory Shifter...",
+    "Ready."
+  ]
+}

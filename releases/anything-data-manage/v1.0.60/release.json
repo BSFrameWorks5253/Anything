@@ -1,0 +1,36 @@
+{
+  "appId": "anything-data-manage",
+  "appName": "Anything Data Manage",
+  "version": "1.0.60",
+  "executableName": "AIN53_Data_Management_Portable.exe",
+  "setupExecutableName": "AIN53_Data_Management_Setup.exe",
+  "releaseDate": "2026-10-26",
+  "releaseType": "major",
+  "tagline": "Advanced Tabular PDF Extraction, Hierarchical Folder Generator & Drive Inventory",
+  "summary": "Anything Data Manage v1.0.60 (AIN53)",
+  "newFeatures": [
+    "High-Performance Tabular PDF to CSV Extraction with vector cell parsing and fuzzy synonym header mapping.",
+    "Hierarchical Directory Generator: transforms tabular data into nested production file trees automatically.",
+    "Media Boundary Scanner & Sorter: multi-cameraman media sorting, ripple sequence shifting, and isolated move.",
+    "Drive Inventory Engine: automated gap verification scan and formatted color-coded Excel report generator.",
+    "Dual Build Architecture: Standalone Portable executable and full GUI Setup installer with uninstaller."
+  ],
+  "improvements": [
+    "Direct integration into the Anything Master Hub ecosystem.",
+    "PyWebView native Windows 11 hardware-accelerated frontend renderer.",
+    "Offline local SQLite database indexing with zero external network dependencies."
+  ],
+  "fixes": [
+    "Smart text-wrap protection inside PDF table cells.",
+    "Vivo, Honor, and multi-display DPI scaling layout stability."
+  ],
+  "emailNotification": {
+    "subject": "🚀 Anything Data Manage v1.0.60 is Ready!",
+    "preview": "Experience intelligent tabular data extraction and directory sorting in Anything.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-cyan-500 via-indigo-600 to-purple-700"
+  },
+  "sizeFormatted": "132.2 MB",
+  "downloadUrl": "releases/anything-data-manage/v1.0.60/AIN53_Data_Management_Setup.exe",
+  "releasesUrl": "releases/anything-data-manage"
+}

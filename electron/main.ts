@@ -1262,6 +1262,18 @@ function findInstalledExecutable(options: {
     candidateNames.add('onetap-workstation');
   }
 
+  const isDataManageApp =
+    (appName && appName.toLowerCase().includes('data manage')) ||
+    (appId && appId.toLowerCase().includes('data-manage'));
+  if (isDataManageApp) {
+    const portablePath = path.join(getProjectRoot(), 'releases', 'anything-data-manage', 'v1.0.60', 'AIN53_Data_Management_Portable.exe');
+    if (fs.existsSync(portablePath)) return portablePath;
+    const setupPath = path.join(getProjectRoot(), 'releases', 'anything-data-manage', 'v1.0.60', 'AIN53_Data_Management_Setup.exe');
+    if (fs.existsSync(setupPath)) return setupPath;
+    const projectMain = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Data Manage\\main.py';
+    if (fs.existsSync(projectMain)) return projectMain;
+  }
+
   const localAppData = process.env.LOCALAPPDATA || '';
   const appData = process.env.APPDATA || '';
   const programFiles = process.env.ProgramFiles || 'C:\\Program Files';

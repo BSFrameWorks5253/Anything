@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const isMediaFlow =
         target.id === 'mediaflow-studio' ||
         Boolean(target.name && target.name.toLowerCase().includes('mediaflow'));
+      const isDataManage =
+        target.id === 'anything-data-manage' ||
+        Boolean(target.name && target.name.toLowerCase().includes('data manage'));
       if (
         !pathString ||
         pathString.toLowerCase().includes('setup') ||
@@ -32,6 +35,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
           pathString = `${appData}\\Anything\\installed-apps\\one-tap\\OneTap-Portable-V-26.10.21.exe`;
         } else if (isMediaFlow) {
           pathString = `${localAppData}\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe`;
+        } else if (isDataManage) {
+          pathString = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\releases\\anything-data-manage\\v1.0.60\\AIN53_Data_Management_Portable.exe';
         }
       }
     }
