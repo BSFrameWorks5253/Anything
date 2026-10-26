@@ -13,7 +13,7 @@ interface LogEntry {
 export const DiagnosticLogsViewer: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>(() => [
     { id: '1', timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(), level: 'info', source: 'Anything Daemon', message: 'Ecosystem runtime initialized smoothly.' },
-    { id: '2', timestamp: new Date(Date.now() - 1800000).toLocaleTimeString(), level: 'info', source: 'GitHub Engine', message: 'Checked updates for MediaFlow Studio: v6.0.0 is up to date.' },
+    { id: '2', timestamp: new Date(Date.now() - 1800000).toLocaleTimeString(), level: 'info', source: 'GitHub Engine', message: 'Checked updates for MediaFlow Studio: v26.10.26 is up to date.' },
     { id: '3', timestamp: new Date(Date.now() - 900000).toLocaleTimeString(), level: 'warn', source: 'Launcher', message: 'Path verification completed. All child apps present.' },
   ]);
 

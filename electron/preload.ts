@@ -155,6 +155,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gitAutoCommit: (options?: { push?: boolean; ecosystem?: boolean; message?: string }) =>
     ipcRenderer.invoke('git:auto-commit', options),
 
+  // Master Builder Studio
+  launchMasterBuilder: () => ipcRenderer.invoke('builder:launch'),
+  syncEcosystemVersions: () => ipcRenderer.invoke('builder:sync-versions'),
+
   // Splash Screen Lifecycle
   splashDone: () => ipcRenderer.invoke('splash:done'),
 

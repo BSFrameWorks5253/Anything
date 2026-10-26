@@ -1,8 +1,8 @@
 {
   "name": "anything",
   "private": true,
-  "version": "26.10.01",
-  "description": "Anything — Professional Creative & Productivity Ecosystem Desktop Suite",
+  "version": "26.10.26",
+  "description": "Anything \u2014 Professional Creative & Productivity Ecosystem Desktop Suite",
   "author": "Burhanuddin",
   "type": "module",
   "main": "electron-dist/main.js",
@@ -25,7 +25,9 @@
     "commit:ecosystem": "node scripts/auto-commit.cjs --ecosystem",
     "commit:ecosystem:push": "node scripts/auto-commit.cjs --ecosystem --push",
     "start": "electron .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "builder": "python scripts/master_builder.py",
+    "sync:versions": "python scripts/sync_all_versions.py"
   },
   "build": {
     "appId": "com.burhanuddin.anything",
@@ -38,7 +40,7 @@
       "owner": "BSFrameWorks5253",
       "repo": "Anything"
     },
-    "artifactName": "Anything_26.10.01_Setup.${ext}",
+    "artifactName": "Anything_${version}_Setup.${ext}",
     "files": [
       "dist/**/*",
       "electron-dist/**/*",
@@ -55,7 +57,7 @@
       "target": [
         "nsis"
       ],
-      "artifactName": "Anything_26.10.01_Setup.${ext}"
+      "artifactName": "Anything_${version}_Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -64,7 +66,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Anything",
-      "artifactName": "Anything_26.10.01_Setup.${ext}"
+      "artifactName": "Anything_${version}_Setup.${ext}"
     }
   },
   "dependencies": {

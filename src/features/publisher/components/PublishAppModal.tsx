@@ -181,7 +181,7 @@ export const PublishAppModal: React.FC<PublishAppModalProps> = ({
             </label>
             <input
               type="url"
-              placeholder="https://github.com/user/repo/releases/download/v1.0.0/app.zip"
+              placeholder="https://github.com/user/repo/releases/download/v26.10.26/app.zip"
               value={downloadUrl}
               onChange={(e) => setDownloadUrl(e.target.value)}
               className="w-full px-3.5 py-2 text-xs font-mono bg-white/[0.05] border border-white/10 rounded-xl text-cyan-300 outline-none focus:border-cyan-400/60"

@@ -214,7 +214,7 @@ async function findAppLogoImage(dirPath: string): Promise<{ iconType: 'image'; i
       return { iconType: 'image', iconValue: `data:image/svg+xml;base64,${b64}`, hasRealIcon: true };
     }
 
-    // Sub-directory scan (assets/, v1.0.0/, etc.)
+    // Sub-directory scan (assets/, v26.10.26/, etc.)
     for (const file of files) {
       const subPath = path.join(dirPath, file);
       if (!fs.existsSync(subPath) || !fs.statSync(subPath).isDirectory()) continue;
@@ -454,7 +454,7 @@ async function scanAndCollectReleases(): Promise<{
 
           const discoveredReleases: DiscoveredRelease[] = [];
 
-          // Scan version subdirectories: V-1.0.0, v1.0.0, 1.0.0, etc.
+          // Scan version subdirectories: V-1.0.0, v26.10.26, 1.0.0, etc.
           const subEntries = fs.readdirSync(appDir, { withFileTypes: true });
           const versionDirs = subEntries.filter(
             (e) =>
@@ -2725,7 +2725,7 @@ function createWindow() {
         fs.writeFileSync(catalogFile, JSON.stringify(catalog, null, 2), 'utf-8');
       }
 
-      // 1. Remove matching version subfolder on disk (V-1.0.0, v1.0.0, etc.)
+      // 1. Remove matching version subfolder on disk (V-1.0.0, v26.10.26, etc.)
       const scanRoots = getAllReleaseDirs();
       for (const root of scanRoots) {
         if (!fs.existsSync(root)) continue;
@@ -3442,6 +3442,40 @@ function createWindow() {
         cwd: root,
         encoding: 'utf8',
         timeout: 45000
+      });
+      return { success: true, output: out };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  });
+
+  // Master Builder Studio IPC
+  ipcMain.handle('builder:launch', async () => {
+    try {
+      const builderDir = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Exe Builder Anything';
+      const isWindows = process.platform === 'win32';
+      const cmd = isWindows ? 'cmd.exe' : 'npm';
+      const args = isWindows ? ['/c', 'npm run start'] : ['run', 'start'];
+      const child = spawn(cmd, args, {
+        cwd: builderDir,
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  });
+
+  ipcMain.handle('builder:sync-versions', async () => {
+    try {
+      const root = getProjectRoot();
+      const scriptPath = path.join(root, 'scripts', 'sync_all_versions.py');
+      const out = execSync(`python "${scriptPath}"`, {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 30000
       });
       return { success: true, output: out };
     } catch (e: any) {

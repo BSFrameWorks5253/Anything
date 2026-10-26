@@ -197,7 +197,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2 text-zinc-600">
-            Anything v1.0.0
+            Anything v26.10.26
           </div>
         </div>
       </div>

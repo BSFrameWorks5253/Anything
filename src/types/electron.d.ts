@@ -87,6 +87,10 @@ export interface ElectronAPI {
   gitPreviewMessage?: () => Promise<{ success: boolean; output?: string; error?: string }>;
   gitAutoCommit?: (options?: { push?: boolean; ecosystem?: boolean; message?: string }) => Promise<{ success: boolean; output?: string; error?: string }>;
 
+  // Master Builder Studio
+  launchMasterBuilder?: () => Promise<{ success: boolean; error?: string }>;
+  syncEcosystemVersions?: () => Promise<{ success: boolean; output?: string; error?: string }>;
+
   // Splash Screen Lifecycle
   splashDone?: () => Promise<boolean>;
 

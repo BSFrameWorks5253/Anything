@@ -67,12 +67,12 @@ export interface SplashSettings {
 }
 
 export const cleanVersionText = (ver?: string): string => {
-  if (!ver) return 'v1.0.0';
+  if (!ver) return 'v26.10.26';
   const cleaned = ver
     .replace(/\s*\((?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\)/gi, '')
     .replace(/\s*[-_.]?\s*(?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\b/gi, '')
     .trim();
-  return cleaned || 'v1.0.0';
+  return cleaned || 'v26.10.26';
 };
 
 export const defaultSplashSettings: SplashSettings = {
@@ -82,7 +82,7 @@ export const defaultSplashSettings: SplashSettings = {
   artistName: 'Anything Creation',
   artworkTitle: '-Designed by Burhanuddin',
   productName: 'Anything',
-  versionText: '2026.1 Release · v1.0.0',
+  versionText: '2026.1 Release · v26.10.26',
   tagline: 'Creative & Productivity Master Hub',
   durationMs: 2800,
   logoText: 'An',
@@ -99,7 +99,7 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     artistName: 'Anything Creation',
     artworkTitle: '-Designed by Burhanuddin',
     productName: 'Tap Studio',
-    versionText: 'v1.0.0',
+    versionText: 'v26.10.26',
     tagline: 'Macro Automation & Stream Deck Companion',
     durationMs: 2800,
     logoText: 'Ts',
@@ -114,7 +114,7 @@ export const defaultChildAppSplashSettings: Record<string, SplashSettings> = {
     artistName: 'Anything Creation',
     artworkTitle: '-Designed by Burhanuddin',
     productName: 'MediaFlow Studio',
-    versionText: 'v6.0.0',
+    versionText: 'v26.10.26',
     tagline: 'Professional Media Ingestion, Synchronization and Report Fusion Desktop Suite',
     durationMs: 2800,
     logoText: 'Ms',
@@ -155,7 +155,7 @@ export const loadAppSplashSettings = (
       productName: currentApp?.name || appId.charAt(0).toUpperCase() + appId.slice(1).replace(/-/g, ' '),
       logoText: currentApp?.shortName || appId.slice(0, 2).toUpperCase(),
       tagline: 'Integrated Workspace Application',
-      versionText: appCleanVersion || 'v1.0.0',
+      versionText: appCleanVersion || 'v26.10.26',
     };
 
     const defaults: SplashSettings =
@@ -181,7 +181,7 @@ export const loadAppSplashSettings = (
         parsed.versionText = cleanVersionText(parsed.versionText);
       }
       // If currentApp exists and saved version was a generic placeholder with x64/x86 or stale default, sync it
-      if (appCleanVersion && (!parsed.versionText || parsed.versionText.includes('x64') || parsed.versionText.includes('x86') || parsed.versionText === 'v1.0.0 (x64)')) {
+      if (appCleanVersion && (!parsed.versionText || parsed.versionText.includes('x64') || parsed.versionText.includes('x86') || parsed.versionText === 'v26.10.26 (x64)')) {
         parsed.versionText = appCleanVersion;
       }
       return { ...defaults, ...parsed };
