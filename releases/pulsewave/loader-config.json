@@ -1,0 +1,13 @@
+{
+  "appId": "pulsewave",
+  "appName": "Pulse Wave",
+  "monogram": "PW",
+  "tagline": "Pulse Wave Desktop Workstation",
+  "gradient": "from-emerald-500 via-teal-600 to-cyan-700",
+  "presetId": "apple-ambient",
+  "bootPhrases": [
+    "Connecting Pulse Wave to Anything...",
+    "Synchronizing hardware macro event loop...",
+    "Ready."
+  ]
+}

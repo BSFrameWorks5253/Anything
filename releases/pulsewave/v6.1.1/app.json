@@ -1,0 +1,38 @@
+{
+  "id": "pulsewave",
+  "name": "Pulse Wave",
+  "shortName": "PW",
+  "version": "6.1.1",
+  "category": "Mobile & Music",
+  "description": "Universal Playlist & Album Importer, Lossless Audio Engine, and Dual Wrapped Playback Sync for Android.",
+  "executableName": "app-universal-gms-release.apk",
+  "setupExecutableName": "app-universal-gms-release.apk",
+  "packageFileName": "app-universal-gms-release.apk",
+  "targetPlatforms": [
+    "mobile",
+    "android"
+  ],
+  "mobileInfo": {
+    "platforms": [
+      "android"
+    ],
+    "apkDownloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.1/app-universal-gms-release.apk",
+    "packageId": "com.beatwave.music",
+    "minOsVersion": "Android 8.0+ (API 26)"
+  },
+  "gradient": "from-emerald-500 via-teal-600 to-cyan-700",
+  "textColor": "#10b981",
+  "glowColor": "rgba(16, 185, 129, 0.45)",
+  "githubRepo": "BSFrameWorks5253/Plusewave",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases",
+  "releasesTagUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/tag/",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.1/app-universal-gms-release.apk",
+  "iconType": "monogram",
+  "systemRequirements": {
+    "os": "Android 8.0 (Oreo) or higher",
+    "processor": "ARM64 / x86_64 Quad-Core",
+    "ram": "3 GB RAM",
+    "graphics": "OpenGL ES 3.0+",
+    "storage": "100 MB available space"
+  }
+}

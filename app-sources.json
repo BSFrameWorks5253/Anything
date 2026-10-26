@@ -19,5 +19,13 @@
     "name": "DocuFlow Studio Pro",
     "category": "Productivity & Documents",
     "autoSync": true
+  },
+  {
+    "id": "pulsewave",
+    "url": "https://github.com/BSFrameWorks5253/Plusewave",
+    "name": "Pulse Wave",
+    "category": "Mobile & Music",
+    "targetPlatforms": ["mobile", "android"],
+    "autoSync": true
   }
 ]

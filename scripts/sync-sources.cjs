@@ -111,23 +111,37 @@ async function run() {
       const version = latestRel.tag_name.replace(/^[vV]/, '');
       const assets = latestRel.assets || [];
 
+      // Check for Mobile APK asset
+      const apkAsset = assets.find((a) => a.name.endsWith('.apk'));
+      const isMobile =
+        Boolean(apkAsset) ||
+        (Array.isArray(src.targetPlatforms) && src.targetPlatforms.includes('mobile')) ||
+        (src.category && src.category.toLowerCase().includes('mobile'));
+
+      const isPulseWave =
+        appId.includes('pulsewave') ||
+        appId.includes('plusewave') ||
+        explicitName.toLowerCase().includes('pulse') ||
+        parsed.repo.toLowerCase().includes('plusewave');
+
       // Find Setup Installer and Standalone Binary
       const setupAsset =
         assets.find((a) => a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) ||
         assets.find((a) => !a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')) ||
-        assets.find((a) => a.name.endsWith('.exe'));
+        assets.find((a) => a.name.endsWith('.exe')) ||
+        apkAsset;
       const standaloneAsset =
         assets.find((a) => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')) ||
         assets.find((a) => !a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) ||
         setupAsset;
 
-      const setupName = setupAsset ? setupAsset.name : `${explicitName.replace(/\s+/g, '')}_Setup_V${version}.exe`;
-      const exeName = standaloneAsset ? standaloneAsset.name : `${explicitName.replace(/\s+/g, '')}_V${version}.exe`;
+      const setupName = setupAsset ? setupAsset.name : (isMobile ? `${explicitName.replace(/\s+/g, '')}_V${version}.apk` : `${explicitName.replace(/\s+/g, '')}_Setup_V${version}.exe`);
+      const exeName = standaloneAsset ? standaloneAsset.name : (isMobile ? `${explicitName.replace(/\s+/g, '')}_V${version}.apk` : `${explicitName.replace(/\s+/g, '')}_V${version}.exe`);
       const downloadUrl = setupAsset ? setupAsset.browser_download_url : `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${latestRel.tag_name}/${setupName}`;
       const packageSize = setupAsset ? formatBytes(setupAsset.size) : 'Online Package';
 
       console.log(`  ✓ Latest Release: ${latestRel.tag_name} (${latestRel.name || 'Release'})`);
-      console.log(`  ✓ Installer: ${setupName} (${packageSize})`);
+      console.log(`  ✓ Installer/Package: ${setupName} (${packageSize})`);
       console.log(`  ✓ Standalone/Trial: ${exeName}`);
 
       // Ensure directory: releases/<appId>/v<version>/
@@ -143,25 +157,39 @@ async function run() {
         explicitName.toLowerCase().includes('one tap');
       const gradient = isOneTap
         ? 'from-rose-600 via-red-600 to-amber-500'
+        : isPulseWave
+        ? 'from-emerald-500 via-teal-600 to-cyan-700'
         : 'from-blue-600 to-indigo-700';
-      const textColor = isOneTap ? '#f43f5e' : '#0066ee';
-      const glowColor = isOneTap ? 'rgba(225, 29, 72, 0.45)' : 'rgba(0, 102, 238, 0.45)';
-      const appCategory = isOneTap ? 'Media & Production' : category;
+      const textColor = isOneTap ? '#f43f5e' : isPulseWave ? '#10b981' : '#0066ee';
+      const glowColor = isOneTap ? 'rgba(225, 29, 72, 0.45)' : isPulseWave ? 'rgba(16, 185, 129, 0.45)' : 'rgba(0, 102, 238, 0.45)';
+      const appCategory = isOneTap ? 'Media & Production' : isPulseWave ? 'Mobile & Music' : category;
+
+      const targetPlatforms = isMobile ? ['mobile', 'android'] : ['desktop'];
+      const mobileInfo = isMobile ? {
+        platforms: ['android'],
+        apkDownloadUrl: apkAsset ? apkAsset.browser_download_url : downloadUrl,
+        packageId: 'com.beatwave.music',
+        minOsVersion: 'Android 8.0+ (API 26)'
+      } : undefined;
 
       // 1. app.json
       const appJsonPath = path.join(versionDir, 'app.json');
       const appData = {
         id: appId,
         name: explicitName,
-        shortName: isOneTap ? 'OT' : explicitName.slice(0, 2).toUpperCase(),
+        shortName: isOneTap ? 'OT' : isPulseWave ? 'PW' : explicitName.slice(0, 2).toUpperCase(),
         version,
         category: appCategory,
         description: isOneTap
           ? 'Next-Generation Automated Video Production Workstation, Sequential Multi-Batch Rendering Engine, and Media Asset Management Suite for the Anything ecosystem.'
+          : isPulseWave
+          ? 'Universal Playlist & Album Importer, Lossless Audio Engine, and Dual Wrapped Playback Sync for Android.'
           : (latestRel.body?.slice(0, 240) || `${explicitName} for the Anything ecosystem.`),
         executableName: isOneTap ? 'One Tap.exe' : exeName,
         setupExecutableName: setupName,
         packageFileName: setupName,
+        targetPlatforms,
+        mobileInfo,
         gradient,
         textColor,
         glowColor,
@@ -170,7 +198,13 @@ async function run() {
         releasesTagUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/tag/`,
         downloadUrl,
         iconType: 'monogram',
-        systemRequirements: {
+        systemRequirements: isMobile ? {
+          os: 'Android 8.0 (Oreo) or higher',
+          processor: 'ARM64 / x86_64 Quad-Core',
+          ram: '3 GB RAM',
+          graphics: 'OpenGL ES 3.0+',
+          storage: '100 MB available space'
+        } : {
           os: 'Windows 10 / Windows 11 (64-bit)',
           processor: isOneTap ? 'Intel Core i5 / AMD Ryzen 5 or higher' : 'Intel Core i7 / AMD Ryzen 7',
           ram: isOneTap ? '8 GB RAM (16 GB recommended)' : '16 GB RAM',
@@ -296,6 +330,12 @@ async function run() {
           detectedInstalledPath = mfPath;
           detectedLocalVersion = '5.0.0';
         }
+      } else if (isPulseWave) {
+        const beatWaveDir = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\BeatWave';
+        if (fs.existsSync(beatWaveDir)) {
+          detectedInstalledPath = beatWaveDir;
+          detectedLocalVersion = version;
+        }
       }
       if (!detectedInstalledPath && existingIndex >= 0) {
         detectedInstalledPath = catalog[existingIndex].installedPath;
@@ -313,7 +353,7 @@ async function run() {
       const catalogItem = {
         ...appData,
         packageSize,
-        packageFormat: '.exe',
+        packageFormat: isMobile ? '.apk' : '.exe',
         status: appStatus,
         installedPath: detectedInstalledPath,
         localVersion: detectedLocalVersion,

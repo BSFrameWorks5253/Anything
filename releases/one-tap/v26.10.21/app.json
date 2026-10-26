@@ -8,6 +8,9 @@
   "executableName": "One Tap.exe",
   "setupExecutableName": "OneTap-V-26.10.21.exe",
   "packageFileName": "OneTap-V-26.10.21.exe",
+  "targetPlatforms": [
+    "desktop"
+  ],
   "gradient": "from-rose-600 via-red-600 to-amber-500",
   "textColor": "#f43f5e",
   "glowColor": "rgba(225, 29, 72, 0.45)",

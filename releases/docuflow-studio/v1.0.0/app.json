@@ -8,6 +8,9 @@
   "executableName": "DocuFlow_Studio_1.0.0.exe",
   "setupExecutableName": "DocuFlow_Studio_1.0.0_Setup.exe",
   "packageFileName": "DocuFlow_Studio_1.0.0_Setup.exe",
+  "targetPlatforms": [
+    "desktop"
+  ],
   "gradient": "from-blue-600 to-indigo-700",
   "textColor": "#0066ee",
   "glowColor": "rgba(0, 102, 238, 0.45)",

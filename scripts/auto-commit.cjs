@@ -41,7 +41,8 @@ const KNOWN_ECOSYSTEM_REPOS = [
   { name: 'Anything Master Hub', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything' },
   { name: 'MediaFlow-Studio', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\MediaFlow-Studio' },
   { name: 'One Tap Workstation', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap' },
-  { name: 'DocuFlow Studio', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\DocuFlow' }
+  { name: 'DocuFlow Studio', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\DocuFlow' },
+  { name: 'Pulse Wave Mobile', path: 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\BeatWave' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -168,6 +169,7 @@ function analyzeRepositoryStatus(repoDir) {
   if (repoName.includes('mediaflow')) scope = 'mediaflow';
   else if (repoName.includes('tap')) scope = 'onetap';
   else if (repoName.includes('docuflow')) scope = 'docuflow';
+  else if (repoName.includes('beatwave') || repoName.includes('pulse')) scope = 'pulsewave';
   else if (categories.ui.length > categories.electron.length && categories.ui.length > categories.releases.length) {
     scope = files.some(f => f.filePath.toLowerCase().includes('logo') || f.filePath.toLowerCase().includes('liquid')) ? 'branding' : 'ui';
   } else if (categories.electron.length > 0) {
