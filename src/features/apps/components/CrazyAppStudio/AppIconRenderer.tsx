@@ -38,6 +38,9 @@ function getAdobePalette(app: Partial<CreativeApp>) {
   if (id.includes('docu') || name.includes('docuflow')) {
     return { bgStart: '#002B1D', bgEnd: '#00140E', text: '#2DD4BF', rim: '#2DD4BF', monogram: 'Df' };
   }
+  if (id.includes('data-manage') || id.includes('datamanage') || name.includes('data manage') || id.includes('ain53')) {
+    return { bgStart: '#002236', bgEnd: '#000A12', text: '#00E5FF', rim: '#00E5FF', monogram: 'Dm' };
+  }
 
   // Categories
   if (category.includes('video') || category.includes('media')) {
