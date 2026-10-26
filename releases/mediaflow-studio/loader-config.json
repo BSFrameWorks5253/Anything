@@ -1,13 +1,13 @@
 {
   "appId": "mediaflow-studio",
   "appName": "MediaFlow Studio",
-  "monogram": "ME",
-  "tagline": "MediaFlow Studio Desktop Workstation",
-  "gradient": "from-blue-600 to-indigo-700",
+  "monogram": "MS",
+  "tagline": "## 🚀 MediaFlow Studio v6.0.0\nProfessional Media Ingestion, Synchronization and Report Fusion Desktop Suite.\n\n### ✨ What's Included:\n- **Standalone Frameless Adobe Splash Window**: Instant transparent zero-backdrop boot screen with live tel",
+  "gradient": "from-violet-700 via-purple-600 to-indigo-500",
   "presetId": "apple-ambient",
   "bootPhrases": [
     "Connecting MediaFlow Studio to Anything...",
-    "Synchronizing hardware macro event loop...",
+    "Initializing graphics pipeline...",
     "Ready."
   ]
 }

@@ -6,6 +6,7 @@ import { FilesStats } from './components/FilesStats';
 import { FilesTable } from './components/FilesTable';
 import { FileDropZone } from './components/FileDropZone';
 import { FilePreviewModal } from './components/FilePreviewModal';
+import { SharedAssetLibrary } from './components/SharedAssetLibrary';
 
 interface FilesPageProps {
   searchQuery: string;
@@ -18,6 +19,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
   });
 
   const [selectedFile, setSelectedFile] = useState<CloudFileItem | null>(null);
+  const [activeTab, setActiveTab] = useState<'cloud' | 'shared'>('cloud');
 
   const saveFiles = (updated: CloudFileItem[]) => {
     setFiles(updated);
@@ -56,22 +58,44 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
         saveFiles([dummy, ...files]);
       }} />
 
-      {/* Storage category stats */}
-      <FilesStats />
+      {/* Tabs */}
+      <div className="flex items-center gap-1 p-1 bg-zinc-900/40 border border-zinc-700/50 rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab('cloud')}
+          className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-colors ${activeTab === 'cloud' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+        >
+          Cloud Documents
+        </button>
+        <button
+          onClick={() => setActiveTab('shared')}
+          className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-colors ${activeTab === 'shared' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+        >
+          Shared Asset Library
+        </button>
+      </div>
 
-      {/* OS Drag and Drop Zone */}
-      <FileDropZone onFilesDropped={handleFilesDropped} />
+      {activeTab === 'cloud' ? (
+        <>
+          {/* Storage category stats */}
+          <FilesStats />
 
-      {/* Cloud Documents Table */}
-      <FilesTable files={filteredFiles} onOpenFile={(f) => setSelectedFile(f)} />
+          {/* OS Drag and Drop Zone */}
+          <FileDropZone onFilesDropped={handleFilesDropped} />
 
-      {/* File Lightbox / Palette Modal */}
-      <FilePreviewModal
-        file={selectedFile}
-        isOpen={Boolean(selectedFile)}
-        onClose={() => setSelectedFile(null)}
-        onDelete={handleDeleteFile}
-      />
+          {/* Cloud Documents Table */}
+          <FilesTable files={filteredFiles} onOpenFile={(f) => setSelectedFile(f)} />
+
+          {/* File Lightbox / Palette Modal */}
+          <FilePreviewModal
+            file={selectedFile}
+            isOpen={Boolean(selectedFile)}
+            onClose={() => setSelectedFile(null)}
+            onDelete={handleDeleteFile}
+          />
+        </>
+      ) : (
+        <SharedAssetLibrary />
+      )}
     </div>
   );
 };

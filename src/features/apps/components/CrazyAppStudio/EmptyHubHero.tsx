@@ -112,52 +112,54 @@ export const EmptyHubHero: React.FC<EmptyHubHeroProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {popularPresets.map((preset) => (
-            <button
-              key={preset.name}
-              type="button"
-              onClick={() => onAddPreset(preset)}
-              className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:scale-102 group select-none ${
-                isLight
-                  ? 'bg-white/80 hover:bg-white border-slate-900/10 hover:border-sky-400/50 shadow-sm'
-                  : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 hover:border-white/25'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <AppIconRenderer app={preset} size="sm" />
-                <div className="min-w-0">
-                  <span
-                    className={`text-xs font-semibold block truncate transition-colors ${
-                      isLight
-                        ? 'text-slate-900 group-hover:text-sky-600'
-                        : 'text-white group-hover:text-cyan-300'
-                    }`}
-                  >
-                    {preset.name}
-                  </span>
-                  <span
-                    className={`text-[10px] block truncate ${
-                      isLight ? 'text-slate-500' : 'text-white/40'
-                    }`}
-                  >
-                    {preset.category}
-                  </span>
-                </div>
-              </div>
-
-              <span
-                className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+        {popularPresets.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {popularPresets.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => onAddPreset(preset)}
+                className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:scale-102 group select-none ${
                   isLight
-                    ? 'bg-slate-200/80 group-hover:bg-sky-500 group-hover:text-white text-slate-700'
-                    : 'bg-white/10 group-hover:bg-cyan-400 group-hover:text-slate-950 text-white'
+                    ? 'bg-white/80 hover:bg-white border-slate-900/10 hover:border-sky-400/50 shadow-sm'
+                    : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 hover:border-white/25'
                 }`}
               >
-                <Plus className="w-3.5 h-3.5" />
-              </span>
-            </button>
-          ))}
-        </div>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <AppIconRenderer app={preset} size="sm" />
+                  <div className="min-w-0">
+                    <span
+                      className={`text-xs font-semibold block truncate transition-colors ${
+                        isLight
+                          ? 'text-slate-900 group-hover:text-sky-600'
+                          : 'text-white group-hover:text-cyan-300'
+                      }`}
+                    >
+                      {preset.name}
+                    </span>
+                    <span
+                      className={`text-[10px] block truncate ${
+                        isLight ? 'text-slate-500' : 'text-white/40'
+                      }`}
+                    >
+                      {preset.category}
+                    </span>
+                  </div>
+                </div>
+
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                    isLight
+                      ? 'bg-slate-200/80 group-hover:bg-sky-500 group-hover:text-white text-slate-700'
+                      : 'bg-white/10 group-hover:bg-cyan-400 group-hover:text-slate-950 text-white'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </GlassCard>
     </div>
   );

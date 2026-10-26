@@ -144,6 +144,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('notification:clicked', subscription);
   },
 
+  // Git Ecosystem Auto-Commit
+  gitStatus: () => ipcRenderer.invoke('git:status'),
+  gitPreviewMessage: () => ipcRenderer.invoke('git:preview-message'),
+  gitAutoCommit: (options?: { push?: boolean; ecosystem?: boolean; message?: string }) =>
+    ipcRenderer.invoke('git:auto-commit', options),
+
   // Splash Screen Lifecycle
   splashDone: () => ipcRenderer.invoke('splash:done'),
 

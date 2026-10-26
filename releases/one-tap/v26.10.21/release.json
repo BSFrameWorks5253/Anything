@@ -3,7 +3,7 @@
   "appName": "One Tap",
   "version": "26.10.21",
   "executableName": "One Tap.exe",
-  "setupExecutableName": "OneTap-Portable-V-26.10.21.exe",
+  "setupExecutableName": "OneTap-V-26.10.21.exe",
   "releaseDate": "2026-10-23",
   "releaseType": "major",
   "tagline": "Automated Batch Rendering Engine & VisionOS Design System",
@@ -25,7 +25,7 @@
     "ctaText": "Open in Anything",
     "heroGradient": "from-rose-600 via-red-600 to-amber-500"
   },
-  "sizeFormatted": "91.3 MB",
-  "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.21/OneTap-Portable-V-26.10.21.exe",
+  "sizeFormatted": "91.6 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.21/OneTap-V-26.10.21.exe",
   "releasesUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases"
 }

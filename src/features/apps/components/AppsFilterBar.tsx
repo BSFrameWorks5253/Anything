@@ -1,16 +1,18 @@
 import React from 'react';
-import { ArrowDownCircle, Sparkles, Plus, RefreshCw } from 'lucide-react';
+import { ArrowDownCircle, Sparkles, Plus, RefreshCw, Monitor, Smartphone } from 'lucide-react';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { useTheme } from '../../../context/ThemeContext';
 import { useViewMode } from '../../../context/ViewModeContext';
 
-type FilterTab = 'all' | 'installed' | 'updates';
+export type FilterTab = 'all' | 'desktop' | 'mobile' | 'installed' | 'updates';
 
 interface AppsFilterBarProps {
   activeTab: FilterTab;
   onTabChange: (tab: FilterTab) => void;
   updateCount: number;
   totalCount: number;
+  desktopCount?: number;
+  mobileCount?: number;
   onUpdateAll: () => void;
   onOpenAddModal: () => void;
   isCheckingUpdates?: boolean;
@@ -22,6 +24,8 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
   onTabChange,
   updateCount,
   totalCount,
+  desktopCount,
+  mobileCount,
   onUpdateAll,
   onOpenAddModal,
   isCheckingUpdates,
@@ -31,8 +35,10 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
   const { viewMode } = useViewMode();
   const isLight = theme === 'light';
 
-  const tabs: { id: FilterTab; label: string; count?: number }[] = [
+  const tabs: { id: FilterTab; label: string; count?: number; icon?: React.ReactNode }[] = [
     { id: 'all', label: viewMode === 'user' ? 'All Applications' : 'All Apps', count: totalCount },
+    { id: 'desktop', label: 'Desktop', count: desktopCount, icon: <Monitor className="w-3.5 h-3.5" /> },
+    { id: 'mobile', label: 'Mobile', count: mobileCount, icon: <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> },
     { id: 'installed', label: 'Installed' },
     { id: 'updates', label: 'Updates', count: updateCount },
   ];
@@ -67,6 +73,7 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
+              {tab.icon}
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span

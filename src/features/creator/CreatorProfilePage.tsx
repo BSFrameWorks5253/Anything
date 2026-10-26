@@ -17,6 +17,7 @@ import {
   ArrowRight,
   MessageSquare,
   Package,
+  RefreshCw,
 } from 'lucide-react';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GlassButton } from '../../components/ui/GlassButton';
@@ -65,13 +66,17 @@ release/<AppName>/
     setTimeout(() => setCopiedPrompt(false), 2200);
   };
 
-  const handleOpenReleasesFolder = async () => {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const handleSyncGitHubSources = async () => {
     try {
+      setIsSyncing(true);
       const electronAPI = (window as any).electronAPI;
-      if (electronAPI?.openReleasesFolder) {
-        await electronAPI.openReleasesFolder();
+      if (electronAPI?.syncAppSources) {
+        await electronAPI.syncAppSources();
       }
+      setTimeout(() => setIsSyncing(false), 800);
     } catch (e) {
+      setIsSyncing(false);
       console.error(e);
     }
   };
@@ -210,10 +215,10 @@ release/<AppName>/
           <GlassButton
             variant="glass"
             size="sm"
-            icon={<FolderOpen className="w-3.5 h-3.5 text-cyan-500" />}
-            onClick={handleOpenReleasesFolder}
+            icon={<RefreshCw className={`w-3.5 h-3.5 text-cyan-500 ${isSyncing ? 'animate-spin' : ''}`} />}
+            onClick={handleSyncGitHubSources}
           >
-            Open Release Folder
+            {isSyncing ? 'Syncing...' : 'Sync from GitHub'}
           </GlassButton>
         </div>
 

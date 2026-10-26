@@ -1,8 +1,16 @@
 import React from 'react';
-import { LayoutGrid, Compass, CloudUpload, FolderClosed, Sliders, Sparkles } from 'lucide-react';
+import {
+  LayoutGrid,
+  Compass,
+  Smartphone,
+  Cloud,
+  FolderClosed,
+  Sliders,
+  Sparkles,
+  ExternalLink
+} from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { SidebarLogo } from './SidebarLogo';
-import { SidebarNavItem } from './SidebarNavItem';
 import { SidebarFooter } from './SidebarFooter';
 import { useTheme } from '../../../context/ThemeContext';
 import { useViewMode } from '../../../context/ViewModeContext';
@@ -22,71 +30,139 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { viewMode } = useViewMode();
   const isLight = theme === 'light';
 
-  const allNavItems = [
+  const sections = [
     {
-      id: 'home' as NavigationPage,
-      label: 'Home',
-      icon: <LayoutGrid className="w-4 h-4" />,
-      creatorOnly: false,
+      title: 'APPS',
+      items: [
+        {
+          id: 'home' as NavigationPage,
+          label: 'Home',
+          icon: <LayoutGrid className="w-4 h-4" />,
+        },
+        {
+          id: 'apps' as NavigationPage,
+          label: 'Desktop Apps',
+          icon: <Compass className="w-4 h-4" />,
+          badge: updateCount > 0 ? updateCount : undefined,
+        },
+        {
+          id: 'mobile' as NavigationPage,
+          label: 'Mobile Apps',
+          icon: <Smartphone className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />,
+        },
+      ],
     },
     {
-      id: 'apps' as NavigationPage,
-      label: 'Apps',
-      icon: <Compass className="w-4 h-4" />,
-      badge: updateCount > 0 ? updateCount : undefined,
-      creatorOnly: false,
+      title: 'ECOSYSTEM',
+      items: [
+        {
+          id: 'publisher' as NavigationPage,
+          label: 'Cloud Hub',
+          icon: <Cloud className="w-4 h-4" />,
+          creatorOnly: true,
+        },
+        {
+          id: 'creator' as NavigationPage,
+          label: 'Creator',
+          icon: <Sparkles className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />,
+        },
+        {
+          id: 'files' as NavigationPage,
+          label: 'Files',
+          icon: <FolderClosed className="w-4 h-4" />,
+        },
+      ],
     },
     {
-      id: 'creator' as NavigationPage,
-      label: 'Creator',
-      icon: <Sparkles className="w-4 h-4 text-cyan-500" />,
-      creatorOnly: false,
-    },
-    {
-      id: 'publisher' as NavigationPage,
-      label: 'Publish',
-      icon: <CloudUpload className="w-4 h-4" />,
-      creatorOnly: true,
-    },
-    {
-      id: 'files' as NavigationPage,
-      label: 'Files',
-      icon: <FolderClosed className="w-4 h-4" />,
-      creatorOnly: false,
-    },
-    {
-      id: 'settings' as NavigationPage,
-      label: 'Settings',
-      icon: <Sliders className="w-4 h-4" />,
-      creatorOnly: false,
+      title: 'PREFERENCES',
+      items: [
+        {
+          id: 'settings' as NavigationPage,
+          label: 'Settings',
+          icon: <Sliders className="w-4 h-4" />,
+        },
+      ],
     },
   ];
 
-  const navItems = allNavItems.filter((item) => (viewMode === 'user' ? !item.creatorOnly : true));
-
   return (
     <aside
-      className={`w-[76px] h-full flex flex-col items-center py-3.5 px-2 select-none z-30 relative transition-colors duration-200 shrink-0 ${
+      className={`w-[84px] h-full flex flex-col items-center py-4 px-2 select-none z-30 relative transition-colors duration-200 shrink-0 ${
         isLight
-          ? 'bg-[#FAFAFA] border-r border-zinc-200'
-          : 'bg-[#18181B] border-r border-zinc-800'
+          ? 'bg-[#F2F3F5] border-r border-[#E0E2E6]'
+          : 'bg-[#18181B] border-r border-[#27272A]'
       }`}
     >
       <SidebarLogo />
 
-      {/* Nav stack */}
-      <nav className="flex flex-col gap-1 w-full">
-        {navItems.map((item) => (
-          <SidebarNavItem
-            key={item.id}
-            id={item.id}
-            label={item.label}
-            icon={item.icon}
-            isActive={activePage === item.id}
-            badge={item.badge}
-            onClick={onNavigate}
-          />
-        ))}
+      {/* Nav stack with Adobe CC Section Dividers */}
+      <nav className="flex flex-col gap-3 w-full mt-1 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+        {sections.map((sec, sIdx) => {
+          const visibleItems = sec.items.filter((item) =>
+            viewMode === 'user' ? !item.creatorOnly : true
+          );
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={sec.title} className="flex flex-col items-center w-full">
+              {sIdx > 0 && (
+                <div
+                  className={`w-8 h-[1px] my-1 mb-2 ${
+                    isLight ? 'bg-zinc-300/80' : 'bg-zinc-800/80'
+                  }`}
+                />
+              )}
+
+              <span
+                className={`text-[8px] font-mono tracking-widest uppercase mb-1 ${
+                  isLight ? 'text-zinc-400 font-bold' : 'text-zinc-500 font-semibold'
+                }`}
+              >
+                {sec.title}
+              </span>
+
+              <div className="flex flex-col gap-1 w-full px-0.5">
+                {visibleItems.map((item) => {
+                  const isActive = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onNavigate(item.id)}
+                      className={`relative w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-150 group select-none ${
+                        isActive
+                          ? isLight
+                            ? 'bg-white text-zinc-950 font-bold shadow-xs'
+                            : 'bg-[#27272A] text-white font-bold shadow-xs'
+                          : isLight
+                          ? 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/60 font-medium'
+                          : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] font-medium'
+                      }`}
+                      title={item.label}
+                    >
+                      {/* Adobe Signature Active Red Indicator Bar */}
+                      {isActive && (
+                        <div className="absolute left-0 inset-y-2.5 w-[3px] bg-[#E00201] rounded-r-full shadow-[0_0_8px_rgba(224,2,1,0.7)]" />
+                      )}
+
+                      <div className="relative p-0.5 transition-transform duration-150 group-hover:scale-105">
+                        {item.icon}
+                        {item.badge !== undefined && (
+                          <span className="absolute -top-1 -right-2 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#E00201] text-white shadow-xs">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="text-[10px] mt-1 tracking-tight leading-tight text-center truncate max-w-full">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
       <SidebarFooter onNavigate={onNavigate} />

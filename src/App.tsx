@@ -4,6 +4,7 @@ import { creativeAppsData } from './data/apps.data';
 import { AppLayout } from './components/layout/AppLayout';
 import { HomePage } from './features/home/HomePage';
 import { AppsPage } from './features/apps/AppsPage';
+import { MobileAppsPage } from './features/apps/MobileAppsPage';
 import { AppDetailPage } from './features/apps/AppDetailPage';
 import { PublisherPage } from './features/publisher/PublisherPage';
 import { FilesPage } from './features/files/FilesPage';
@@ -18,6 +19,7 @@ import {
 import { AppDemoModal } from './features/apps/components/AppDemoModal';
 import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
+import { CommandPalette } from './components/ui/CommandPalette';
 
 function compareVersions(v1: string, v2: string): number {
   if (!v1 || !v2) return 0;
@@ -1124,6 +1126,14 @@ export function App() {
             onCheckUpdates={checkAllGitHubUpdates}
           />
         );
+      case 'mobile':
+        return (
+          <MobileAppsPage
+            apps={apps}
+            onOpenAppDetail={(targetApp) => setViewingApp(targetApp)}
+            onNavigateToPublisher={() => setCurrentPage('publisher')}
+          />
+        );
       case 'publisher':
         return (
           <PublisherPage
@@ -1177,6 +1187,20 @@ export function App() {
     );
   }
 
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // Global Ctrl+K listener for Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // 2. Web browser fallback: show splash before app
   if (isBooting) {
     return (
@@ -1222,6 +1246,19 @@ export function App() {
       >
         {renderActivePage()}
       </AppLayout>
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        apps={apps}
+        onNavigate={(page) => {
+          setViewingApp(null);
+          setCurrentPage(page);
+        }}
+        onLaunchApp={handleLaunchApp}
+        onCheckUpdates={checkAllGitHubUpdates}
+      />
 
       {/* Global Interactive Demo Simulator & Free Demo Modal */}
       {demoModalApp && (

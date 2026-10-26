@@ -1,6 +1,7 @@
 export type NavigationPage = 
   | 'home' 
   | 'apps' 
+  | 'mobile'
   | 'publisher'
   | 'creator'
   | 'files' 
@@ -52,6 +53,19 @@ export interface AppReleaseMetadata {
   };
 }
 
+export type AppPlatform = 'desktop' | 'mobile' | 'web';
+
+export interface MobileAppInfo {
+  platforms: ('android' | 'ios')[];
+  apkDownloadUrl?: string;
+  ipaDownloadUrl?: string;
+  googlePlayUrl?: string;
+  appStoreUrl?: string;
+  qrCodeUrl?: string;
+  packageId?: string;
+  minOsVersion?: string;
+}
+
 export interface CatalogApp {
   id: string;
   name: string;
@@ -61,6 +75,10 @@ export interface CatalogApp {
   version: string;
   localVersion?: string;
   size: string;
+  targetPlatforms?: AppPlatform[]; // e.g. ['desktop'], ['mobile'], ['desktop', 'mobile']
+  mobileInfo?: MobileAppInfo;
+  badgeTag?: string;
+  rating?: number;
   downloadUrl?: string; // Direct link to .zip, .exe, or GitHub Release
   releasesUrl?: string; // Direct link to GitHub repository releases page
   releasesTagUrl?: string; // Direct link prefix for GitHub release tags (e.g. https://github.com/owner/repo/releases/tag/)
@@ -110,6 +128,8 @@ export interface CatalogApp {
     publishedAt?: string;
   };
 }
+
+export type CreativeApp = CatalogApp;
 
 export interface CloudFileItem {
   id: string;

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ImagePlus } from 'lucide-react';
 import type { CreativeApp } from '../../../../types/app.types';
 import {
   TAP_STUDIO_LOGO_BASE64,
@@ -15,25 +14,60 @@ interface AppIconRendererProps {
   className?: string;
 }
 
+// Map well-known apps or categories to authentic Adobe CC Squircle color profiles
+function getAdobePalette(app: Partial<CreativeApp>) {
+  const id = (app.id || '').toLowerCase();
+  const name = (app.name || '').toLowerCase();
+  const category = (app.category || '').toLowerCase();
+
+  if (id.includes('anything')) {
+    return { bgStart: '#FF2A2A', bgEnd: '#BA0000', text: '#FFFFFF', rim: 'rgba(255,255,255,0.4)', monogram: 'An' };
+  }
+  if (id.includes('mediaflow') || name.includes('mediaflow')) {
+    return { bgStart: '#002B49', bgEnd: '#001424', text: '#31A8FF', rim: '#31A8FF', monogram: 'Mf' };
+  }
+  if (id.includes('one-tap') || id.includes('onetap') || name.includes('one tap')) {
+    return { bgStart: '#360000', bgEnd: '#1A0000', text: '#FF416C', rim: '#FF416C', monogram: 'Ot' };
+  }
+  if (id.includes('tap-studio') || name.includes('tap studio')) {
+    return { bgStart: '#2A1800', bgEnd: '#140B00', text: '#F59E0B', rim: '#F59E0B', monogram: 'Ts' };
+  }
+  if (id.includes('pdf') || id.includes('acro') || name.includes('acroflow')) {
+    return { bgStart: '#3A0000', bgEnd: '#1F0000', text: '#FF3333', rim: '#FF3333', monogram: 'Ac' };
+  }
+  if (id.includes('docu') || name.includes('docuflow')) {
+    return { bgStart: '#002B1D', bgEnd: '#00140E', text: '#2DD4BF', rim: '#2DD4BF', monogram: 'Df' };
+  }
+
+  // Categories
+  if (category.includes('video') || category.includes('media')) {
+    return { bgStart: '#140033', bgEnd: '#09001A', text: '#9999FF', rim: '#9999FF', monogram: app.shortName || name.slice(0, 2).toUpperCase() || 'Vd' };
+  }
+  if (category.includes('design') || category.includes('creative')) {
+    return { bgStart: '#331B00', bgEnd: '#1A0D00', text: '#FF9A00', rim: '#FF9A00', monogram: app.shortName || name.slice(0, 2).toUpperCase() || 'Ds' };
+  }
+  if (category.includes('code') || category.includes('developer')) {
+    return { bgStart: '#002B33', bgEnd: '#00141A', text: '#00E5FF', rim: '#00E5FF', monogram: app.shortName || name.slice(0, 2).toUpperCase() || 'Dv' };
+  }
+
+  // Default spectrum slate
+  return {
+    bgStart: '#1F2026',
+    bgEnd: '#121317',
+    text: app.textColor || '#38BDF8',
+    rim: 'rgba(255,255,255,0.25)',
+    monogram: app.shortName || (name ? name.slice(0, 2).toUpperCase() : 'Ap'),
+  };
+}
+
 export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
   app,
   size = 'md',
   className = '',
 }) => {
-  const sizeMap = {
-    sm: 'w-10 h-10 rounded-xl text-xs',
-    md: 'w-14 h-14 rounded-2xl text-lg',
-    lg: 'w-16 h-16 rounded-2xl text-2xl',
-    xl: 'w-20 h-20 rounded-3xl text-3xl',
-  }[size];
+  const pixelSizeMap = { sm: 40, md: 54, lg: 64, xl: 80 }[size];
+  const fontSizeMap = { sm: 20, md: 27, lg: 32, xl: 40 }[size];
 
-  const pixelSizeMap = { sm: 40, md: 56, lg: 64, xl: 80 }[size];
-
-  const gradient = app.gradient || 'from-blue-600 via-sky-500 to-cyan-400';
-  const textColor = app.textColor || '#38bdf8';
-  const glowColor = app.glowColor || 'rgba(56, 189, 248, 0.4)';
-
-  // ── Known official apps always get their authentic logo ────────────────────────
   const isTapStudio =
     app.id === 'tap-studio' ||
     app.id === 'app-tap-studio' ||
@@ -58,12 +92,10 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
     if (isOneTap) return ONE_TAP_LOGO_BASE64;
 
     if (typeof rawIconValue === 'string') {
-      // Embedded data URI or remote URL → use directly
       if (rawIconValue.startsWith('data:image/')) return rawIconValue;
       if (rawIconValue.startsWith('http://') || rawIconValue.startsWith('https://')) return rawIconValue;
       if (rawIconValue.startsWith('/')) return rawIconValue;
 
-      // Guard against accidental routing of tap/mediaflow icon references
       if (rawIconValue.includes('tap-studio') || rawIconValue.includes('tapstudio')) {
         return TAP_STUDIO_LOGO_BASE64;
       }
@@ -74,14 +106,10 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
         return ONE_TAP_LOGO_BASE64;
       }
 
-      // Relative path (e.g. "icon.png")
       if (/\.(png|svg|jpg|jpeg|webp)$/i.test(rawIconValue)) {
         return `/${rawIconValue.replace(/^(\.\/)+/, '')}`;
       }
     }
-
-    // iconType image/svg but no usable URI → null (shows fallback)
-    if (app.iconType === 'image' || app.iconType === 'svg') return null;
 
     return null;
   };
@@ -95,90 +123,92 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
   }, [app.iconValue, app.iconType, app.id, app.name]);
 
   const handleImageError = () => {
-    if (isTapStudio && imgSrc !== TAP_STUDIO_LOGO_BASE64) {
-      setImgSrc(TAP_STUDIO_LOGO_BASE64);
-      setImgFailed(false);
-    } else if (isMediaFlowStudio && imgSrc !== MEDIAFLOW_STUDIO_LOGO_BASE64) {
-      setImgSrc(MEDIAFLOW_STUDIO_LOGO_BASE64);
-      setImgFailed(false);
-    } else if (isOneTap && imgSrc !== ONE_TAP_LOGO_BASE64) {
-      setImgSrc(ONE_TAP_LOGO_BASE64);
-      setImgFailed(false);
-    } else {
-      setImgFailed(true);
-    }
+    setImgFailed(true);
   };
 
-  // Determine if we have a real icon from EXE/PNG/SVG or the creator hasn't added one yet
-  const hasRealIcon =
-    (app as any).hasRealIcon === true ||
-    isTapStudio ||
-    isMediaFlowStudio ||
-    (typeof rawIconValue === 'string' && rawIconValue.startsWith('data:image/')) ||
-    (typeof rawIconValue === 'string' && (rawIconValue.startsWith('http') || rawIconValue.startsWith('/')));
-
-  const showAddIconHint = !hasRealIcon && !imgSrc && (app as any).addedByCreator;
+  const palette = getAdobePalette(app);
+  const gradId = `adobe-grad-${(app.id || 'default').replace(/[^a-z0-9]/gi, '-')}-${size}`;
 
   return (
     <div
-      className={`relative p-[1px] bg-gradient-to-br ${gradient} shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300 ${sizeMap} ${className}`}
-      style={{ boxShadow: `0 12px 28px -6px ${glowColor}` }}
+      className={`relative select-none shrink-0 transition-transform duration-200 group-hover:scale-105 ${className}`}
+      style={{
+        width: pixelSizeMap,
+        height: pixelSizeMap,
+        filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.45))',
+      }}
     >
-      <div className="w-full h-full rounded-[inherit] bg-slate-950/85 backdrop-blur-2xl flex items-center justify-center relative overflow-hidden border border-white/20">
-        {/* Specular glass reflection */}
-        <div className="specular-reflection opacity-80" />
-
-        {imgSrc && !imgFailed ? (
-          /* ── Real icon: EXE-extracted, PNG, SVG, or Data URI ── */
+      {imgSrc && !imgFailed ? (
+        /* ── Image Logo with Adobe CC Squircle Framing ── */
+        <div
+          className="w-full h-full rounded-[22%] overflow-hidden bg-[#18181B] border border-white/20 shadow-inner flex items-center justify-center relative"
+          style={{
+            boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.5)',
+          }}
+        >
           <img
             src={imgSrc}
             alt={app.name || ''}
             onError={handleImageError}
-            className={`w-full h-full rounded-[inherit] ${
-              isTapStudio ? 'object-contain p-1' : 'object-cover'
-            }`}
+            className="w-full h-full object-cover"
           />
-        ) : isTapStudio ? (
-          <img
-            src={TAP_STUDIO_LOGO_BASE64}
-            alt="Tap Studio"
-            className="w-full h-full object-contain p-1 rounded-[inherit]"
+          {/* Top highlight sheen */}
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+        </div>
+      ) : (
+        /* ── Authentic Adobe Spectrum Vector Squircle Monogram Tile ── */
+        <svg
+          viewBox="0 0 100 100"
+          className="w-full h-full"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor={palette.bgStart} />
+              <stop offset="100%" stopColor={palette.bgEnd} />
+            </linearGradient>
+          </defs>
+
+          {/* Squircle Base Tile */}
+          <rect width="100" height="100" rx="22" fill={`url(#${gradId})`} />
+
+          {/* Specular Edge Rim */}
+          <rect
+            x="1.5"
+            y="1.5"
+            width="97"
+            height="97"
+            rx="20.5"
+            stroke={palette.rim}
+            strokeWidth="1.8"
+            strokeOpacity="0.45"
           />
-        ) : isMediaFlowStudio ? (
-          <img
-            src={MEDIAFLOW_STUDIO_LOGO_BASE64}
-            alt="MediaFlow Studio"
-            className="w-full h-full object-cover rounded-[inherit]"
+
+          {/* Subtle Top Glass Sheen */}
+          <path
+            d="M 2 22 C 2 11 11 2 22 2 L 78 2 C 89 2 98 11 98 22 L 98 46 L 2 46 Z"
+            fill="rgba(255,255,255,0.06)"
           />
-        ) : showAddIconHint ? (
-          /* ── No icon found: prompt creator to add one ── */
-          <div className="flex flex-col items-center justify-center gap-0.5 text-center px-1">
-            <ImagePlus
-              className="text-white/40"
-              style={{ width: pixelSizeMap * 0.35, height: pixelSizeMap * 0.35 }}
-            />
-            {pixelSizeMap >= 56 && (
-              <span
-                className="font-semibold text-white/30 leading-none select-none"
-                style={{ fontSize: Math.max(7, pixelSizeMap * 0.135) }}
-              >
-                Add Icon
-              </span>
-            )}
-          </div>
-        ) : app.iconType === 'emoji' && app.iconValue ? (
-          /* ── Emoji icon ── */
-          <span className="select-none filter drop-shadow-md">{app.iconValue}</span>
-        ) : (
-          /* ── Monogram fallback ── */
-          <span
-            className="font-black tracking-tight select-none"
-            style={{ color: textColor }}
+
+          {/* Adobe CC Bold 2-Letter Monogram Typography */}
+          <text
+            x="50"
+            y="67"
+            textAnchor="middle"
+            fill={palette.text}
+            style={{
+              fontFamily:
+                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Outfit', 'Helvetica Neue', Arial, sans-serif",
+              fontWeight: 800,
+              fontSize: '48px',
+              letterSpacing: '-1.5px',
+            }}
           >
-            {app.shortName || (app.name ? app.name.slice(0, 2).toUpperCase() : 'Cc')}
-          </span>
-        )}
-      </div>
+            {palette.monogram}
+          </text>
+        </svg>
+      )}
     </div>
   );
 };

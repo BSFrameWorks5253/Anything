@@ -11,7 +11,7 @@ import { EditAppModal } from './components/EditAppModal';
 import { useViewMode } from '../../context/ViewModeContext';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard } from '../../components/ui/GlassCard';
-import { PackageOpen, Sparkles } from 'lucide-react';
+import { CommunityAppStore } from './components/CommunityAppStore';
 
 interface AppsPageProps {
   apps: CatalogApp[];
@@ -54,7 +54,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   isCheckingUpdates,
   onCheckUpdates,
 }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'installed' | 'updates'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'desktop' | 'mobile' | 'installed' | 'updates'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailApp, setDetailApp] = useState<CatalogApp | null>(null);
@@ -64,6 +64,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   const isLight = theme === 'light';
 
   const updateCount = apps.filter((a) => a.status === 'update-available').length;
+  const desktopCount = apps.filter((a) => !a.targetPlatforms || a.targetPlatforms.includes('desktop')).length;
+  const mobileCount = apps.filter((a) => a.targetPlatforms?.includes('mobile') || a.category.toLowerCase().includes('mobile')).length;
 
   const filteredApps = apps.filter((app) => {
     const matchesSearch =
@@ -75,8 +77,13 @@ export const AppsPage: React.FC<AppsPageProps> = ({
     const matchesCategory =
       selectedCategory === 'All' || app.category === selectedCategory;
 
+    const isDesktopApp = !app.targetPlatforms || app.targetPlatforms.includes('desktop');
+    const isMobileApp = Boolean(app.targetPlatforms?.includes('mobile') || app.category.toLowerCase().includes('mobile'));
+
     const matchesTab =
       activeTab === 'all' ||
+      (activeTab === 'desktop' && isDesktopApp) ||
+      (activeTab === 'mobile' && isMobileApp) ||
       (activeTab === 'installed' && (app.status === 'installed' || app.status === 'path-broken' || app.status === 'update-available')) ||
       (activeTab === 'updates' && app.status === 'update-available');
 
@@ -91,6 +98,8 @@ export const AppsPage: React.FC<AppsPageProps> = ({
         onTabChange={setActiveTab}
         updateCount={updateCount}
         totalCount={apps.length}
+        desktopCount={desktopCount}
+        mobileCount={mobileCount}
         onUpdateAll={() => {
           apps.filter((a) => a.status === 'update-available').forEach(onUpdateApp);
         }}
@@ -99,7 +108,9 @@ export const AppsPage: React.FC<AppsPageProps> = ({
         onCheckUpdates={onCheckUpdates}
       />
 
-      {apps.length === 0 ? (
+      {activeTab === 'community' ? (
+        <CommunityAppStore apps={apps} />
+      ) : apps.length === 0 ? (
         viewMode === 'user' ? (
           <GlassCard variant="elevated" className="p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl">
             <div className="w-16 h-16 rounded-3xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center mx-auto text-sky-600">

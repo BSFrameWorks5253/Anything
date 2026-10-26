@@ -12,11 +12,14 @@ import {
   ShieldCheck,
   User,
   Phone,
+  Layers,
+  ChevronDown,
 } from 'lucide-react';
 import { GlassInput } from '../../ui/GlassInput';
 import { useTheme } from '../../../context/ThemeContext';
 import { useViewMode } from '../../../context/ViewModeContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useWorkspace } from '../../../context/WorkspaceContext';
 import { getProfileInitial, getInitialGradient } from '../../../utils/userInitials';
 
 interface HeaderActionsProps {
@@ -31,6 +34,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
   const { theme, toggleTheme } = useTheme();
   const { viewMode, setViewMode } = useViewMode();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
+  const { activeWorkspace, setActiveWorkspace, workspaces } = useWorkspace();
   const isLight = theme === 'light';
   const isCreator = Boolean(
     user?.role?.includes('Creator') ||
@@ -39,8 +43,10 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
   );
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,18 +56,70 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
       }
+      if (workspaceRef.current && !workspaceRef.current.contains(e.target as Node)) {
+        setShowWorkspaceMenu(false);
+      }
     };
-    if (showNotifications || showUserMenu) {
+    if (showNotifications || showUserMenu || showWorkspaceMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications, showUserMenu]);
+  }, [showNotifications, showUserMenu, showWorkspaceMenu]);
 
   return (
     <div
       className="flex items-center gap-2"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
+      {/* Workspace Switcher */}
+      <div className="relative" ref={workspaceRef}>
+        <button
+          onClick={() => setShowWorkspaceMenu(!showWorkspaceMenu)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+            isLight
+              ? 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'
+              : 'bg-zinc-800/60 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5 text-blue-500" />
+          <span className="text-xs font-semibold">{activeWorkspace.name}</span>
+          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showWorkspaceMenu ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showWorkspaceMenu && (
+          <div
+            className={`absolute right-0 mt-2 w-56 rounded-xl p-1.5 shadow-2xl border z-50 animate-in fade-in zoom-in-95 duration-100 ${
+              isLight
+                ? 'bg-white border-zinc-200 shadow-zinc-200/80'
+                : 'bg-zinc-900 border-zinc-700 shadow-black/80'
+            }`}
+          >
+            <div className="px-2 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              Switch Workspace
+            </div>
+            {workspaces.map((ws) => (
+              <button
+                key={ws.id}
+                onClick={() => {
+                  setActiveWorkspace(ws.id);
+                  setShowWorkspaceMenu(false);
+                }}
+                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors ${
+                  activeWorkspace.id === ws.id
+                    ? 'bg-blue-600/10 text-blue-500 font-bold'
+                    : isLight
+                    ? 'text-zinc-600 hover:bg-zinc-100'
+                    : 'text-zinc-400 hover:bg-zinc-800'
+                }`}
+              >
+                {ws.name}
+                {activeWorkspace.id === ws.id && <CheckCircle2 className="w-3 h-3" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Search Bar */}
       <GlassInput
         value={searchQuery}

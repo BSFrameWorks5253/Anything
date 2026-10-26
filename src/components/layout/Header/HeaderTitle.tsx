@@ -14,8 +14,12 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
     subtitle: 'Quick access, child apps & ecosystem updates',
   },
   apps: {
-    title: 'All Apps',
-    subtitle: 'Download, update and manage creative applications',
+    title: 'Desktop Apps',
+    subtitle: 'Download, update and manage desktop creative applications',
+  },
+  mobile: {
+    title: 'Mobile Apps',
+    subtitle: 'Android APKs, iOS companion apps & mobile suite sync',
   },
   publisher: {
     title: 'Catalog Publisher',

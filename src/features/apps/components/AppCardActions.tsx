@@ -91,98 +91,86 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
         </span>
 
         <div className="flex items-center gap-1.5">
-          {/* Main Action Button Based on Lifecycle */}
+          {/* Adobe Creative Cloud Action Buttons */}
           {app.status === 'installed' && (
-            <GlassButton
-              variant="glass"
-              size="sm"
-              icon={<Play className="w-3 h-3 fill-current" />}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onLaunch(app);
               }}
-              className="text-xs px-3 font-semibold"
+              className="text-xs px-3.5 py-1 rounded-full border border-zinc-400 dark:border-zinc-600 hover:border-zinc-300 dark:text-white text-zinc-900 font-semibold hover:bg-zinc-100 dark:hover:bg-white/10 transition-all flex items-center gap-1.5"
             >
-              Open
-            </GlassButton>
+              <Play className="w-3 h-3 fill-current" />
+              <span>Open</span>
+            </button>
           )}
 
           {app.status === 'trial' && (
             <div className="flex items-center gap-1.5">
-              <GlassButton
-                variant="accent"
-                size="sm"
-                icon={<Play className="w-3 h-3 fill-current" />}
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onTryDemo) onTryDemo(app);
                   else onLaunch(app);
                 }}
-                className="text-xs px-2.5 font-semibold bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold hover:bg-emerald-500/30 transition-all flex items-center gap-1"
                 title="Launch Software Demo"
               >
-                Open Demo
-              </GlassButton>
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<Download className="w-3 h-3" />}
+                <Play className="w-3 h-3 fill-current" />
+                <span>Demo</span>
+              </button>
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onInstall(app);
                 }}
-                className="text-xs px-2.5 font-semibold"
+                className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs transition-all flex items-center gap-1.5"
                 title="Install Full Version"
               >
-                Install
-              </GlassButton>
+                <Download className="w-3 h-3" />
+                <span>Install</span>
+              </button>
             </div>
           )}
 
           {app.status === 'update-available' && (
-            <GlassButton
-              variant="accent"
-              size="sm"
-              icon={<RefreshCw className="w-3 h-3" />}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onUpdate(app);
               }}
-              className="text-xs px-3 font-semibold"
+              className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs transition-all flex items-center gap-1.5"
             >
-              Update
-            </GlassButton>
+              <RefreshCw className="w-3 h-3" />
+              <span>Update</span>
+            </button>
           )}
 
           {app.status === 'not-installed' && (
             <div className="flex items-center gap-1.5">
               {onTryDemo && (
-                <GlassButton
-                  variant="glass"
-                  size="sm"
-                  icon={<Sparkles className="w-3 h-3 text-cyan-400" />}
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onTryDemo(app);
                   }}
-                  className="text-xs px-2.5 font-medium border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
+                  className="text-xs px-3 py-1 rounded-full border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 font-medium hover:bg-cyan-500/10 transition-all flex items-center gap-1"
                   title="Try Software Demo / Sandbox"
                 >
-                  Try
-                </GlassButton>
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <span>Try</span>
+                </button>
               )}
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<Download className="w-3 h-3" />}
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onInstall(app);
                 }}
-                className="text-xs px-3 font-semibold"
+                className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs transition-all flex items-center gap-1.5"
               >
-                Install
-              </GlassButton>
+                <Download className="w-3 h-3" />
+                <span>Install</span>
+              </button>
             </div>
           )}
 

@@ -112,9 +112,14 @@ async function run() {
       const assets = latestRel.assets || [];
 
       // Find Setup Installer and Standalone Binary
-      const setupAsset = assets.find((a) => a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) ||
-                         assets.find((a) => a.name.endsWith('.exe'));
-      const standaloneAsset = assets.find((a) => !a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) || setupAsset;
+      const setupAsset =
+        assets.find((a) => a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) ||
+        assets.find((a) => !a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')) ||
+        assets.find((a) => a.name.endsWith('.exe'));
+      const standaloneAsset =
+        assets.find((a) => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')) ||
+        assets.find((a) => !a.name.toLowerCase().includes('setup') && a.name.endsWith('.exe')) ||
+        setupAsset;
 
       const setupName = setupAsset ? setupAsset.name : `${explicitName.replace(/\s+/g, '')}_Setup_V${version}.exe`;
       const exeName = standaloneAsset ? standaloneAsset.name : `${explicitName.replace(/\s+/g, '')}_V${version}.exe`;

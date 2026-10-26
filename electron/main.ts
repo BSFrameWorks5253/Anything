@@ -832,7 +832,14 @@ function ensureWindowsShortcut() {
 // Set Windows AppUserModelId for dedicated taskbar grouping and native Action Center toast notifications
 const ANYTHING_AUMID = 'com.burhanuddin.anything';
 if (process.platform === 'win32') {
-  app.setAppUserModelId(ANYTHING_AUMID);
+  // In development, setting an arbitrary AUMID that isn't pinned by Windows Shell causes Windows to
+  // display a blank white page icon on the taskbar. Set it only when packaged or when running officially.
+  if (app.isPackaged) {
+    app.setAppUserModelId(ANYTHING_AUMID);
+  } else {
+    // In dev mode, fall back to Electron process ID or app name so Windows taskbar resolves the process icon
+    app.setAppUserModelId(process.execPath);
+  }
   const defaultIco = path.join(getProjectRoot(), 'public', 'icon.ico');
   const defaultAppLogo = path.join(getProjectRoot(), 'public', 'app-logo.png');
   const regLogo = fs.existsSync(defaultIco) ? defaultIco : defaultAppLogo;
@@ -1057,7 +1064,37 @@ function pickWindowsAsset(assets: any[]): any {
     if (nameB.endsWith('.zip')) scoreB += 2;
 
     if (nameA.includes('setup') || nameA.includes('_setup')) scoreA += 50;
+    else if (!nameA.includes('portable') && nameA.endsWith('.exe')) scoreA += 25;
     if (nameB.includes('setup') || nameB.includes('_setup')) scoreB += 50;
+    else if (!nameB.includes('portable') && nameB.endsWith('.exe')) scoreB += 25;
+
+    return scoreB - scoreA;
+  });
+
+  return candidates[0];
+}
+
+function pickMobileAsset(assets: any[]): any {
+  if (!Array.isArray(assets) || assets.length === 0) return null;
+  const candidates = assets.filter((a: any) => {
+    const name = String(a.name || '').toLowerCase();
+    return name.endsWith('.apk') || name.endsWith('.aab') || name.endsWith('.ipa');
+  });
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a: any, b: any) => {
+    let scoreA = 0;
+    let scoreB = 0;
+    const nameA = String(a.name).toLowerCase();
+    const nameB = String(b.name).toLowerCase();
+
+    if (nameA.endsWith('.apk')) scoreA += 20;
+    if (nameB.endsWith('.apk')) scoreB += 20;
+    if (nameA.includes('release')) scoreA += 10;
+    if (nameB.includes('release')) scoreB += 10;
+    if (nameA.includes('arm64') || nameA.includes('universal')) scoreA += 5;
+    if (nameB.includes('arm64') || nameB.includes('universal')) scoreB += 5;
 
     return scoreB - scoreA;
   });
@@ -1453,6 +1490,7 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
         const remoteTag = relData.tag_name;
         const cleanVer = remoteTag.replace(/^[vV]/, '').trim();
         const asset = pickWindowsAsset(relData.assets || []);
+        const mobileAsset = pickMobileAsset(relData.assets || []);
         const appId = (src.id || parsed.repo).toLowerCase().replace(/[^a-z0-9]/g, '-');
         const appName =
           src.name ||
@@ -1466,6 +1504,25 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
             : parsed.repo.toLowerCase().includes('code') || parsed.repo.toLowerCase().includes('dev')
             ? 'Development'
             : 'Custom Tools');
+
+        // Detect platforms supported by this release
+        const detectedPlatforms: string[] = [];
+        if (asset || (relData.assets || []).some((a: any) => String(a.name).match(/\.(exe|msix|appx|zip)$/i))) {
+          detectedPlatforms.push('desktop');
+        }
+        if (mobileAsset || (relData.assets || []).some((a: any) => String(a.name).match(/\.(apk|aab|ipa)$/i))) {
+          detectedPlatforms.push('mobile');
+        }
+        if (detectedPlatforms.length === 0) detectedPlatforms.push('desktop');
+
+        const mobileInfo = mobileAsset
+          ? {
+              platforms: [mobileAsset.name.endsWith('.ipa') ? 'ios' : 'android'],
+              apkDownloadUrl: mobileAsset.name.endsWith('.apk') ? mobileAsset.browser_download_url : undefined,
+              ipaDownloadUrl: mobileAsset.name.endsWith('.ipa') ? mobileAsset.browser_download_url : undefined,
+              packageId: `com.burhanuddin.${appId.replace(/-/g, '')}`,
+            }
+          : undefined;
 
         // Extract changelog features from GitHub release body
         const bodyLines = (relData.body || '')
@@ -1580,6 +1637,8 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
         const existingIdx = catalog.findIndex((c: any) => c.id === appId);
         const catalogEntry = {
           ...appMetadata,
+          targetPlatforms: detectedPlatforms,
+          mobileInfo,
           downloadUrl,
           releasesUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases`,
           releasesTagUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/tag/`,
@@ -1682,12 +1741,24 @@ const getAppIconPath = () => {
   return undefined;
 };
 
+const getAppNativeIcon = () => {
+  const iconPath = getAppIconPath();
+  if (iconPath && fs.existsSync(iconPath)) {
+    try {
+      const img = nativeImage.createFromPath(iconPath);
+      if (!img.isEmpty()) return img;
+    } catch {}
+  }
+  return undefined;
+};
+
 function createWindow() {
   const appIconPath = getAppIconPath();
+  const appNativeIcon = getAppNativeIcon();
 
   mainWindow = new BrowserWindow({
     title: 'Anything',
-    icon: appIconPath,
+    icon: appNativeIcon || appIconPath,
     width: 1280,
     height: 840,
     minWidth: 980,
@@ -1703,9 +1774,9 @@ function createWindow() {
     show: false, // Hidden on startup: ONLY the loader box appears first!
   });
 
-  if (process.platform === 'win32' && appIconPath) {
+  if (process.platform === 'win32' && (appNativeIcon || appIconPath)) {
     try {
-      mainWindow.setIcon(appIconPath);
+      mainWindow.setIcon(appNativeIcon || (appIconPath as string));
     } catch (e) {}
   }
 
@@ -1714,7 +1785,7 @@ function createWindow() {
   // Standalone Adobe Splash Window: Centered, frameless, 100% transparent desktop background
   splashWindow = new BrowserWindow({
     title: 'Anything',
-    icon: appIconPath,
+    icon: appNativeIcon || appIconPath,
     width: 740,
     height: 480,
     frame: false,
@@ -1725,7 +1796,7 @@ function createWindow() {
     alwaysOnTop: true,
     show: true, // Only the loader box appears on the screen
     hasShadow: true,
-    skipTaskbar: false,
+    skipTaskbar: true, // Do not create a separate blank taskbar entry for the splash loader
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -1733,9 +1804,9 @@ function createWindow() {
     },
   });
 
-  if (process.platform === 'win32' && appIconPath) {
+  if (process.platform === 'win32' && (appNativeIcon || appIconPath)) {
     try {
-      splashWindow.setIcon(appIconPath);
+      splashWindow.setIcon(appNativeIcon || (appIconPath as string));
     } catch (e) {}
   }
 
@@ -1780,6 +1851,12 @@ function createWindow() {
     }
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.show();
+      if (process.platform === 'win32') {
+        const icon = getAppNativeIcon() || getAppIconPath();
+        if (icon) {
+          try { mainWindow.setIcon(icon as any); } catch {}
+        }
+      }
       mainWindow.focus();
     }
     return true;
@@ -1793,6 +1870,12 @@ function createWindow() {
         splashWindow = null;
       }
       mainWindow.show();
+      if (process.platform === 'win32') {
+        const icon = getAppNativeIcon() || getAppIconPath();
+        if (icon) {
+          try { mainWindow.setIcon(icon as any); } catch {}
+        }
+      }
       mainWindow.focus();
     }
   }, 6000);
@@ -1866,13 +1949,15 @@ function createWindow() {
   });
 
   ipcMain.handle('releases:scan-and-collect', async () => {
-    const result = await scanAndCollectReleases();
-    if (result.addedCount > 0 || result.updatedCount > 0) {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('catalog:updated', result.catalog);
-      }
-    }
-    return result;
+    // Cloud-only: Sync apps directly from GitHub releases
+    const syncRes = await syncAppsFromSourcesFile();
+    return {
+      success: syncRes.success,
+      addedCount: syncRes.synced,
+      updatedCount: 0,
+      total: syncRes.synced,
+      catalog: [],
+    };
   });
 
   ipcMain.handle('publisher:scan-inbox', async () => {
@@ -3302,6 +3387,56 @@ function createWindow() {
     return { success: true };
   });
 
+  // ================= GIT AUTO-COMMIT ENGINE IPC HANDLERS =================
+  ipcMain.handle('git:status', async () => {
+    try {
+      const root = getProjectRoot();
+      const statusOut = execSync('git status --porcelain', { cwd: root, encoding: 'utf8', timeout: 10000 }).trim();
+      const branchOut = execSync('git branch --show-current', { cwd: root, encoding: 'utf8', timeout: 5000 }).trim();
+      const files = statusOut ? statusOut.split('\n').filter(Boolean) : [];
+      return {
+        success: true,
+        isDirty: files.length > 0,
+        branch: branchOut || 'main',
+        changedFilesCount: files.length,
+        files: files.slice(0, 50)
+      };
+    } catch (e: any) {
+      return { success: false, error: e.message, isDirty: false, files: [] };
+    }
+  });
+
+  ipcMain.handle('git:preview-message', async () => {
+    try {
+      const root = getProjectRoot();
+      const scriptPath = path.join(root, 'scripts', 'auto-commit.cjs');
+      const out = execSync(`node "${scriptPath}" --dry-run`, { cwd: root, encoding: 'utf8', timeout: 15000 });
+      return { success: true, output: out };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('git:auto-commit', async (_, options: { push?: boolean; ecosystem?: boolean; message?: string } = {}) => {
+    try {
+      const root = getProjectRoot();
+      const scriptPath = path.join(root, 'scripts', 'auto-commit.cjs');
+      const args: string[] = [];
+      if (options.push !== false) args.push('--push');
+      if (options.ecosystem) args.push('--ecosystem');
+      if (options.message) args.push(`--msg "${options.message.replace(/"/g, '\\"')}"`);
+
+      const out = execSync(`node "${scriptPath}" ${args.join(' ')}`, {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 45000
+      });
+      return { success: true, output: out };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  });
+
   // Auto-Updater Handlers
   ipcMain.handle('updater:check', async () => {
     if (isDev) return { status: 'dev-mode', currentVersion: app.getVersion() };
@@ -3419,29 +3554,7 @@ function createWindow() {
     }
   }, 60 * 60 * 1000);
 
-  // Live Auto-Watcher on releases folders: drops and deletions are immediately detected and synced
-  try {
-    const relDirs = getAllReleaseDirs();
-    let releasesDebounce: NodeJS.Timeout | null = null;
-    for (const relDir of relDirs) {
-      if (!fs.existsSync(relDir)) continue;
-      fs.watch(relDir, { recursive: true }, () => {
-        if (releasesDebounce) clearTimeout(releasesDebounce);
-        releasesDebounce = setTimeout(async () => {
-          const res = await scanAndCollectReleases();
-          if (res.addedCount > 0 || res.updatedCount > 0) {
-            if (win && !win.isDestroyed()) {
-              win.webContents.send('catalog:updated', res.catalog);
-            }
-          }
-        }, 1500);
-      });
-    }
-  } catch (err) {
-    console.error('Error starting releases folder watcher:', err);
-  }
-
-  // Live Auto-Watcher on app-sources.json: changes to repo links are synced immediately
+  // Live Auto-Watcher on app-sources.json: changes to repo links are synced immediately from GitHub
   try {
     const sourcesFile = path.join(getProjectRoot(), 'app-sources.json');
     if (fs.existsSync(sourcesFile)) {
@@ -3449,7 +3562,7 @@ function createWindow() {
       fs.watch(sourcesFile, () => {
         if (sourcesDebounce) clearTimeout(sourcesDebounce);
         sourcesDebounce = setTimeout(async () => {
-          console.log('🔄 Detected update in app-sources.json, syncing apps...');
+          console.log('🔄 Detected update in app-sources.json, syncing apps from GitHub...');
           await syncAppsFromSourcesFile();
         }, 1500);
       });
@@ -3458,16 +3571,13 @@ function createWindow() {
     console.error('Error starting app-sources watcher:', err);
   }
 
-  // Initial scan on startup to sync newly placed child app releases and app sources immediately
+  // Initial scan on startup to sync child app releases from GitHub app sources
   setTimeout(async () => {
     try {
-      const res = await scanAndCollectReleases();
-      if (win && !win.isDestroyed() && res.catalog) {
-        win.webContents.send('catalog:updated', res.catalog);
-      }
+      console.log('🌐 Startup: Syncing apps exclusively from GitHub app-sources.json...');
       await syncAppsFromSourcesFile();
     } catch (e) {
-      console.error('Initial startup releases & sources scan error:', e);
+      console.error('Initial startup GitHub sources sync error:', e);
     }
   }, 1200);
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 54" width="850" height="54">
+  <defs>
+    <linearGradient id="boxBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0b10"/>
+      <stop offset="100%" stop-color="#14141f"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .terminal-text {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      font-weight: 600;
+      fill: #38bdf8;
+    }
+    .prompt { fill: #ef4444; font-weight: bold; }
+    .cursor {
+      animation: blink 0.9s infinite;
+      fill: #ef4444;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+  </style>
+  <rect x="1" y="1" width="848" height="52" rx="14" fill="url(#boxBg)" stroke="#262635" stroke-width="1.5"/>
+  <circle cx="24" cy="27" r="4.5" fill="#ef4444"/>
+  <circle cx="38" cy="27" r="4.5" fill="#f59e0b"/>
+  <circle cx="52" cy="27" r="4.5" fill="#10b981"/>
+  <text x="75" y="32" class="terminal-text">
+    <tspan class="prompt">anything@master:~$</tspan> Liberating documents from Adobe $239/yr paywalls · 100% Free Forever · Zero Cloud Telemetry
+  </text>
+  <rect x="800" y="19" width="8" height="16" class="cursor"/>
+</svg>

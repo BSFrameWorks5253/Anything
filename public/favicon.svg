@@ -1,4 +1,93 @@
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="20" fill="#E00201"/>
-  <text x="50" y="67" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="50" letter-spacing="-1.5">An</text>
+﻿<svg viewBox="0 0 512 512" width="512" height="512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Authentic Adobe Creative Cloud Spectrum Gradient -->
+    <linearGradient id="spectrumGradient" x1="60" y1="360" x2="450" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DA1884"/>   <!-- CC Magenta/Pink -->
+      <stop offset="25%" stop-color="#FF1341"/>  <!-- Adobe Crimson -->
+      <stop offset="55%" stop-color="#FF4F00"/>  <!-- Red-Orange Vermilion -->
+      <stop offset="80%" stop-color="#FF8A00"/>  <!-- Amber -->
+      <stop offset="100%" stop-color="#FFBA00"/> <!-- Gold -->
+    </linearGradient>
+
+    <!-- Deep Ambient Glow -->
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#FF1A4B" flood-opacity="0.32"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+
+    <!-- Dark Adobe Studio Squircle Tile -->
+    <linearGradient id="tileBg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#24242A"/>
+      <stop offset="50%" stop-color="#18181C"/>
+      <stop offset="100%" stop-color="#0E0E12"/>
+    </linearGradient>
+
+    <radialGradient id="tileSheen" cx="120" cy="90" r="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Dark Adobe Studio Squircle Tile -->
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#tileBg)"/>
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#tileSheen)"/>
+  <!-- Specular Chamfer Rim -->
+  <rect x="21.5" y="21.5" width="469" height="469" rx="110.5" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="3"/>
+
+  <!-- Perfectly Geometric Creative Cloud Infinity Ribbon (True Even-Odd Tube with Filleted Curves) -->
+  <g filter="url(#softGlow)">
+    <path 
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M 256,120
+         C 308,120 350,154 366,198
+         C 408,206 440,242 440,286
+         C 440,336 400,376 350,376
+         C 322,376 288,360 256,334
+         C 224,360 190,376 162,376
+         C 112,376 72,336 72,286
+         C 72,242 104,206 146,198
+         C 162,154 204,120 256,120 Z
+         M 256,168
+         C 220,168 188,194 178,230
+         C 176,238 168,244 160,244
+         C 134,244 116,262 116,286
+         C 116,312 136,332 162,332
+         C 180,332 206,318 232,294
+         C 246,281 266,281 280,294
+         C 306,318 332,332 350,332
+         C 376,332 396,312 396,286
+         C 396,262 378,244 352,244
+         C 344,244 336,238 334,230
+         C 324,194 292,168 256,168 Z"
+      fill="url(#spectrumGradient)"
+    />
+
+    <!-- Elegant Precision Triangle 'A' Apex (Delta Nexus) with soft rounded tips -->
+    <path 
+      d="M 256,190
+         C 258,190 260,193 262,196
+         L 282,238
+         C 284,242 282,246 278,246
+         L 234,246
+         C 230,246 228,242 230,238
+         L 250,196
+         C 252,193 254,190 256,190 Z"
+      fill="#FFFFFF"
+    />
+  </g>
+
+  <!-- Mnemonic 'An' in Crisp White Adobe CC Spectrum Typography -->
+  <text 
+    x="256" 
+    y="442" 
+    text-anchor="middle" 
+    fill="#FFFFFF" 
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+    font-weight="800" 
+    font-size="76" 
+    letter-spacing="-1.5"
+  >
+    An
+  </text>
 </svg>

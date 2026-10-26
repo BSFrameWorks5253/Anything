@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Star, Smartphone, Monitor } from 'lucide-react';
 import type { CreativeApp } from '../../../types/app.types';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { AppIconRenderer } from './CrazyAppStudio/AppIconRenderer';
@@ -12,6 +12,7 @@ interface AppCardHeaderProps {
 export const AppCardHeader: React.FC<AppCardHeaderProps> = ({ app }) => {
   const { theme } = useTheme();
   const isLight = theme === 'light';
+  const hasMobile = Boolean(app.targetPlatforms?.includes('mobile') || app.category?.toLowerCase().includes('mobile'));
 
   return (
     <div className="flex items-start gap-3.5">
@@ -20,15 +21,25 @@ export const AppCardHeader: React.FC<AppCardHeaderProps> = ({ app }) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
-          <h3
-            className={`text-sm font-bold tracking-tight truncate transition-colors ${
-              isLight
-                ? 'text-slate-900 group-hover:text-cyan-600'
-                : 'text-white group-hover:text-cyan-300'
-            }`}
-          >
-            {app.name}
-          </h3>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h3
+              className={`text-sm font-bold tracking-tight truncate transition-colors ${
+                isLight
+                  ? 'text-slate-900 group-hover:text-cyan-600'
+                  : 'text-white group-hover:text-cyan-300'
+              }`}
+            >
+              {app.name}
+            </h3>
+            {hasMobile && (
+              <span
+                className="shrink-0 p-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                title="Mobile app available"
+              >
+                <Smartphone className="w-2.5 h-2.5" />
+              </span>
+            )}
+          </div>
           {(app.status === 'update-available' || (app as any).status === 'update') && (
             <GlassBadge variant="cyan" dot className="shrink-0 text-[10px]">
               Update

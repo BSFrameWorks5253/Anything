@@ -82,6 +82,11 @@ export interface ElectronAPI {
   showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) => Promise<any>;
   onNotificationClicked: (callback: (data: any) => void) => () => void;
 
+  // Git Ecosystem Auto-Commit
+  gitStatus?: () => Promise<{ success: boolean; isDirty: boolean; branch: string; changedFilesCount: number; files: string[]; error?: string }>;
+  gitPreviewMessage?: () => Promise<{ success: boolean; output?: string; error?: string }>;
+  gitAutoCommit?: (options?: { push?: boolean; ecosystem?: boolean; message?: string }) => Promise<{ success: boolean; output?: string; error?: string }>;
+
   // Splash Screen Lifecycle
   splashDone?: () => Promise<boolean>;
 

@@ -19,6 +19,11 @@
     "release": "npm run build && electron-builder --publish always",
     "release:github": "node scripts/publish-github-release.cjs",
     "release:all": "node scripts/publish-github-release.cjs --all",
+    "commit": "node scripts/auto-commit.cjs",
+    "commit:push": "node scripts/auto-commit.cjs --push",
+    "commit:dry": "node scripts/auto-commit.cjs --dry-run",
+    "commit:ecosystem": "node scripts/auto-commit.cjs --ecosystem",
+    "commit:ecosystem:push": "node scripts/auto-commit.cjs --ecosystem --push",
     "start": "electron .",
     "preview": "vite preview"
   },

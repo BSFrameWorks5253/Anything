@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tileBg" x1="0" y1="0" x2="100" y2="100">
+      <stop offset="0%" stop-color="#0a0f1d" />
+      <stop offset="50%" stop-color="#060912" />
+      <stop offset="100%" stop-color="#020408" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="100" y2="100">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="40%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0" y1="0" x2="0" y2="100">
+      <stop offset="0%" stop-color="#7dd3fc" />
+      <stop offset="60%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="86" height="86" rx="20" fill="url(#tileBg)" />
+  <rect x="8.6" y="8.6" width="82.8" height="82.8" rx="18.4" stroke="url(#borderGrad)" stroke-width="3.2" />
+  <rect x="11.5" y="11.5" width="77" height="77" rx="15.5" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+  <path d="M9.5 30C22 26 38 31 52 25C66 19 80 23 90.5 19V9.5H16C12 9.5 9.5 12 9.5 16V30Z" fill="white" opacity="0.12" />
+  <text x="50" y="66.5" text-anchor="middle" fill="url(#textGrad)" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-weight="900" font-size="47" letter-spacing="-2">Df</text>
+</svg>

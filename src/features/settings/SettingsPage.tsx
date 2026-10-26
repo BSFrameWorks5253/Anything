@@ -3,7 +3,10 @@ import { AccountSection } from './components/AccountSection';
 import { SplashScreenSection } from './components/SplashScreenSection';
 import { AutoUpdateSection } from './components/AutoUpdateSection';
 import { AuthEmailNotificationSection } from './components/AuthEmailNotificationSection';
-import { PlanSection } from './components/PlanSection';
+import { DiagnosticLogsViewer } from './components/DiagnosticLogsViewer';
+import { GitAutoCommitSection } from './components/GitAutoCommitSection';
+import { AnythingFontsManager } from '../fonts/AnythingFontsManager';
+import { EcosystemThemeSync } from '../theme/EcosystemThemeSync';
 import { AdobeSplashScreen } from '../../components/ui/AdobeSplashScreen';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { GlassBadge } from '../../components/ui/GlassBadge';
@@ -53,8 +56,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         isCheckingUpdates={isCheckingUpdates}
       />
 
+      {/* Intelligent Git Auto-Commit & Ecosystem Synchronizer */}
+      <GitAutoCommitSection />
+
       {/* Authentication & Animated Email Release Dispatch */}
       <AuthEmailNotificationSection />
+
+      {/* Anything Fonts Manager */}
+      <AnythingFontsManager />
+
+      {/* Ecosystem Theme Sync */}
+      <EcosystemThemeSync />
+
+      {/* Diagnostic Logs */}
+      <DiagnosticLogsViewer />
 
       {/* Subscription Tier Details */}
       <PlanSection />
