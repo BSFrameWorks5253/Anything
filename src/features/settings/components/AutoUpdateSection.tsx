@@ -100,7 +100,7 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
     } else {
       setTimeout(() => {
         setCheckingParent(false);
-        setParentStatusText('Latest version installed (v26.10.26)');
+        setParentStatusText('Latest version installed (v26.10.27)');
       }, 800);
     }
   };
@@ -485,7 +485,7 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">
-                  Anything Host App v26.10.26
+                  Anything Host App v26.10.27
                 </h4>
                 <GlassBadge variant="emerald" dot>Live Channel</GlassBadge>
               </div>

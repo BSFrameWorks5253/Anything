@@ -98,7 +98,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 dark:text-white/50">
-            <span>Anything v26.10.26</span>
+            <span>Anything v26.10.27</span>
             <span>•</span>
             <span>Build 2026.10</span>
           </div>
