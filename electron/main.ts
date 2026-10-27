@@ -14,7 +14,6 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import { exec, spawn, execSync } from 'child_process';
-import { autoUpdater } from 'electron-updater';
 
 app.name = 'Anything';
 
@@ -848,9 +847,72 @@ async function scanAndCollectReleases(): Promise<{
   }
 }
 
-// Configure Auto-Updater
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+// ================= BULLETPROOF AUTO-UPDATER INITIALIZER =================
+let safeAutoUpdater: any = null;
+let autoUpdaterInitialized = false;
+
+function getSafeAutoUpdater(win?: BrowserWindow | null): any {
+  if (autoUpdaterInitialized) return safeAutoUpdater;
+  autoUpdaterInitialized = true;
+  try {
+    const rawVersion = app.getVersion();
+    // Validate semver: check if any numeric segment has leading zeroes (e.g. "26.10.01")
+    const parts = (rawVersion || '').split('.');
+    const hasLeadingZero = parts.some((p) => p.length > 1 && p.startsWith('0') && /^\d+$/.test(p));
+    if (hasLeadingZero) {
+      console.warn(
+        `[AutoUpdater] Current version "${rawVersion}" contains leading zeroes which violates SemVer; skipping electron-updater to prevent crash.`
+      );
+      safeAutoUpdater = null;
+      return null;
+    }
+
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    if (win && !win.isDestroyed()) {
+      autoUpdater.on('update-available', (info: any) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('updater:status', { status: 'update-available', info });
+        }
+        sendWindowsNotification(
+          `⚡ Anything v${info.version} Available!`,
+          `A new update is downloading in the background. Click to view.`,
+          () => {
+            if (win.isMinimized()) win.restore();
+            win.show();
+            win.focus();
+          }
+        );
+      });
+
+      autoUpdater.on('update-downloaded', (info: any) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('updater:status', { status: 'update-downloaded', info });
+        }
+        sendWindowsNotification(
+          `🎉 Anything v${info.version} Ready!`,
+          `Update downloaded. Click to restart and apply changes now.`,
+          () => {
+            try {
+              autoUpdater.quitAndInstall();
+            } catch (e) {
+              console.error('quitAndInstall error:', e);
+            }
+          }
+        );
+      });
+    }
+
+    safeAutoUpdater = autoUpdater;
+    return autoUpdater;
+  } catch (err) {
+    console.warn('[AutoUpdater] Failed to initialize electron-updater (safe fallback active):', err);
+    safeAutoUpdater = null;
+    return null;
+  }
+}
 
 // ================= WINDOWS APP USER MODEL ID & SHORTCUT =================
 function ensureWindowsAppRegistration(appId: string, displayName: string, iconPath?: string) {
@@ -3642,7 +3704,11 @@ function createWindow() {
   ipcMain.handle('updater:check', async () => {
     if (isDev) return { status: 'dev-mode', currentVersion: app.getVersion() };
     try {
-      const res = await autoUpdater.checkForUpdates();
+      const updater = getSafeAutoUpdater(mainWindow);
+      if (!updater) {
+        return { status: 'not-available', currentVersion: app.getVersion() };
+      }
+      const res = await updater.checkForUpdates();
       return { status: 'checking', updateInfo: res?.updateInfo };
     } catch (err: any) {
       return { status: 'error', error: err.message };
@@ -3650,7 +3716,12 @@ function createWindow() {
   });
 
   ipcMain.handle('updater:install', () => {
-    autoUpdater.quitAndInstall();
+    try {
+      const updater = getSafeAutoUpdater(mainWindow);
+      if (updater) updater.quitAndInstall();
+    } catch (e) {
+      console.error('updater:install error:', e);
+    }
   });
 
   // Child Apps Update Settings Storage
@@ -3723,29 +3794,8 @@ function createWindow() {
     return { success: true };
   });
 
-  // Auto-Updater status and notifications for Anything
-  autoUpdater.on('update-available', (info) => {
-    win.webContents.send('updater:status', { status: 'update-available', info });
-    sendWindowsNotification(
-      `⚡ Anything v${info.version} Available!`,
-      `A new update is downloading in the background. Click to view.`,
-      () => {
-        if (win.isMinimized()) win.restore();
-        win.focus();
-      }
-    );
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    win.webContents.send('updater:status', { status: 'update-downloaded', info });
-    sendWindowsNotification(
-      `🎉 Anything v${info.version} Ready!`,
-      `Update downloaded. Click to restart and apply changes now.`,
-      () => {
-        autoUpdater.quitAndInstall();
-      }
-    );
-  });
+  // Initialize Auto-Updater safely (handles valid semver & suppresses crashes on calver/custom builds)
+  getSafeAutoUpdater(win);
 
   // Setup System Tray
   createSystemTray(win);
