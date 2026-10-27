@@ -1,0 +1,26 @@
+{
+  "appId": "pulsewave",
+  "appName": "Pulse Wave",
+  "version": "6.1.8",
+  "executableName": "Plusewave_6.1.8_Setup.exe",
+  "releaseDate": "2026-10-26",
+  "releaseType": "minor",
+  "tagline": "Pulse Wave v6.1.8 from GitHub Releases",
+  "summary": "Pulse Wave v6.1.8",
+  "newFeatures": [
+    "*Full Changelog**: https://github.com/BSFrameWorks5253/Plusewave/compare/v6.1.7...v6.1.8"
+  ],
+  "improvements": [
+    "Ecosystem loader integration",
+    "Performance optimizations"
+  ],
+  "fixes": [
+    "Stability and compatibility updates"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Pulse Wave v6.1.8 is Live!",
+    "preview": "Discover all the updates in v6.1.8.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-emerald-500 via-teal-400 to-cyan-400"
+  }
+}

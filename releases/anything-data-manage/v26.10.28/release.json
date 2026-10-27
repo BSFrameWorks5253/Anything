@@ -1,0 +1,9 @@
+{
+  "appId": "anything-data-manage",
+  "appName": "Anything Data Manage",
+  "version": "26.10.28",
+  "setupFile": "AIN53_Data_Management_Portable.exe",
+  "size": "109.5 MB",
+  "publishedAt": "2026-10-26T17:39:22.985Z",
+  "destination": "anything_only"
+}

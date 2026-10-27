@@ -141,7 +141,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('settings:load-child-app-updates'),
 
   // Native Windows Notifications
-  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) =>
+  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string; version?: string }) =>
     ipcRenderer.invoke('notification:show', data),
   onNotificationClicked: (callback: (data: any) => void) => {
     const subscription = (_: any, data: any) => callback(data);

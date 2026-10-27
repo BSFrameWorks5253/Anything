@@ -1,0 +1,21 @@
+{
+  "id": "docuflow",
+  "name": "DocuFlow Studio Pro",
+  "shortName": "Df",
+  "version": "26.10.27",
+  "category": "Productivity & Utilities",
+  "description": "DocuFlow Studio Pro — High performance native workstation application for the Anything ecosystem.",
+  "executableName": "DocuFlow_Studio_26.10.27.exe",
+  "setupExecutableName": "DocuFlow_Studio_26.10.27.exe",
+  "packageFileName": "DocuFlow_Studio_26.10.27.exe",
+  "gradient": "from-emerald-500 to-teal-700",
+  "downloadUrl": "releases/docuflow/v26.10.27/DocuFlow_Studio_26.10.27.exe",
+  "iconType": "image",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i5 / AMD Ryzen 5 or higher",
+    "ram": "8 GB RAM",
+    "graphics": "DirectX 11 compatible",
+    "storage": "500 MB available space"
+  }
+}

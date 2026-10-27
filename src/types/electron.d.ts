@@ -79,7 +79,7 @@ export interface ElectronAPI {
   loadChildAppUpdateSettings?: () => Promise<any>;
 
   // Notifications
-  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string }) => Promise<any>;
+  showNotification: (data: { title: string; body: string; appId?: string; icon?: string; appName?: string; version?: string }) => Promise<any>;
   onNotificationClicked: (callback: (data: any) => void) => () => void;
 
   // Git Ecosystem Auto-Commit

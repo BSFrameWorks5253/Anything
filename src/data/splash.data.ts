@@ -66,9 +66,10 @@ export interface SplashSettings {
   artworkPosition?: 'center' | 'top' | 'bottom';
 }
 
-export const cleanVersionText = (ver?: string): string => {
-  if (!ver) return 'v26.10.27';
-  const cleaned = ver
+export const cleanVersionText = (ver?: any): string => {
+  if (ver === null || ver === undefined) return 'v26.10.27';
+  const str = String(ver);
+  const cleaned = str
     .replace(/\s*\((?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\)/gi, '')
     .replace(/\s*[-_.]?\s*(?:x64|x86|x86_64|amd64|arm64|win32|ia32|64-bit|32-bit)\b/gi, '')
     .trim();

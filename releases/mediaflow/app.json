@@ -1,0 +1,21 @@
+{
+  "id": "mediaflow",
+  "name": "MediaFlow Studio",
+  "shortName": "Mf",
+  "version": "26.10.27",
+  "category": "Productivity & Utilities",
+  "description": "MediaFlow Studio — High performance native workstation application for the Anything ecosystem.",
+  "executableName": "Mediaflow_studio_26.10.27_Setup.exe",
+  "setupExecutableName": "Mediaflow_studio_26.10.27_Setup.exe",
+  "packageFileName": "Mediaflow_studio_26.10.27_Setup.exe",
+  "gradient": "from-amber-500 to-orange-600",
+  "downloadUrl": "releases/mediaflow/v26.10.27/Mediaflow_studio_26.10.27_Setup.exe",
+  "iconType": "image",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i5 / AMD Ryzen 5 or higher",
+    "ram": "8 GB RAM",
+    "graphics": "DirectX 11 compatible",
+    "storage": "500 MB available space"
+  }
+}

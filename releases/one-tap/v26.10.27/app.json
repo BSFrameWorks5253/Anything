@@ -1,0 +1,15 @@
+{
+  "id": "one-tap",
+  "name": "One Tap",
+  "shortName": "OT",
+  "version": "26.10.21",
+  "category": "Media & Production",
+  "description": "One Tap v26.10.21 - Automated Video Production Workstation",
+  "executableName": "OneTap-Portable-V-26.10.21.exe",
+  "setupExecutableName": "OneTap-Portable-V-26.10.21.exe",
+  "gradient": "from-amber-600 via-orange-500 to-yellow-400",
+  "textColor": "#fbbf24",
+  "glowColor": "rgba(251, 191, 36, 0.45)",
+  "githubRepo": "BSFrameWorks5253/onetap-workstation",
+  "iconType": "monogram"
+}

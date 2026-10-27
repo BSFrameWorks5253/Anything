@@ -21,14 +21,14 @@ import { useAuth } from './context/AuthContext';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { CommandPalette } from './components/ui/CommandPalette';
 
-function compareVersions(v1: string, v2: string): number {
+function compareVersions(v1: any, v2: any): number {
   if (!v1 || !v2) return 0;
-  const p1 = (v1 || '').replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
-  const p2 = (v2 || '').replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
-  const len = Math.max(p1.length, p2.length);
+  const s1 = String(v1).replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
+  const s2 = String(v2).replace(/^[vV]/, '').split(/[-_]/)[0].split('.').map((x) => parseInt(x, 10) || 0);
+  const len = Math.max(s1.length, s2.length);
   for (let i = 0; i < len; i++) {
-    const num1 = p1[i] || 0;
-    const num2 = p2[i] || 0;
+    const num1 = s1[i] || 0;
+    const num2 = s2[i] || 0;
     if (num1 > num2) return 1;
     if (num1 < num2) return -1;
   }
@@ -407,6 +407,13 @@ export function App() {
       if (saved) updateSettings = JSON.parse(saved);
     } catch {}
 
+    // Track notified update versions to prevent spamming notifications repeatedly
+    let notifiedUpdates: Record<string, string> = {};
+    try {
+      const savedNotifs = localStorage.getItem('anything_notified_app_updates');
+      if (savedNotifs) notifiedUpdates = JSON.parse(savedNotifs);
+    } catch {}
+
     setIsCheckingUpdates(true);
     try {
       const appsToAutoUpdate: CatalogApp[] = [];
@@ -446,14 +453,23 @@ export function App() {
                 }
 
                 // MODE B: MANUAL (User clicks update when ready)
-                if (updateSettings.notifyAvailable && electronAPI?.showNotification) {
-                  electronAPI.showNotification({
-                    title: `🚀 Update Available: ${app.name} v${remoteVer}`,
-                    body: `Version ${remoteVer} is available on GitHub (Installed: v${app.localVersion || app.version}). Click "Update" in Anything to apply.`,
-                    appId: app.id,
-                    appName: app.name,
-                    icon: app.iconValue,
-                  });
+                // ONLY notify once per app version to prevent notification spam
+                const alreadyNotifiedVer = notifiedUpdates[app.id];
+                if (alreadyNotifiedVer !== remoteVer) {
+                  if (updateSettings.notifyAvailable && electronAPI?.showNotification) {
+                    electronAPI.showNotification({
+                      title: `🚀 Update Available: ${app.name} v${remoteVer}`,
+                      body: `Version ${remoteVer} is available on GitHub (Installed: v${app.localVersion || app.version}). Click "Update" in Anything to apply.`,
+                      appId: app.id,
+                      appName: app.name,
+                      icon: app.iconValue,
+                      version: remoteVer,
+                    });
+                  }
+                  notifiedUpdates[app.id] = remoteVer;
+                  try {
+                    localStorage.setItem('anything_notified_app_updates', JSON.stringify(notifiedUpdates));
+                  } catch {}
                 }
 
                 return {

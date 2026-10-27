@@ -20,7 +20,7 @@
         overflow: hidden;
       }
       /* Standalone Splash mode: 100% transparent desktop background */
-      html.splash-mode, body.splash-mode, .splash-mode #root {
+      html.splash-mode, body.splash-mode, .splash-mode body, .splash-mode #root {
         background: transparent !important;
         background-color: transparent !important;
       }
@@ -56,6 +56,18 @@
         document.documentElement.style.backgroundColor = 'transparent';
         document.documentElement.style.background = 'transparent';
       }
+
+      window.addEventListener('error', function(e) {
+        console.error('[UNCAUGHT RENDERER ERROR]', e.error || e.message);
+        var root = document.getElementById('root');
+        if (root && (!root.children || root.children.length === 0)) {
+          var errText = e.error ? (e.error.stack || e.error.message) : e.message;
+          root.innerHTML = '<div style="padding: 32px; color: #f87171; font-family: sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #030712;"><h2 style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #ef4444;">Anything Initialization Error</h2><pre style="background: rgba(255,255,255,0.06); padding: 16px; border-radius: 8px; text-align: left; max-width: 600px; overflow: auto; font-size: 13px; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); white-space: pre-wrap;">' + errText + '</pre><button onclick="localStorage.clear(); window.location.reload();" style="margin-top: 16px; padding: 10px 24px; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Reset Cache & Reload</button></div>';
+        }
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[UNHANDLED PROMISE REJECTION]', e.reason);
+      });
     </script>
   </head>
   <body class="bg-slate-950 text-white selection:bg-cyan-500/30 selection:text-cyan-200">

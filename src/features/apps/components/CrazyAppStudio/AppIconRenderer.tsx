@@ -21,7 +21,7 @@ function getAdobePalette(app: Partial<CreativeApp>) {
   const category = (app.category || '').toLowerCase();
 
   if (id.includes('anything')) {
-    return { bgStart: '#FF2A2A', bgEnd: '#BA0000', text: '#FFFFFF', rim: 'rgba(255,255,255,0.4)', monogram: 'An' };
+    return { bgStart: '#1E1E24', bgEnd: '#121216', text: '#FFFFFF', rim: 'rgba(255,255,255,0.4)', monogram: 'An' };
   }
   if (id.includes('mediaflow') || name.includes('mediaflow')) {
     return { bgStart: '#002B49', bgEnd: '#001424', text: '#31A8FF', rim: '#31A8FF', monogram: 'Mf' };
@@ -93,6 +93,7 @@ export const AppIconRenderer: React.FC<AppIconRendererProps> = ({
     if (isTapStudio) return TAP_STUDIO_LOGO_BASE64;
     if (isMediaFlowStudio) return MEDIAFLOW_STUDIO_LOGO_BASE64;
     if (isOneTap) return ONE_TAP_LOGO_BASE64;
+    if (app.id?.includes('anything') || app.name?.toLowerCase().includes('anything')) return '/app-logo.png';
 
     if (typeof rawIconValue === 'string') {
       if (rawIconValue.startsWith('data:image/')) return rawIconValue;

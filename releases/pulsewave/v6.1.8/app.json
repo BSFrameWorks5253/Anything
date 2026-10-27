@@ -1,0 +1,15 @@
+{
+  "id": "pulsewave",
+  "name": "Pulse Wave",
+  "shortName": "PW",
+  "version": "6.1.8",
+  "category": "Mobile & Music",
+  "description": "**Full Changelog**: https://github.com/BSFrameWorks5253/Plusewave/compare/v6.1.7...v6.1.8",
+  "executableName": "Plusewave_6.1.8.exe",
+  "setupExecutableName": "Plusewave_6.1.8_Setup.exe",
+  "gradient": "from-emerald-500 via-teal-400 to-cyan-400",
+  "textColor": "#2dd4bf",
+  "glowColor": "rgba(45, 212, 191, 0.45)",
+  "githubRepo": "BSFrameWorks5253/Plusewave",
+  "iconType": "monogram"
+}

@@ -1,0 +1,9 @@
+{
+  "appId": "one-tap",
+  "appName": "One Tap Workstation",
+  "version": "26.10.27",
+  "setupFile": "OneTap-V-26.10.27.exe",
+  "size": "91.6 MB",
+  "publishedAt": "2026-10-26T16:29:00.000Z",
+  "destination": "both"
+}

@@ -1,0 +1,30 @@
+{
+  "appId": "docuflow-studio",
+  "appName": "DocuFlow Studio Pro",
+  "version": "26.10.27",
+  "executableName": "DocuFlow_Studio_26.10.27_Setup.exe",
+  "releaseDate": "2026-10-26",
+  "releaseType": "minor",
+  "tagline": "DocuFlow Studio Pro v26.10.27 from GitHub Releases",
+  "summary": "DocuFlow Studio Pro v26.10.27",
+  "newFeatures": [
+    "DocuFlow Studio Pro v1.0.0 introduces PDFella-grade in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+    "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+    "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+    "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+    "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP"
+  ],
+  "improvements": [
+    "Ecosystem loader integration",
+    "Performance optimizations"
+  ],
+  "fixes": [
+    "Stability and compatibility updates"
+  ],
+  "emailNotification": {
+    "subject": "🚀 DocuFlow Studio Pro v26.10.27 is Live!",
+    "preview": "Discover all the updates in v26.10.27.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-violet-700 via-purple-600 to-indigo-500"
+  }
+}

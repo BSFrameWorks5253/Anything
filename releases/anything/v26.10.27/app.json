@@ -1,0 +1,21 @@
+{
+  "id": "anything",
+  "name": "Anything Master Hub",
+  "shortName": "An",
+  "version": "26.10.27",
+  "category": "Productivity & Utilities",
+  "description": "Anything Master Hub — High performance native workstation application for the Anything ecosystem.",
+  "executableName": "Anything_26.10.27_Setup.exe",
+  "setupExecutableName": "Anything_26.10.27_Setup.exe",
+  "packageFileName": "Anything_26.10.27_Setup.exe",
+  "gradient": "from-cyan-400 to-indigo-600",
+  "downloadUrl": "releases/anything/v26.10.27/Anything_26.10.27_Setup.exe",
+  "iconType": "image",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i5 / AMD Ryzen 5 or higher",
+    "ram": "8 GB RAM",
+    "graphics": "DirectX 11 compatible",
+    "storage": "500 MB available space"
+  }
+}

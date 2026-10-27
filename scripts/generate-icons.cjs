@@ -36,8 +36,8 @@ app.whenReady().then(async () => {
       <svg width="512" height="512" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="emblemGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#FF2A2A" />
-            <stop offset="100%" stop-color="#BA0000" />
+            <stop offset="0%" stop-color="#1E1E24" />
+            <stop offset="100%" stop-color="#121216" />
           </linearGradient>
           <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
             <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.4)" />

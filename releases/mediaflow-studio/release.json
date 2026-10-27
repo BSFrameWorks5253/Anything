@@ -1,0 +1,9 @@
+{
+  "appId": "mediaflow-studio",
+  "appName": "MediaFlow Studio",
+  "version": "26.10.27",
+  "setupFile": "Mediaflow_studio_26.10.27_Setup.exe",
+  "size": "86.2 MB",
+  "publishedAt": "2026-10-26T16:30:00.000Z",
+  "destination": "both"
+}

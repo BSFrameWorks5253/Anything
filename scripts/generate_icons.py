@@ -5,8 +5,8 @@ def create_anything_logo():
     size = 1024
     
     # 1. Base gradient rounded rectangle
-    top_color = (255, 42, 42, 255)
-    bottom_color = (186, 0, 0, 255)
+    top_color = (30, 30, 36, 255)
+    bottom_color = (18, 18, 22, 255)
     
     grad = Image.new("RGBA", (size, size))
     draw_grad = ImageDraw.Draw(grad)

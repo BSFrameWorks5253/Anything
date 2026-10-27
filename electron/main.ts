@@ -18,7 +18,46 @@ import { autoUpdater } from 'electron-updater';
 
 app.name = 'Anything';
 
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT MAIN PROCESS EXCEPTION]', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[UNHANDLED MAIN PROCESS REJECTION]', reason);
+});
+
 const isDev = process.env.NODE_ENV === 'development';
+
+// Bulletproof asset resolver across both dev and packaged modes
+const getAssetPath = (...segments: string[]): string => {
+  const distPath = path.join(__dirname, '..', 'dist', ...segments);
+  if (fs.existsSync(distPath)) return distPath;
+  const publicPath = path.join(__dirname, '..', 'public', ...segments);
+  if (fs.existsSync(publicPath)) return publicPath;
+  const resPath = path.join(process.resourcesPath, ...segments);
+  if (fs.existsSync(resPath)) return resPath;
+  return path.join(__dirname, '..', ...segments);
+};
+
+// Primary App Icon Resolvers (used across taskbar, splash, tray, and shortcuts)
+const getAppIconPath = (): string | undefined => {
+  const icoPath = getAssetPath('icon.ico');
+  if (fs.existsSync(icoPath)) return icoPath;
+  const pngPath = getAssetPath('app-logo.png');
+  if (fs.existsSync(pngPath)) return pngPath;
+  return undefined;
+};
+
+const getAppNativeIcon = (): Electron.NativeImage | undefined => {
+  const iconPath = getAppIconPath();
+  if (iconPath && fs.existsSync(iconPath)) {
+    try {
+      const img = nativeImage.createFromPath(iconPath);
+      if (!img.isEmpty()) return img;
+    } catch {}
+  }
+  return undefined;
+};
 
 // Project root and distribution folders
 const getProjectRoot = () => {
@@ -558,12 +597,15 @@ async function scanAndCollectReleases(): Promise<{
             let needsCopy = true;
             if (fs.existsSync(destPath)) {
               const destStats = fs.statSync(destPath);
-              if (destStats.size === rel.stats.size && destStats.mtimeMs === rel.stats.mtimeMs) {
+              if (destStats.size === rel.stats.size) {
                 needsCopy = false;
               }
             }
             if (needsCopy) {
               fs.copyFileSync(rel.exeFullPath, destPath);
+              try {
+                fs.utimesSync(destPath, rel.stats.atime, rel.stats.mtime);
+              } catch {}
               if (rel === latest) isNewFile = true;
             }
 
@@ -694,7 +736,7 @@ async function scanAndCollectReleases(): Promise<{
                 status: existing.status === 'ready' ? 'update-available' : existing.status,
               };
               updatedCount++;
-              if (hasNewer || isNewFile) {
+              if ((hasNewer || isNewFile) && !hasNotifiedAppUpdate(appId, appVersion)) {
                 sendWindowsNotification(
                   `⚡ Update Detected for ${appName}!`,
                   `Version v${appVersion} was collected from releases. Ready to launch!`,
@@ -702,18 +744,22 @@ async function scanAndCollectReleases(): Promise<{
                   catalogEntry.iconValue,
                   appName
                 );
+                markAppUpdateNotified(appId, appVersion);
               }
             }
           } else {
             catalog.unshift(catalogEntry);
             addedCount++;
-            sendWindowsNotification(
-              `🎉 New Child App: ${appName}`,
-              `Version v${appVersion} was automatically registered from releases!`,
-              undefined,
-              catalogEntry.iconValue,
-              appName
-            );
+            if (!hasNotifiedAppUpdate(appId, `registered-${appVersion}`)) {
+              sendWindowsNotification(
+                `🎉 New Child App: ${appName}`,
+                `Version v${appVersion} was automatically registered from releases!`,
+                undefined,
+                catalogEntry.iconValue,
+                appName
+              );
+              markAppUpdateNotified(appId, `registered-${appVersion}`);
+            }
           }
         } else if (entry.isFile()) {
           const ext = path.extname(entry.name).toLowerCase();
@@ -766,24 +812,30 @@ async function scanAndCollectReleases(): Promise<{
             if (compareVersions(appVersion, existing.version) > 0) {
               catalog[existingIndex] = { ...existing, ...catalogEntry, status: 'update-available' };
               updatedCount++;
-              sendWindowsNotification(
-                `⚡ Update Detected for ${appName}!`,
-                `Version v${appVersion} was collected from releases.`,
-                undefined,
-                catalogEntry.iconValue,
-                appName
-              );
+              if (!hasNotifiedAppUpdate(appId, appVersion)) {
+                sendWindowsNotification(
+                  `⚡ Update Detected for ${appName}!`,
+                  `Version v${appVersion} was collected from releases.`,
+                  undefined,
+                  catalogEntry.iconValue,
+                  appName
+                );
+                markAppUpdateNotified(appId, appVersion);
+              }
             }
           } else {
             catalog.unshift(catalogEntry);
             addedCount++;
-            sendWindowsNotification(
-              `🎉 New Child App: ${appName}`,
-              `Version v${appVersion} is now ready in Anything!`,
-              undefined,
-              catalogEntry.iconValue,
-              appName
-            );
+            if (!hasNotifiedAppUpdate(appId, `registered-${appVersion}`)) {
+              sendWindowsNotification(
+                `🎉 New Child App: ${appName}`,
+                `Version v${appVersion} is now ready in Anything!`,
+                undefined,
+                catalogEntry.iconValue,
+                appName
+              );
+              markAppUpdateNotified(appId, `registered-${appVersion}`);
+            }
           }
         }
       }
@@ -807,11 +859,29 @@ function ensureWindowsAppRegistration(appId: string, displayName: string, iconPa
     const regKey = `HKCU\\Software\\Classes\\AppUserModelId\\${appId}`;
     const safeDisplay = displayName.replace(/"/g, '\\"');
     exec(`reg.exe add "${regKey}" /v "DisplayName" /t REG_SZ /d "${safeDisplay}" /f`, () => {});
+
+    // Ensure icon exists as a real physical file on disk outside app.asar
+    let resolvedPhysicalIcon = iconPath;
     if (iconPath && fs.existsSync(iconPath)) {
-      const safeIcon = iconPath.replace(/"/g, '\\"');
-      exec(`reg.exe add "${regKey}" /v "IconUri" /t REG_SZ /d "${safeIcon}" /f`, () => {});
-      exec(`reg.exe add "${regKey}" /v "IconBackgroundColor" /t REG_SZ /d "FF111827" /f`, () => {});
+      try {
+        const physicalIcon = path.join(app.getPath('userData'), 'app-logo.png');
+        fs.copyFileSync(iconPath, physicalIcon);
+        resolvedPhysicalIcon = physicalIcon;
+      } catch {}
     }
+
+    if (resolvedPhysicalIcon && fs.existsSync(resolvedPhysicalIcon)) {
+      const safeIcon = resolvedPhysicalIcon.replace(/"/g, '\\"');
+      exec(`reg.exe add "${regKey}" /v "IconUri" /t REG_SZ /d "${safeIcon}" /f`, () => {});
+      exec(`reg.exe add "${regKey}" /v "IconBackgroundColor" /t REG_SZ /d "FF030712" /f`, () => {});
+    }
+    exec(`reg.exe add "${regKey}" /v "ShowInSettings" /t REG_DWORD /d 1 /f`, () => {});
+
+    // Ensure Windows FriendlyAppName for both Anything.exe and electron.exe
+    exec(`reg.exe add "HKCU\\Software\\Classes\\Applications\\Anything.exe" /v "FriendlyAppName" /t REG_SZ /d "Anything" /f`, () => {});
+    exec(`reg.exe add "HKCU\\Software\\Classes\\Applications\\Anything.exe" /v "ApplicationName" /t REG_SZ /d "Anything" /f`, () => {});
+    exec(`reg.exe add "HKCU\\Software\\Classes\\Applications\\electron.exe" /v "FriendlyAppName" /t REG_SZ /d "Anything" /f`, () => {});
+    exec(`reg.exe add "HKCU\\Software\\Classes\\Applications\\electron.exe" /v "ApplicationName" /t REG_SZ /d "Anything" /f`, () => {});
   } catch (e) {
     console.warn(`ensureWindowsAppRegistration failed for ${appId}:`, e);
   }
@@ -820,8 +890,13 @@ function ensureWindowsAppRegistration(appId: string, displayName: string, iconPa
 function ensureWindowsShortcut() {
   if (process.platform !== 'win32') return;
   try {
-    const scriptPath = path.join(getProjectRoot(), 'scripts', 'create-shortcut.ps1');
-    if (fs.existsSync(scriptPath)) {
+    const candidatePaths = [
+      path.join(__dirname, '..', 'scripts', 'create-shortcut.ps1'),
+      path.join(getProjectRoot(), 'scripts', 'create-shortcut.ps1'),
+      path.join(process.resourcesPath, 'scripts', 'create-shortcut.ps1'),
+    ];
+    const scriptPath = candidatePaths.find((p) => fs.existsSync(p));
+    if (scriptPath) {
       exec(`powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"`, () => {});
     }
   } catch (e) {
@@ -832,20 +907,60 @@ function ensureWindowsShortcut() {
 // Set Windows AppUserModelId for dedicated taskbar grouping and native Action Center toast notifications
 const ANYTHING_AUMID = 'com.burhanuddin.anything';
 if (process.platform === 'win32') {
-  // In development, setting an arbitrary AUMID that isn't pinned by Windows Shell causes Windows to
-  // display a blank white page icon on the taskbar. Set it only when packaged or when running officially.
-  if (app.isPackaged) {
-    app.setAppUserModelId(ANYTHING_AUMID);
-  } else {
-    // In dev mode, fall back to Electron process ID or app name so Windows taskbar resolves the process icon
-    app.setAppUserModelId(process.execPath);
-  }
-  const defaultIco = path.join(getProjectRoot(), 'public', 'icon.ico');
-  const defaultAppLogo = path.join(getProjectRoot(), 'public', 'app-logo.png');
+  // Always register Anything as the explicit AUMID so Windows Toast Notifications identify as 'Anything'
+  app.setAppUserModelId(ANYTHING_AUMID);
+  const defaultIco = getAssetPath('icon.ico');
+  const defaultAppLogo = getAssetPath('app-logo.png');
   const regLogo = fs.existsSync(defaultIco) ? defaultIco : defaultAppLogo;
   ensureWindowsAppRegistration(ANYTHING_AUMID, 'Anything', regLogo);
   ensureWindowsShortcut();
 }
+
+// ================= NOTIFICATION DEDUPLICATION & PERSISTENCE =================
+const recentNotifications = new Map<string, number>();
+
+const getNotifiedUpdatesFilePath = () => {
+  return path.join(app.getPath('userData'), 'notified-updates.json');
+};
+
+const getNotifiedUpdates = (): Record<string, string> => {
+  try {
+    const p = getNotifiedUpdatesFilePath();
+    if (fs.existsSync(p)) {
+      return JSON.parse(fs.readFileSync(p, 'utf-8'));
+    }
+  } catch {}
+  return {};
+};
+
+const markAppUpdateNotified = (appId: string, version: string) => {
+  try {
+    const cleanVer = (version || '').trim();
+    if (!appId || !cleanVer) return;
+    const normId = appId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const current = getNotifiedUpdates();
+    current[normId] = cleanVer;
+    current[appId] = cleanVer;
+    const p = getNotifiedUpdatesFilePath();
+    const dir = path.dirname(p);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(p, JSON.stringify(current, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Failed saving notified updates:', e);
+  }
+};
+
+const hasNotifiedAppUpdate = (appId: string, version: string): boolean => {
+  try {
+    const cleanVer = (version || '').trim();
+    if (!appId || !cleanVer) return false;
+    const normId = appId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+    const current = getNotifiedUpdates();
+    return current[normId] === cleanVer || current[appId] === cleanVer;
+  } catch {
+    return false;
+  }
+};
 
 function sendWindowsNotification(
   title: string,
@@ -857,7 +972,24 @@ function sendWindowsNotification(
   try {
     if (!Notification.isSupported()) return;
 
-    const defaultIconPath = path.join(getProjectRoot(), 'public', 'app-logo.png');
+    // Deduplication check: suppress identical notifications within 10 minutes
+    const notifKey = `${title}:::${body}`;
+    const now = Date.now();
+    const lastSent = recentNotifications.get(notifKey);
+    if (lastSent && now - lastSent < 10 * 60 * 1000) {
+      console.log(`[Notification Suppressed - Duplicate within cooldown]: ${title}`);
+      return;
+    }
+    recentNotifications.set(notifKey, now);
+
+    // Prune cooldown cache if large
+    if (recentNotifications.size > 200) {
+      for (const [k, time] of recentNotifications.entries()) {
+        if (now - time > 15 * 60 * 1000) recentNotifications.delete(k);
+      }
+    }
+
+    const defaultIconPath = getAppIconPath() || getAssetPath('app-logo.png');
     let resolvedIconPath = defaultIconPath;
     let iconImg: Electron.NativeImage | undefined;
 
@@ -887,6 +1019,11 @@ function sendWindowsNotification(
 
     if (!iconImg && fs.existsSync(resolvedIconPath)) {
       iconImg = nativeImage.createFromPath(resolvedIconPath);
+    }
+
+    // Fall back to primary native app icon if available
+    if (!iconImg) {
+      iconImg = getAppNativeIcon();
     }
 
     const notif = new Notification({
@@ -967,16 +1104,49 @@ function buildTrayMenu(win: BrowserWindow) {
 
 function createSystemTray(win: BrowserWindow) {
   try {
-    const iconPath = path.join(__dirname, '../public/tray-icon.png');
-    let trayImage = fs.existsSync(iconPath)
-      ? nativeImage.createFromPath(iconPath)
-      : nativeImage.createEmpty();
+    const primaryIconPath = getAppIconPath();
+    const appNativeIcon = getAppNativeIcon();
+    let trayImage: Electron.NativeImage | null = null;
+
+    // The task bar logo is the primary logo: prioritize it directly
+    const candidatePaths = [
+      primaryIconPath,
+      getAssetPath('icon.ico'),
+      getAssetPath('app-logo.png'),
+      getAssetPath('tray-icon-32.png'),
+      getAssetPath('tray-icon.png'),
+    ].filter(Boolean) as string[];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          const img = nativeImage.createFromPath(p);
+          if (!img.isEmpty()) {
+            const size = img.getSize();
+            trayImage = (size.width === 32 && size.height === 32)
+              ? img
+              : img.resize({ width: 32, height: 32, quality: 'best' });
+            break;
+          }
+        } catch {}
+      }
+    }
+
+    if (!trayImage && appNativeIcon && !appNativeIcon.isEmpty()) {
+      trayImage = appNativeIcon.resize({ width: 32, height: 32, quality: 'best' });
+    }
+
+    if (!trayImage || trayImage.isEmpty()) {
+      console.warn('System tray icon could not be located; skipping tray initialization');
+      return;
+    }
 
     tray = new Tray(trayImage);
     tray.setToolTip('Anything');
     tray.setContextMenu(buildTrayMenu(win));
 
     tray.on('click', () => {
+      if (win.isDestroyed()) return;
       if (win.isVisible()) {
         win.hide();
       } else {
@@ -1693,7 +1863,7 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
               ? 'installed'
               : existing.status || 'not-installed',
           };
-          if (isOutdated) {
+          if (isOutdated && !hasNotifiedAppUpdate(appId, cleanVer)) {
             sendWindowsNotification(
               `⚡ Update Available for ${appName}!`,
               `Version v${cleanVer} is ready to download from GitHub (Installed: v${activeLocalVer || 'earlier'}).`,
@@ -1701,6 +1871,7 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
               existing.iconValue,
               appName
             );
+            markAppUpdateNotified(appId, cleanVer);
           }
         } else {
           const isOutdated = localVer ? compareVersions(cleanVer, localVer) > 0 : false;
@@ -1711,13 +1882,16 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
             localVersion: localVer || undefined,
             status: isOutdated ? 'update-available' : (localExe ? 'installed' : 'not-installed'),
           });
-          sendWindowsNotification(
-            `🎉 Synced App from GitHub: ${appName}`,
-            `Version v${cleanVer} was automatically added to Anything!`,
-            undefined,
-            undefined,
-            appName
-          );
+          if (!hasNotifiedAppUpdate(appId, `registered-${cleanVer}`)) {
+            sendWindowsNotification(
+              `🎉 Synced App from GitHub: ${appName}`,
+              `Version v${cleanVer} was automatically added to Anything!`,
+              undefined,
+              undefined,
+              appName
+            );
+            markAppUpdateNotified(appId, `registered-${cleanVer}`);
+          }
         }
         synced++;
       } catch (err: any) {
@@ -1744,25 +1918,6 @@ async function syncAppsFromSourcesFile(): Promise<{ success: boolean; synced: nu
 
 let mainWindow: BrowserWindow | null = null;
 let splashWindow: BrowserWindow | null = null;
-const getAppIconPath = () => {
-  const root = getProjectRoot();
-  const icoPath = path.join(root, 'public', 'icon.ico');
-  if (fs.existsSync(icoPath)) return icoPath;
-  const pngPath = path.join(root, 'public', 'app-logo.png');
-  if (fs.existsSync(pngPath)) return pngPath;
-  return undefined;
-};
-
-const getAppNativeIcon = () => {
-  const iconPath = getAppIconPath();
-  if (iconPath && fs.existsSync(iconPath)) {
-    try {
-      const img = nativeImage.createFromPath(iconPath);
-      if (!img.isEmpty()) return img;
-    } catch {}
-  }
-  return undefined;
-};
 
 function createWindow() {
   const appIconPath = getAppIconPath();
@@ -3520,7 +3675,21 @@ function createWindow() {
   });
 
   // Windows Native Toast Notification IPC
-  ipcMain.handle('notification:show', (_, { title, body, appId, icon, appName }: any) => {
+  ipcMain.handle('notification:show', (_, { title, body, appId, icon, appName, version }: any) => {
+    // If this is an update notification for an app, ensure it is only sent once per version
+    let updateVer = version;
+    if (!updateVer && title) {
+      const vMatch = title.match(/v([0-9A-Za-z_.-]+)/i);
+      if (vMatch && vMatch[1]) updateVer = vMatch[1];
+    }
+    if (appId && updateVer && title && title.toLowerCase().includes('update')) {
+      if (hasNotifiedAppUpdate(appId, updateVer)) {
+        console.log(`[IPC Notification Suppressed - Already Notified]: ${appId} v${updateVer}`);
+        return { success: true, suppressed: true };
+      }
+      markAppUpdateNotified(appId, updateVer);
+    }
+
     let resolvedIcon = icon;
     let resolvedAppName = appName;
     if (appId && (!resolvedIcon || !resolvedAppName)) {
@@ -3581,15 +3750,19 @@ function createWindow() {
   // Setup System Tray
   createSystemTray(win);
 
-  // Minimize to System Tray on close instead of terminating
+  // Minimize to System Tray on close instead of terminating (notify once per session)
+  let hasShownTrayNotice = false;
   win.on('close', (e) => {
     if (!isQuitting) {
       e.preventDefault();
       win.hide();
-      sendWindowsNotification(
-        'Anything is running in the background',
-        'Anything is minimized to your system tray. Updates and app notifications will remain active.'
-      );
+      if (!hasShownTrayNotice) {
+        hasShownTrayNotice = true;
+        sendWindowsNotification(
+          'Anything is running in the background',
+          'Anything is minimized to your system tray. Updates and app notifications will remain active.'
+        );
+      }
     }
   });
 
@@ -3643,7 +3816,7 @@ function createWindow() {
   } else {
     // Production build loading
     if (splashWindow && !splashWindow.isDestroyed()) {
-      splashWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { view: 'splash' } }).catch(() => {});
+      splashWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { view: 'splash' }, search: 'view=splash' }).catch(() => {});
     }
     win.loadFile(path.join(__dirname, '../dist/index.html'));
   }

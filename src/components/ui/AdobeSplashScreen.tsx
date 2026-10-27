@@ -33,8 +33,8 @@ export const AnythingBrandEmblem: React.FC<{
   const isTap = lower === 'ts';
   const isMediaFlow = lower === 'ms' || lower === 'mf';
 
-  const defaultFrom = isOneTap ? '#E11D48' : isTap ? '#06B6D4' : isMediaFlow ? '#0066EE' : '#FF2A2A';
-  const defaultTo = isOneTap ? '#9F1239' : isTap ? '#4F46E5' : isMediaFlow ? '#003399' : '#BA0000';
+  const defaultFrom = isOneTap ? '#E11D48' : isTap ? '#06B6D4' : isMediaFlow ? '#0066EE' : '#1E1E24';
+  const defaultTo = isOneTap ? '#9F1239' : isTap ? '#4F46E5' : isMediaFlow ? '#003399' : '#121216';
   const fromColor = gradientFrom || defaultFrom;
   const toColor = gradientTo || defaultTo;
   const shadowColor = isOneTap
@@ -43,7 +43,7 @@ export const AnythingBrandEmblem: React.FC<{
     ? 'rgba(6, 182, 212, 0.45)'
     : isMediaFlow
     ? 'rgba(0, 102, 238, 0.45)'
-    : 'rgba(224, 2, 1, 0.45)';
+    : 'rgba(0, 0, 0, 0.55)';
 
   return (
     <div
