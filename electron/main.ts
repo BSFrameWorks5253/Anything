@@ -1107,6 +1107,264 @@ function sendWindowsNotification(
 let tray: Tray | null = null;
 let isQuitting = false;
 let installedAppsForTray: Array<{ id: string; name: string; path?: string }> = [];
+let lastOneTapConvertedDir: string | null = null;
+
+// ================= ONE TAP PNG TO JPG DAEMON & BACKGROUND CONVERTER =================
+function convertPngToJpgBuffer(pngFilePath: string, quality = 92): Buffer {
+  const img = nativeImage.createFromPath(pngFilePath);
+  if (img.isEmpty()) {
+    throw new Error(`Failed to load PNG image: ${pngFilePath}`);
+  }
+
+  const size = img.getSize();
+  const rawBitmap = img.toBitmap(); // 32-bit BGRA buffer
+  const totalPixels = size.width * size.height;
+
+  // Composite RGBA over pure white (255, 255, 255) for any transparent/translucent pixels
+  for (let i = 0; i < totalPixels; i++) {
+    const offset = i * 4;
+    const a = rawBitmap[offset + 3];
+    if (a < 255) {
+      const alphaRatio = a / 255;
+      const invRatio = 1 - alphaRatio;
+      rawBitmap[offset] = Math.round(rawBitmap[offset] * alphaRatio + 255 * invRatio); // Blue
+      rawBitmap[offset + 1] = Math.round(rawBitmap[offset + 1] * alphaRatio + 255 * invRatio); // Green
+      rawBitmap[offset + 2] = Math.round(rawBitmap[offset + 2] * alphaRatio + 255 * invRatio); // Red
+      rawBitmap[offset + 3] = 255; // Alpha
+    }
+  }
+
+  const whiteBackedImg = nativeImage.createFromBitmap(rawBitmap, {
+    width: size.width,
+    height: size.height,
+  });
+
+  return whiteBackedImg.toJPEG(quality);
+}
+
+async function handleOneTapConvertFiles(
+  win?: BrowserWindow | null,
+  filePaths?: string[]
+): Promise<{ success: boolean; converted: number; failed: number; outputDir?: string }> {
+  try {
+    let targetFiles = filePaths;
+    if (!targetFiles || targetFiles.length === 0) {
+      const openOptions: Electron.OpenDialogOptions = {
+        title: 'One Tap: Select PNG Images to Convert to JPG',
+        buttonLabel: 'Convert to JPG',
+        filters: [
+          { name: 'PNG Images (*.png)', extensions: ['png', 'PNG'] },
+          { name: 'All Files (*.*)', extensions: ['*'] },
+        ],
+        properties: ['openFile', 'multiSelections'],
+      };
+      const result = win && !win.isDestroyed()
+        ? await dialog.showOpenDialog(win, openOptions)
+        : await dialog.showOpenDialog(openOptions);
+
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        return { success: false, converted: 0, failed: 0 };
+      }
+      targetFiles = result.filePaths;
+    }
+
+    const pngFiles = targetFiles.filter((f) => {
+      const ext = path.extname(f).toLowerCase();
+      return ext === '.png' && fs.existsSync(f);
+    });
+
+    if (pngFiles.length === 0) {
+      sendWindowsNotification(
+        'One Tap: No PNGs Found',
+        'None of the selected files were valid .png images.'
+      );
+      return { success: false, converted: 0, failed: 0 };
+    }
+
+    const sourceDir = path.dirname(pngFiles[0]);
+    const outDir = path.join(sourceDir, 'Converted_JPEGs');
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+
+    let converted = 0;
+    let failed = 0;
+
+    for (const file of pngFiles) {
+      try {
+        const stem = path.basename(file, path.extname(file));
+        const dstPath = path.join(outDir, `${stem}.jpg`);
+        const jpgBuf = convertPngToJpgBuffer(file, 92);
+        fs.writeFileSync(dstPath, jpgBuf);
+        converted++;
+      } catch (err) {
+        console.error('[One Tap Tray] Failed converting PNG:', file, err);
+        failed++;
+      }
+    }
+
+    lastOneTapConvertedDir = outDir;
+
+    if (tray && win && !win.isDestroyed()) {
+      tray.setContextMenu(buildTrayMenu(win));
+    }
+
+    sendWindowsNotification(
+      'One Tap: PNG to JPG Complete ✨',
+      `Converted ${converted} image${converted === 1 ? '' : 's'} to JPG in "${path.basename(outDir)}"${failed > 0 ? ` (${failed} failed)` : ''}. Click to open folder.`,
+      () => {
+        shell.openPath(outDir);
+      }
+    );
+
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('onetap:converted', {
+        converted,
+        failed,
+        outputDir: outDir,
+      });
+    }
+
+    return { success: true, converted, failed, outputDir: outDir };
+  } catch (err: any) {
+    console.error('[One Tap Tray] Conversion error:', err);
+    sendWindowsNotification('One Tap: Conversion Error', err?.message || 'An error occurred during conversion.');
+    return { success: false, converted: 0, failed: 1 };
+  }
+}
+
+async function handleOneTapConvertFolder(
+  win?: BrowserWindow | null,
+  targetFolder?: string
+): Promise<{ success: boolean; converted: number; failed: number; outputDir?: string }> {
+  try {
+    let folder = targetFolder;
+    if (!folder) {
+      const folderOptions: Electron.OpenDialogOptions = {
+        title: 'One Tap: Select Folder Containing PNG Images',
+        buttonLabel: 'Convert PNGs to JPG',
+        properties: ['openDirectory'],
+      };
+      const result = win && !win.isDestroyed()
+        ? await dialog.showOpenDialog(win, folderOptions)
+        : await dialog.showOpenDialog(folderOptions);
+
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        return { success: false, converted: 0, failed: 0 };
+      }
+      folder = result.filePaths[0];
+    }
+
+    if (!fs.existsSync(folder)) {
+      sendWindowsNotification('One Tap', `Selected folder does not exist: "${folder}"`);
+      return { success: false, converted: 0, failed: 0 };
+    }
+
+    const entries = fs.readdirSync(folder);
+    const pngFiles = entries.filter((f) => {
+      const ext = path.extname(f).toLowerCase();
+      return ext === '.png';
+    });
+
+    if (pngFiles.length === 0) {
+      sendWindowsNotification(
+        'One Tap: No PNGs Found',
+        `No .png images were found in folder: "${path.basename(folder)}"`
+      );
+      return { success: false, converted: 0, failed: 0 };
+    }
+
+    const outDir = path.join(folder, 'Converted_JPEGs');
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+
+    let converted = 0;
+    let failed = 0;
+
+    for (const file of pngFiles) {
+      try {
+        const fullSrc = path.join(folder, file);
+        const stem = path.basename(file, path.extname(file));
+        const dstPath = path.join(outDir, `${stem}.jpg`);
+        const jpgBuf = convertPngToJpgBuffer(fullSrc, 92);
+        fs.writeFileSync(dstPath, jpgBuf);
+        converted++;
+      } catch (err) {
+        console.error('[One Tap Tray] Failed converting folder image:', file, err);
+        failed++;
+      }
+    }
+
+    lastOneTapConvertedDir = outDir;
+
+    if (tray && win && !win.isDestroyed()) {
+      tray.setContextMenu(buildTrayMenu(win));
+    }
+
+    sendWindowsNotification(
+      'One Tap: Folder Converted ✨',
+      `Converted ${converted} PNG${converted === 1 ? '' : 's'} into "${path.basename(folder)}/Converted_JPEGs"${failed > 0 ? ` (${failed} failed)` : ''}. Click to open.`,
+      () => {
+        shell.openPath(outDir);
+      }
+    );
+
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('onetap:converted', {
+        converted,
+        failed,
+        outputDir: outDir,
+      });
+    }
+
+    return { success: true, converted, failed, outputDir: outDir };
+  } catch (err: any) {
+    console.error('[One Tap Tray] Folder conversion error:', err);
+    sendWindowsNotification('One Tap: Conversion Error', err?.message || 'An error occurred during folder conversion.');
+    return { success: false, converted: 0, failed: 1 };
+  }
+}
+
+function resolveOneTapExecutable(): string | null {
+  const directCandidates = [
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.27.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\One Tap\\V-26.10.27\\OneTap-V-26.10.27.exe',
+  ];
+
+  for (const c of directCandidates) {
+    if (fs.existsSync(c)) return c;
+  }
+
+  const relDir = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release';
+  if (fs.existsSync(relDir)) {
+    try {
+      const files = fs.readdirSync(relDir);
+      const exes = files
+        .filter((f) => f.toLowerCase().endsWith('.exe') && !f.toLowerCase().includes('setup'))
+        .map((f) => path.join(relDir, f));
+      if (exes.length > 0) return exes[0];
+    } catch {}
+  }
+
+  return null;
+}
+
+function launchOneTapApp(win?: BrowserWindow | null): void {
+  const exePath = resolveOneTapExecutable();
+  if (exePath && fs.existsSync(exePath)) {
+    shell.openPath(exePath);
+    sendWindowsNotification('One Tap Workstation', 'Launching One Tap Workstation...');
+  } else {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+      win.webContents.send('notification:clicked', { appId: 'app-one-tap' });
+    }
+  }
+}
 
 function buildTrayMenu(win: BrowserWindow) {
   const appMenuItems =
@@ -1147,6 +1405,41 @@ function buildTrayMenu(win: BrowserWindow) {
         win.show();
         win.webContents.send('tray:check-updates');
       },
+    },
+    { type: 'separator' },
+    {
+      label: '🖼️ One Tap: PNG to JPG',
+      submenu: [
+        {
+          label: '⚡ Convert PNG File(s) to JPG...',
+          click: () => {
+            handleOneTapConvertFiles(win);
+          },
+        },
+        {
+          label: '📁 Convert Folder of PNGs to JPG...',
+          click: () => {
+            handleOneTapConvertFolder(win);
+          },
+        },
+        ...(lastOneTapConvertedDir && fs.existsSync(lastOneTapConvertedDir)
+          ? [
+              {
+                label: `📂 Open Converted Folder (${path.basename(path.dirname(lastOneTapConvertedDir))})`,
+                click: () => {
+                  shell.openPath(lastOneTapConvertedDir!);
+                },
+              },
+            ]
+          : []),
+        { type: 'separator' },
+        {
+          label: '🚀 Open One Tap Workstation',
+          click: () => {
+            launchOneTapApp(win);
+          },
+        },
+      ],
     },
     { type: 'separator' },
     {
@@ -3700,11 +3993,25 @@ function createWindow() {
     }
   });
 
+  // One Tap PNG to JPG IPC Handlers
+  ipcMain.handle('onetap:convert-files', async (_e, files?: string[]) => {
+    return handleOneTapConvertFiles(win, files);
+  });
+
+  ipcMain.handle('onetap:convert-folder', async (_e, folder?: string) => {
+    return handleOneTapConvertFolder(win, folder);
+  });
+
+  ipcMain.handle('onetap:launch', async () => {
+    launchOneTapApp(win);
+    return { success: true };
+  });
+
   // Auto-Updater Handlers
   ipcMain.handle('updater:check', async () => {
     if (isDev) return { status: 'dev-mode', currentVersion: app.getVersion() };
     try {
-      const updater = getSafeAutoUpdater(mainWindow);
+      const updater = getSafeAutoUpdater(win);
       if (!updater) {
         return { status: 'not-available', currentVersion: app.getVersion() };
       }
@@ -3717,7 +4024,7 @@ function createWindow() {
 
   ipcMain.handle('updater:install', () => {
     try {
-      const updater = getSafeAutoUpdater(mainWindow);
+      const updater = getSafeAutoUpdater(win);
       if (updater) updater.quitAndInstall();
     } catch (e) {
       console.error('updater:install error:', e);
