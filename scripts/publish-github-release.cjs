@@ -215,12 +215,14 @@ async function main() {
     for (const dir of possibleDirs) {
       if (!fs.existsSync(dir)) continue;
       const files = fs.readdirSync(dir);
-      const exe = files.find(
+      const candidateExes = files.filter(
         (f) =>
           f.toLowerCase().endsWith('.exe') &&
           !f.toLowerCase().includes('unins') &&
           !f.toLowerCase().endsWith('.blockmap')
       );
+      // Prioritize setup executable matching the target version
+      const exe = candidateExes.find((f) => f.includes(version)) || candidateExes.sort().reverse()[0];
       if (exe) {
         foundSetup = { path: path.join(dir, exe), name: exe };
         break;
