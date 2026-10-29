@@ -1097,5 +1097,134 @@
       "graphics": "DirectX 11 compatible GPU",
       "storage": "250 MB available space"
     }
+  },
+  {
+    "id": "pixelcharm",
+    "name": "Pixelcharm",
+    "productName": "Pixelcharm",
+    "shortName": "PX",
+    "category": "Design & Photography",
+    "version": "1.0.0",
+    "versionText": "v1.0.0",
+    "tagline": "Professional Photoshop-Grade Desktop Image Editor & Creative Suite",
+    "description": "## 🎨 Pixelcharm v1.0.0\n\nProfessional Photoshop-Grade Desktop Image Editor & Creative Suite.\n\n- Full support for Photoshop PSD, PSB, and PSDT documents\n- Layer management with blend modes, opacity, clipping masks, and group hierarchies\n- Non-destructive adjustment layers (Curves, Levels, Hue/Saturation, Color Balance)\n- Vector pen tool, brush engine, selections, text typography, and SVG exports\n- Universal Anything Ecosystem Splash / Dynamic Loader Synchronization",
+    "executableName": "Pixelcharm.exe",
+    "setupExecutableName": "Pixelcharm_Setup_1.0.0.exe",
+    "packageFileName": "Pixelcharm_Setup_1.0.0.exe",
+    "packageSize": "124.5 MB",
+    "packageFormat": ".exe",
+    "gradient": "from-sky-950 via-slate-900 to-blue-800",
+    "textColor": "#38bdf8",
+    "glowColor": "rgba(0, 122, 204, 0.45)",
+    "iconType": "monogram",
+    "iconValue": "PX",
+    "logoText": "PX",
+    "badgeGradient": "linear-gradient(135deg, #001e36, #007acc)",
+    "artworkTitle": "Master Creative Studio",
+    "artistName": "Anything Creative Ecosystem",
+    "status": "not-installed",
+    "platform": "win32",
+    "arch": "x64",
+    "installerType": "nsis-setup",
+    "installerFileName": "Pixelcharm_Setup_1.0.0.exe",
+    "githubRepo": "BSFrameworks5253/Pixelcharm",
+    "repoUrl": "https://github.com/BSFrameworks5253/Pixelcharm",
+    "releaseUrl": "https://github.com/BSFrameworks5253/Pixelcharm/releases/tag/v1.0.0",
+    "downloadUrl": "https://github.com/BSFrameworks5253/Pixelcharm/releases/download/v1.0.0/Pixelcharm_Setup_1.0.0.exe",
+    "releasesUrl": "https://github.com/BSFrameworks5253/Pixelcharm/releases",
+    "releasePage": "https://github.com/BSFrameworks5253/Pixelcharm/releases/tag/v1.0.0",
+    "releasesTagUrl": "https://github.com/BSFrameworks5253/Pixelcharm/releases/tag/v",
+    "releasesApiUrl": "https://api.github.com/repos/BSFrameworks5253/Pixelcharm/releases/latest",
+    "targetPlatforms": [
+      "desktop"
+    ],
+    "supportedFormats": [
+      ".psd",
+      ".psb",
+      ".psdt",
+      ".pixelcharm",
+      ".pixycharm",
+      ".anything-project",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".webp"
+    ],
+    "features": [
+      "Photoshop PSD, PSB, and PSDT parser with full layer hierarchy support",
+      "Layer blend modes, opacity, mask clipping, and raster effects",
+      "Non-destructive adjustment layers: Curves, Levels, Hue/Saturation, Invert",
+      "Vector pen, brush strokes, marquee selection, and text typography",
+      "Universal Anything Ecosystem Splash & Dynamic Loader Synchronization"
+    ],
+    "publishedAt": 1793280000000,
+    "releaseInfo": {
+      "appId": "pixelcharm",
+      "appName": "Pixelcharm",
+      "version": "1.0.0",
+      "executableName": "Pixelcharm_Setup_1.0.0.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Professional Photoshop-Grade Desktop Image Editor & Creative Suite",
+      "summary": "Initial release of Pixelcharm v1.0.0 featuring Photoshop-grade editing, PSD support, and ecosystem loader synchronization.",
+      "newFeatures": [
+        "Photoshop PSD, PSB, and PSDT parser with full layer hierarchy support",
+        "Layer blend modes, opacity, mask clipping, and raster effects",
+        "Non-destructive adjustment layers: Curves, Levels, Hue/Saturation, Invert",
+        "Vector pen, brush strokes, marquee selection, and text typography",
+        "Universal Anything Ecosystem Splash & Dynamic Loader Synchronization"
+      ],
+      "improvements": [
+        "High-DPI crisp rendering on Windows 11",
+        "Sub-second offline startup engine"
+      ],
+      "fixes": [
+        "Zero-flashing window frame synchronization"
+      ],
+      "emailNotification": {
+        "subject": "🎨 Pixelcharm v1.0.0 is Live!",
+        "preview": "Professional Photoshop-Grade Desktop Image Editor & Creative Suite.",
+        "ctaText": "Open in Anything",
+        "heroGradient": "from-sky-950 via-slate-900 to-blue-800"
+      }
+    },
+    "history": [
+      {
+        "appId": "pixelcharm",
+        "appName": "Pixelcharm",
+        "version": "1.0.0",
+        "executableName": "Pixelcharm_Setup_1.0.0.exe",
+        "releaseDate": "2026-10-29",
+        "releaseType": "major",
+        "tagline": "Professional Photoshop-Grade Desktop Image Editor & Creative Suite",
+        "summary": "Initial release of Pixelcharm v1.0.0",
+        "newFeatures": [
+          "Photoshop PSD, PSB, and PSDT parser with full layer hierarchy support",
+          "Layer blend modes, opacity, mask clipping, and raster effects",
+          "Non-destructive adjustment layers: Curves, Levels, Hue/Saturation, Invert",
+          "Vector pen, brush strokes, marquee selection, and text typography",
+          "Universal Anything Ecosystem Splash & Dynamic Loader Synchronization"
+        ],
+        "improvements": [],
+        "fixes": []
+      }
+    ],
+    "changelog": [
+      "Photoshop PSD, PSB, and PSDT parser with full layer hierarchy support",
+      "Layer blend modes, opacity, mask clipping, and raster effects",
+      "Non-destructive adjustment layers: Curves, Levels, Hue/Saturation, Invert",
+      "Vector pen, brush strokes, marquee selection, and text typography",
+      "Universal Anything Ecosystem Splash & Dynamic Loader Synchronization"
+    ],
+    "addedByCreator": true,
+    "size": "124.5 MB",
+    "hasRealIcon": true,
+    "systemRequirements": {
+      "os": "Windows 10 / Windows 11 (64-bit)",
+      "processor": "Intel Core i5 / AMD Ryzen 5 or higher",
+      "ram": "8 GB RAM",
+      "graphics": "DirectX 11 / OpenGL compatible GPU",
+      "storage": "500 MB available space"
+    }
   }
 ]
