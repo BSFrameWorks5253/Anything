@@ -174,6 +174,9 @@ export function resolveOneTapSettingsWatchDir(): { watchDir: string; outDir: str
  */
 export function resolveOneTapExecutable(): string | null {
   const directCandidates = [
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.28.exe',
     'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
     'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.28.exe',
     'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
