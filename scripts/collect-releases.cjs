@@ -68,6 +68,22 @@ function loadCatalog() {
 
 function saveCatalog(catalog) {
   fs.writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2), 'utf-8');
+  const appData = process.env.APPDATA;
+  if (appData) {
+    const targets = [
+      path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
+      path.join(appData, 'anything', 'published-apps', 'catalog.json'),
+      path.join(appData, 'Anything', 'ecosystem_catalog.json'),
+      path.join(appData, 'anything', 'ecosystem_catalog.json')
+    ];
+    for (const t of targets) {
+      try {
+        const d = path.dirname(t);
+        if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+        fs.writeFileSync(t, JSON.stringify(catalog, null, 2), 'utf-8');
+      } catch (e) {}
+    }
+  }
 }
 
 const shaderPresets = [

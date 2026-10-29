@@ -27,8 +27,11 @@ const APPS: AppInfo[] = [
   { name: 'MediaFlow Studio', tag: 'Mf', color: 'from-amber-500 to-orange-600', version: "26.10.30", repo: 'BSFrameWorks5253/MediaFlow-Studio', destination: 'Own Repo + Anything' },
   { name: 'One Tap Workstation', tag: 'Ot', color: 'from-blue-600 to-cyan-500', version: "26.10.30", repo: 'BSFrameWorks5253/onetap-workstation', destination: 'Own Repo + Anything' },
   { name: 'DocuFlow Studio Pro', tag: 'Df', color: 'from-emerald-500 to-teal-700', version: "26.10.30", repo: 'BSFrameWorks5253/DocuFlow-', destination: 'Own Repo + Anything' },
+  { name: 'Anything Office', tag: 'Ao', color: 'from-amber-500 to-rose-600', version: "1.0.1", repo: 'BSFrameworks5253/Anything-Office', destination: 'Own Repo + Anything' },
+  { name: 'Pixelcharm', tag: 'Px', color: 'from-sky-500 to-blue-700', version: "1.0.0", repo: 'BSFrameworks5253/Pixelcharm', destination: 'Own Repo + Anything' },
+  { name: 'PDF Master / AcroFlow', tag: 'Pm', color: 'from-red-600 to-orange-500', version: "1.0.0", repo: 'BSFrameWorks5253/DocuFlow-', destination: 'Own Repo + Anything' },
   { name: 'Anything Master Hub', tag: 'An', color: 'from-cyan-400 to-indigo-600', version: "26.10.30", repo: 'BSFrameWorks5253/Anything', destination: 'Anything Release' },
-  { name: 'Anything Data Manage', tag: 'Dm', color: 'from-purple-600 to-indigo-700', version: "26.10.30", repo: 'Local Hub Only', destination: 'Anything Release Only' },
+  { name: 'Anything Data Manage', tag: 'Dm', color: 'from-purple-600 to-indigo-700', version: "26.10.30", repo: 'BSFrameWorks5253/AIN53_EVENT_SYNC_APP_BACKEND', destination: 'Anything Release Only' },
   { name: 'Auto Copier Pro', tag: 'Ac', color: 'from-rose-500 to-pink-600', version: "26.10.30", repo: 'Local Hub Only', destination: 'Anything Release Only' },
 ];
 
