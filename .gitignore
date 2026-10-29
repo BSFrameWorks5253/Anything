@@ -39,3 +39,7 @@ releases/
 *.njsproj
 *.sln
 *.sw?
+
+# Child App Releases
+Anything Child app realse/
+
