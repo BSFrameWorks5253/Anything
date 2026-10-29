@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, Loader2, Cpu } from 'lucide-react';
 import type { SplashSettings } from '../../data/splash.data';
 import { cleanVersionText } from '../../data/splash.data';
@@ -212,6 +212,10 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
   const [progress, setProgress] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -241,7 +245,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
         setTimeout(() => {
           setIsFadingOut(true);
           setTimeout(() => {
-            onComplete();
+            onCompleteRef.current?.();
           }, 350);
         }, 220);
       } else {
@@ -255,7 +259,7 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [isOpen, settings.durationMs, settings.productName, onComplete]);
+  }, [isOpen, settings.durationMs, settings.productName]);
 
   if (!isOpen) return null;
 

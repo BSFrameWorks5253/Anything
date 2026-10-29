@@ -51,59 +51,30 @@
     },
     "history": [
       {
+        "appId": "one-tap",
+        "appName": "One Tap",
         "version": "26.10.30",
-        "executableName": "One Tap.exe",
-        "setupExecutableName": "latest.yml",
+        "executableName": "OneTap-V-26.10.30.exe",
         "releaseDate": "2026-10-28",
         "releaseType": "minor",
-        "tagline": "One Tap v26.10.30",
+        "tagline": "One Tap v26.10.30 from GitHub Releases",
         "summary": "One Tap v26.10.30",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.30/latest.yml",
-        "sizeFormatted": "341.0 B"
-      },
-      {
-        "version": "26.10.28",
-        "executableName": "One Tap.exe",
-        "setupExecutableName": "latest.yml",
-        "releaseDate": "2026-10-27",
-        "releaseType": "minor",
-        "tagline": "One Tap v26.10.28",
-        "summary": "One Tap v26.10.28",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.28/latest.yml",
-        "sizeFormatted": "341.0 B"
-      },
-      {
-        "version": "26.10.27",
-        "executableName": "One Tap.exe",
-        "setupExecutableName": "latest.yml",
-        "releaseDate": "2026-10-26",
-        "releaseType": "minor",
-        "tagline": "One Tap v26.10.27",
-        "summary": "One Tap v26.10.27",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.27/latest.yml",
-        "sizeFormatted": "341.0 B"
-      },
-      {
-        "version": "26.10.21",
-        "executableName": "One Tap.exe",
-        "setupExecutableName": "latest.yml",
-        "releaseDate": "2026-10-23",
-        "releaseType": "minor",
-        "tagline": "One Tap v26.10.21",
-        "summary": "One Tap v26.10.21",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.21/latest.yml",
-        "sizeFormatted": "341.0 B"
-      },
-      {
-        "version": "26.10.20",
-        "executableName": "One Tap.exe",
-        "setupExecutableName": "latest.yml",
-        "releaseDate": "2026-10-23",
-        "releaseType": "minor",
-        "tagline": "One Tap v26.10.20",
-        "summary": "One Tap v26.10.20",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.20/latest.yml",
-        "sizeFormatted": "341.0 B"
+        "newFeatures": [
+          "One Tap v26.10.30 - Automated Video Production Workstation"
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 One Tap v26.10.30 is Live!",
+          "preview": "Discover all the updates in v26.10.30.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-amber-600 via-orange-500 to-yellow-400"
+        }
       }
     ],
     "systemRequirements": {
@@ -183,59 +154,30 @@
     },
     "history": [
       {
+        "appId": "anything-data-manage",
+        "appName": "Anything Data Manage",
         "version": "1.0.58",
-        "executableName": "AIN53_Data_Management_Portable.exe",
-        "setupExecutableName": "AIN53_Data_Management_Setup.exe",
+        "executableName": "AIN53_Data_Management_Setup.exe",
         "releaseDate": "2026-08-23",
         "releaseType": "minor",
-        "tagline": "Anything Data Manage v1.0.58",
+        "tagline": "Anything Data Manage v1.0.58 from GitHub Releases",
         "summary": "Release v1.0.58",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
-        "sizeFormatted": "124.5 MB"
-      },
-      {
-        "version": "1.0.57",
-        "executableName": "AIN53_Data_Management_Portable.exe",
-        "setupExecutableName": "AIN53_Data_Management_Setup.exe",
-        "releaseDate": "2026-08-23",
-        "releaseType": "minor",
-        "tagline": "Anything Data Manage v1.0.57",
-        "summary": "Release v1.0.57",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.57/AIN53_Data_Management_Setup.exe",
-        "sizeFormatted": "124.5 MB"
-      },
-      {
-        "version": "1.0.56",
-        "executableName": "AIN53_Data_Management_Portable.exe",
-        "setupExecutableName": "AIN53_Data_Management_Setup.exe",
-        "releaseDate": "2026-08-23",
-        "releaseType": "minor",
-        "tagline": "Anything Data Manage v1.0.56",
-        "summary": "Release v1.0.56",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.56/AIN53_Data_Management_Setup.exe",
-        "sizeFormatted": "124.5 MB"
-      },
-      {
-        "version": "1.0.55",
-        "executableName": "AIN53_Data_Management_Portable.exe",
-        "setupExecutableName": "AIN53_Data_Management_Setup.exe",
-        "releaseDate": "2026-08-22",
-        "releaseType": "minor",
-        "tagline": "Anything Data Manage v1.0.55",
-        "summary": "Release v1.0.55",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.55/AIN53_Data_Management_Setup.exe",
-        "sizeFormatted": "124.5 MB"
-      },
-      {
-        "version": "1.0.54",
-        "executableName": "AIN53_Data_Management_Portable.exe",
-        "setupExecutableName": "AIN53_Data_Management_Setup.exe",
-        "releaseDate": "2026-08-14",
-        "releaseType": "minor",
-        "tagline": "Anything Data Manage v1.0.54",
-        "summary": "Release v1.0.54",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.54/AIN53_Data_Management_Setup.exe",
-        "sizeFormatted": "124.4 MB"
+        "newFeatures": [
+          "Automated Release build v1.0.58. Setup and Portable executables attached."
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 Anything Data Manage v1.0.58 is Live!",
+          "preview": "Discover all the updates in v1.0.58.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-emerald-500 via-teal-400 to-cyan-400"
+        }
       }
     ],
     "changelog": [
@@ -302,48 +244,34 @@
     },
     "history": [
       {
+        "appId": "docuflow-studio",
+        "appName": "DocuFlow Studio Pro",
         "version": "26.10.30",
-        "executableName": "DocuFlow_Studio_26.10.30.exe",
-        "setupExecutableName": "DocuFlow_Studio_26.10.30_Setup.exe",
+        "executableName": "DocuFlow_Studio_26.10.30_Setup.exe",
         "releaseDate": "2026-10-28",
         "releaseType": "minor",
-        "tagline": "DocuFlow Studio Pro v26.10.30",
+        "tagline": "DocuFlow Studio Pro v26.10.30 from GitHub Releases",
         "summary": "DocuFlow Studio Pro v26.10.30",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/DocuFlow-/releases/download/v26.10.30/DocuFlow_Studio_26.10.30_Setup.exe",
-        "sizeFormatted": "122.8 MB"
-      },
-      {
-        "version": "26.10.28",
-        "executableName": "DocuFlow_Studio_26.10.30.exe",
-        "setupExecutableName": "DocuFlow_Studio_26.10.28_Setup.exe",
-        "releaseDate": "2026-10-27",
-        "releaseType": "minor",
-        "tagline": "DocuFlow Studio Pro v26.10.28",
-        "summary": "DocuFlow Studio Pro v26.10.28",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/DocuFlow-/releases/download/v26.10.28/DocuFlow_Studio_26.10.28_Setup.exe",
-        "sizeFormatted": "122.8 MB"
-      },
-      {
-        "version": "26.10.27",
-        "executableName": "DocuFlow_Studio_26.10.30.exe",
-        "setupExecutableName": "DocuFlow_Studio_26.10.27_Setup.exe",
-        "releaseDate": "2026-10-26",
-        "releaseType": "minor",
-        "tagline": "DocuFlow Studio Pro v26.10.27",
-        "summary": "DocuFlow Studio Pro v26.10.27",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/DocuFlow-/releases/download/v26.10.27/DocuFlow_Studio_26.10.27_Setup.exe",
-        "sizeFormatted": "122.8 MB"
-      },
-      {
-        "version": "1.0.0",
-        "executableName": "DocuFlow_Studio_26.10.30.exe",
-        "setupExecutableName": "DocuFlow_Studio_1.0.0_Setup.exe",
-        "releaseDate": "2026-10-25",
-        "releaseType": "minor",
-        "tagline": "DocuFlow Studio Pro v1.0.0",
-        "summary": "DocuFlow Studio Pro v1.0.0",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/DocuFlow-/releases/download/v1.0.0/DocuFlow_Studio_1.0.0_Setup.exe",
-        "sizeFormatted": "122.8 MB"
+        "newFeatures": [
+          "DocuFlow Studio Pro v1.0.0 introduces PDFella-grade in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+          "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+          "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+          "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+          "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP"
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 DocuFlow Studio Pro v26.10.30 is Live!",
+          "preview": "Discover all the updates in v26.10.30.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-violet-700 via-purple-600 to-indigo-500"
+        }
       }
     ],
     "changelog": [
@@ -423,59 +351,34 @@
     },
     "history": [
       {
+        "appId": "auto-copier",
+        "appName": "Auto Copier Pro",
         "version": "26.10.30",
         "executableName": "Anything_26.10.30_Setup.exe",
-        "setupExecutableName": "Anything_26.10.30_Setup.exe",
         "releaseDate": "2026-10-28",
         "releaseType": "minor",
-        "tagline": "Auto Copier Pro v26.10.30",
+        "tagline": "Auto Copier Pro v26.10.30 from GitHub Releases",
         "summary": "Anything Master Hub v26.10.30",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.30/Anything_26.10.30_Setup.exe",
-        "sizeFormatted": "112.6 MB"
-      },
-      {
-        "version": "26.10.29",
-        "executableName": "Anything_26.10.30_Setup.exe",
-        "setupExecutableName": "Anything_26.10.29_Setup.exe",
-        "releaseDate": "2026-10-27",
-        "releaseType": "minor",
-        "tagline": "Auto Copier Pro v26.10.29",
-        "summary": "Anything Master Hub v26.10.29",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.29/Anything_26.10.29_Setup.exe",
-        "sizeFormatted": "112.7 MB"
-      },
-      {
-        "version": "26.10.28",
-        "executableName": "Anything_26.10.30_Setup.exe",
-        "setupExecutableName": "Anything_26.10.28_Setup.exe",
-        "releaseDate": "2026-10-27",
-        "releaseType": "minor",
-        "tagline": "Auto Copier Pro v26.10.28",
-        "summary": "Anything Master Hub v26.10.28",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.28/Anything_26.10.28_Setup.exe",
-        "sizeFormatted": "112.7 MB"
-      },
-      {
-        "version": "26.10.27",
-        "executableName": "Anything_26.10.30_Setup.exe",
-        "setupExecutableName": "Anything_26.10.27_Setup.exe",
-        "releaseDate": "2026-10-26",
-        "releaseType": "minor",
-        "tagline": "Auto Copier Pro v26.10.27",
-        "summary": "Anything Master Hub v26.10.27",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.27/Anything_26.10.27_Setup.exe",
-        "sizeFormatted": "112.7 MB"
-      },
-      {
-        "version": "26.10.01",
-        "executableName": "Anything_26.10.30_Setup.exe",
-        "setupExecutableName": "Anything_26.10.01_Setup.exe",
-        "releaseDate": "2026-10-26",
-        "releaseType": "minor",
-        "tagline": "Auto Copier Pro v26.10.01",
-        "summary": "Anything v26.10.01 · Liquid Glass UI",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.01/Anything_26.10.01_Setup.exe",
-        "sizeFormatted": "111.8 MB"
+        "newFeatures": [
+          "Automated production executable package built by Anything Exe Builder Studio.",
+          "**Binary**: `Anything_26.10.30_Setup.exe` (112.6 MB)",
+          "**Target Platform**: Windows x64 (NSIS Standalone Installer)",
+          "**Build Timestamp**: Wed, 28 Oct 2026 05:37:08 GMT",
+          "**Release Hub**: [Anything Ecosystem](https://github.com/BSFrameWorks5253/Anything)"
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 Auto Copier Pro v26.10.30 is Live!",
+          "preview": "Discover all the updates in v26.10.30.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-emerald-500 via-teal-400 to-cyan-400"
+        }
       }
     ],
     "changelog": [
@@ -653,48 +556,34 @@
     },
     "history": [
       {
+        "appId": "mediaflow-studio",
+        "appName": "MediaFlow Studio",
         "version": "26.10.30",
         "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
-        "setupExecutableName": "Mediaflow_studio_26.10.30_Setup.exe",
         "releaseDate": "2026-10-28",
         "releaseType": "minor",
-        "tagline": "MediaFlow Studio v26.10.30",
+        "tagline": "MediaFlow Studio v26.10.30 from GitHub Releases",
         "summary": "MediaFlow Studio v26.10.30",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v26.10.30/Mediaflow_studio_26.10.30_Setup.exe",
-        "sizeFormatted": "82.2 MB"
-      },
-      {
-        "version": "26.10.28",
-        "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
-        "setupExecutableName": "Mediaflow_studio_26.10.28_Setup.exe",
-        "releaseDate": "2026-10-27",
-        "releaseType": "minor",
-        "tagline": "MediaFlow Studio v26.10.28",
-        "summary": "MediaFlow Studio v26.10.28",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v26.10.28/Mediaflow_studio_26.10.28_Setup.exe",
-        "sizeFormatted": "82.2 MB"
-      },
-      {
-        "version": "26.10.27",
-        "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
-        "setupExecutableName": "MediaFlow.Studio.Setup.v6.0.0.exe",
-        "releaseDate": "2026-10-26",
-        "releaseType": "minor",
-        "tagline": "MediaFlow Studio v26.10.27",
-        "summary": "MediaFlow Studio v26.10.27",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v26.10.27/MediaFlow.Studio.Setup.v6.0.0.exe",
-        "sizeFormatted": "86.1 MB"
-      },
-      {
-        "version": "6.0.0",
-        "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
-        "setupExecutableName": "Mediaflow_studio_6.0.0_Setup.exe",
-        "releaseDate": "2026-10-23",
-        "releaseType": "minor",
-        "tagline": "MediaFlow Studio v6.0.0",
-        "summary": "MediaFlow Studio v6.0.0 Release",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v6.0.0/Mediaflow_studio_6.0.0_Setup.exe",
-        "sizeFormatted": "76.5 MB"
+        "newFeatures": [
+          "Automated production executable package built by Anything Exe Builder Studio.",
+          "**Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)",
+          "**Target Platform**: Windows x64 (NSIS Standalone Installer)",
+          "**Build Timestamp**: Wed, 28 Oct 2026 05:28:47 GMT",
+          "**Release Hub**: [Anything Ecosystem](https://github.com/BSFrameWorks5253/Anything)"
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 MediaFlow Studio v26.10.30 is Live!",
+          "preview": "Discover all the updates in v26.10.30.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-violet-700 via-purple-600 to-indigo-500"
+        }
       }
     ],
     "changelog": [
@@ -1053,59 +942,30 @@
     },
     "history": [
       {
+        "appId": "pulsewave",
+        "appName": "Pulse Wave",
         "version": "6.1.16",
         "executableName": "PulseWave-v6.1.16-universal-release.apk",
-        "setupExecutableName": "changelog.json",
         "releaseDate": "2026-10-28",
         "releaseType": "minor",
-        "tagline": "Pulse Wave v6.1.16",
+        "tagline": "Pulse Wave v6.1.16 from GitHub Releases",
         "summary": "Pulse Wave v6.1.16 (Universal Release)",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.16/changelog.json",
-        "sizeFormatted": "3.5 KB"
-      },
-      {
-        "version": "6.1.15",
-        "executableName": "PulseWave-v6.1.16-universal-release.apk",
-        "setupExecutableName": "changelog.json",
-        "releaseDate": "2026-10-28",
-        "releaseType": "minor",
-        "tagline": "Pulse Wave v6.1.15",
-        "summary": "Pulse Wave v6.1.15 (Universal Release)",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.15/changelog.json",
-        "sizeFormatted": "3.0 KB"
-      },
-      {
-        "version": "6.1.14",
-        "executableName": "PulseWave-v6.1.16-universal-release.apk",
-        "setupExecutableName": "changelog.json",
-        "releaseDate": "2026-10-28",
-        "releaseType": "minor",
-        "tagline": "Pulse Wave v6.1.14",
-        "summary": "Pulse Wave v6.1.14 (Universal Release)",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.14/changelog.json",
-        "sizeFormatted": "2.4 KB"
-      },
-      {
-        "version": "6.1.13",
-        "executableName": "PulseWave-v6.1.16-universal-release.apk",
-        "setupExecutableName": "changelog.json",
-        "releaseDate": "2026-10-28",
-        "releaseType": "minor",
-        "tagline": "Pulse Wave v6.1.13",
-        "summary": "Pulse Wave v6.1.13 (Universal Release)",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.13/changelog.json",
-        "sizeFormatted": "1.7 KB"
-      },
-      {
-        "version": "6.1.12",
-        "executableName": "PulseWave-v6.1.16-universal-release.apk",
-        "setupExecutableName": "changelog.json",
-        "releaseDate": "2026-10-28",
-        "releaseType": "minor",
-        "tagline": "Pulse Wave v6.1.12",
-        "summary": "Pulse Wave v6.1.12 (Universal Release)",
-        "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.12/changelog.json",
-        "sizeFormatted": "1.8 KB"
+        "newFeatures": [
+          "*Full Changelog**: https://github.com/BSFrameWorks5253/Plusewave/compare/v6.1.14...v6.1.16"
+        ],
+        "improvements": [
+          "Ecosystem loader integration",
+          "Performance optimizations"
+        ],
+        "fixes": [
+          "Stability and compatibility updates"
+        ],
+        "emailNotification": {
+          "subject": "🚀 Pulse Wave v6.1.16 is Live!",
+          "preview": "Discover all the updates in v6.1.16.",
+          "ctaText": "Open in Anything",
+          "heroGradient": "from-emerald-500 via-teal-400 to-cyan-400"
+        }
       }
     ],
     "changelog": [

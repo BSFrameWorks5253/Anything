@@ -536,3 +536,4 @@ export const MediaFlowStatsTab: React.FC = () => {
     </div>
   );
 };
+

@@ -9,7 +9,7 @@
   "scripts": {
     "dev:vite": "vite",
     "dev:electron": "cross-env NODE_ENV=development electron .",
-    "dev": "concurrently -k \"npm run dev:vite\" \"electron .\"",
+    "dev": "concurrently -k \"npm run dev:vite\" \"cross-env NODE_ENV=development electron .\"",
     "build:vite": "vite build",
     "build:electron": "node -e \"require('fs').mkdirSync('electron-dist',{recursive:true});require('fs').writeFileSync('electron-dist/package.json','{\\\"type\\\":\\\"commonjs\\\"}')\" && tsc -p tsconfig.electron.json",
     "collect-releases": "node scripts/collect-releases.cjs",

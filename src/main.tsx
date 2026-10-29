@@ -2,6 +2,7 @@ import React, { StrictMode, Component, type ErrorInfo, type ReactNode } from 're
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
+import { StandaloneSplashApp } from './StandaloneSplashApp.tsx';
 import { ThemeProvider } from './context/ThemeContext';
 import { ViewModeProvider } from './context/ViewModeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -79,20 +80,30 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RootErrorBoundary>
-      <ThemeProvider>
-        <ViewModeProvider>
-          <AuthProvider>
-            <WorkspaceProvider>
-              <DataBusProvider>
-                <App />
-              </DataBusProvider>
-            </WorkspaceProvider>
-          </AuthProvider>
-        </ViewModeProvider>
-      </ThemeProvider>
-    </RootErrorBoundary>
-  </StrictMode>,
-);
+const isSplashWindow =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('view') === 'splash';
+
+const rootEl = document.getElementById('root')!;
+
+if (isSplashWindow) {
+  createRoot(rootEl).render(<StandaloneSplashApp />);
+} else {
+  createRoot(rootEl).render(
+    <StrictMode>
+      <RootErrorBoundary>
+        <ThemeProvider>
+          <ViewModeProvider>
+            <AuthProvider>
+              <WorkspaceProvider>
+                <DataBusProvider>
+                  <App />
+                </DataBusProvider>
+              </WorkspaceProvider>
+            </AuthProvider>
+          </ViewModeProvider>
+        </ThemeProvider>
+      </RootErrorBoundary>
+    </StrictMode>,
+  );
+}

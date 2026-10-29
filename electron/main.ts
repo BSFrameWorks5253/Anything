@@ -3900,7 +3900,7 @@ function createWindow() {
 
       mainWindow.focus();
     }
-  }, 6000);
+  }, 3000);
 
   // Track window state changes for seamless Maximize / Restore icon updates
 
@@ -7072,7 +7072,7 @@ function createWindow() {
       splashWindow.loadURL(`${devUrl}?view=splash`).catch(() => {});
     }
 
-    const loadDev = (retries = 8) => {
+    const loadDev = (retries = 25) => {
       win.loadURL(devUrl).catch(() => {
         if (retries > 0) setTimeout(() => loadDev(retries - 1), 250);
         else

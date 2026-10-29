@@ -225,3 +225,4 @@ export const AnythingLogoAssemblyAnimation: React.FC<AnythingLogoAssemblyAnimati
     </div>
   );
 };
+
