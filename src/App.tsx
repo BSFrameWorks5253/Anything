@@ -78,6 +78,12 @@ const KNOWN_ECOSYSTEM_REPOS: Record<string, string> = {
   autocopier: "BSFrameWorks5253/Anything",
 
   anything: "BSFrameWorks5253/Anything",
+
+  "anything-office": "BSFrameworks5253/Anything-Office",
+
+  office: "BSFrameworks5253/Anything-Office",
+
+  pixelcharm: "BSFrameworks5253/Pixelcharm",
 };
 
 export function App() {
