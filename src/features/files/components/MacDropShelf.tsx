@@ -21,6 +21,7 @@ import {
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { GlassBadge } from '../../../components/ui/GlassBadge';
+import { AnythingLogoAssemblyAnimation } from '../../../components/ui/AnythingLogoAssemblyAnimation';
 
 export interface ShelfItem {
   id: string;
@@ -50,6 +51,19 @@ export const MacDropShelf: React.FC = () => {
   const [previewItem, setPreviewItem] = useState<ShelfItem | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [animState, setAnimState] = useState<{
+    isOpen: boolean;
+    mode: 'upload' | 'download';
+    title?: string;
+    subtitle?: string;
+    itemCount: number;
+    totalSizeFormatted: string;
+  }>({
+    isOpen: false,
+    mode: 'upload',
+    itemCount: 0,
+    totalSizeFormatted: '0 MB',
+  });
 
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -120,6 +134,16 @@ export const MacDropShelf: React.FC = () => {
     const droppedFiles = Array.from(e.dataTransfer.files);
 
     if (droppedFiles.length === 0) return;
+    const totalBytesDropped = droppedFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+    const dropSizeFormatted = totalBytesDropped > 1024 * 1024 ? `${(totalBytesDropped / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(totalBytesDropped / 1024)} KB`;
+    setAnimState({
+      isOpen: true,
+      mode: 'upload',
+      title: 'Assembling Staged Assets into Hub',
+      subtitle: `Staging ${droppedFiles.length} item(s) (${dropSizeFormatted}) into Studio Drop Shelf`,
+      itemCount: droppedFiles.length,
+      totalSizeFormatted: dropSizeFormatted,
+    });
 
     // In Electron, dropped files carry a physical 'path' property
     const paths = droppedFiles
@@ -180,6 +204,14 @@ export const MacDropShelf: React.FC = () => {
   };
 
   const handleDownloadAll = async () => {
+    setAnimState({
+      isOpen: true,
+      mode: 'download',
+      title: 'Streaming Staged Assets to Disk',
+      subtitle: `Exporting ${items.length} file(s) (${totalSizeFormatted}) at native bus speed`,
+      itemCount: items.length,
+      totalSizeFormatted,
+    });
     for (const it of items) {
       await handleDownloadItem(it);
     }
@@ -558,6 +590,15 @@ export const MacDropShelf: React.FC = () => {
           <span>{feedback}</span>
         </div>
       )}
+      <AnythingLogoAssemblyAnimation
+        isOpen={animState.isOpen}
+        mode={animState.mode}
+        title={animState.title}
+        subtitle={animState.subtitle}
+        itemCount={animState.itemCount}
+        totalSizeFormatted={animState.totalSizeFormatted}
+        onComplete={() => setAnimState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

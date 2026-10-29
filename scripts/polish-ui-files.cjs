@@ -208,3 +208,4 @@ statsContent = statsContent.replace("'ProRes 8K Renders'", "'ProRes & MediaFlow 
 statsContent = statsContent.replace("'RAW Spatial Photos'", "'Production Graphics & Stills'");
 fs.writeFileSync(filesStatsPath, statsContent, 'utf8');
 console.log('✓ Updated FilesStats.tsx');
+

@@ -200,6 +200,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // MediaFlow Studio Event Badges & Remote Launcher
   mediaflowGetBadgesDir: () => ipcRenderer.invoke('mediaflow:get-event-badges-dir'),
+  mediaflowGetSafarStats: () => ipcRenderer.invoke('mediaflow:get-safar-stats'),
   mediaflowSetBadgesDir: (dirPath: string) => ipcRenderer.invoke('mediaflow:set-event-badges-dir', dirPath),
   mediaflowSelectBadgesDir: () => ipcRenderer.invoke('mediaflow:select-badges-dir'),
   mediaflowLaunchStudio: (imagesDir?: string) => ipcRenderer.invoke('mediaflow:launch-studio', imagesDir),

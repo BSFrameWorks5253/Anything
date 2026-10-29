@@ -215,6 +215,46 @@ export function launchMediaFlowStudio(targetDir?: string): boolean {
   }
 }
 
+
+// ── Production Safar Stats Ledger ──────────────────────────────────────────
+
+export function getSafarStatsFilePath(): string {
+  const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+  const candidates = [
+    path.join(appData, 'Anything', 'safar_stats.json'),
+    path.join(appData, 'anything', 'safar_stats.json'),
+    path.join(os.homedir(), 'OneDrive', 'Desktop', 'Anything Apps', 'MediaFlow-Studio', 'safar_stats.json'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+export function readSafarStats(): { exists: boolean; filePath: string; records: any[]; lastUpdated?: string } {
+  const target = getSafarStatsFilePath();
+  if (fs.existsSync(target)) {
+    try {
+      const content = fs.readFileSync(target, 'utf-8');
+      const parsed = JSON.parse(content);
+      const stat = fs.statSync(target);
+      return {
+        exists: true,
+        filePath: target,
+        records: Array.isArray(parsed) ? parsed : (parsed.records || []),
+        lastUpdated: stat.mtime.toISOString(),
+      };
+    } catch (e) {
+      console.warn('[MediaFlow Service] Error reading safar_stats.json:', e);
+    }
+  }
+  return {
+    exists: false,
+    filePath: target,
+    records: [],
+  };
+}
+
 // ── IPC Handlers Registration ─────────────────────────────────────────────
 
 export interface MediaFlowIpcContext {
@@ -279,6 +319,10 @@ export function registerMediaFlowIpc(ctx: MediaFlowIpcContext): void {
   });
 
   // 4. Remote Launch MediaFlow Studio with Deep Link
+  ipcMain.handle('mediaflow:get-safar-stats', async () => {
+    return readSafarStats();
+  });
+
   ipcMain.handle('mediaflow:launch-studio', async (_e, imagesDir?: string) => {
     const launched = launchMediaFlowStudio(imagesDir);
     return launched;

@@ -9,6 +9,8 @@ import { FilePreviewModal } from './components/FilePreviewModal';
 import { SharedAssetLibrary } from './components/SharedAssetLibrary';
 import { MediaFlowEventBadgesCard } from './components/MediaFlowEventBadgesCard';
 import { MacDropShelf } from './components/MacDropShelf';
+import { MediaFlowStatsTab } from './components/MediaFlowStatsTab';
+import { BarChart3 } from 'lucide-react';
 import { OneTapTitlesTab } from './components/OneTapTitlesTab';
 import { Layers, Folder, QrCode, FileText, Film } from 'lucide-react';
 
@@ -23,7 +25,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
   });
 
   const [selectedFile, setSelectedFile] = useState<CloudFileItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'shelf' | 'cloud' | 'shared' | 'onetap'>('shelf');
+  const [activeTab, setActiveTab] = useState<'shelf' | 'cloud' | 'shared' | 'mediaflow-stats' | 'onetap'>('shelf');
 
   const saveFiles = (updated: CloudFileItem[]) => {
     setFiles(updated);
@@ -103,6 +105,17 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           <Folder className="w-3.5 h-3.5 text-purple-400" />
           <span>Shared Assets & MediaFlow Badges</span>
         </button>
+        <button
+          onClick={() => setActiveTab('mediaflow-stats')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'mediaflow-stats'
+              ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5 text-cyan-500" />
+          <span>MediaFlow Production Stats</span>
+        </button>
 
         <button
           onClick={() => setActiveTab('onetap')}
@@ -154,6 +167,14 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
 
           {/* General Shared Asset Library */}
           <SharedAssetLibrary />
+        </div>
+      )}
+
+      
+      {/* Tab: MediaFlow Production & Safar Telemetry */}
+      {activeTab === 'mediaflow-stats' && (
+        <div className="space-y-6">
+          <MediaFlowStatsTab />
         </div>
       )}
 
