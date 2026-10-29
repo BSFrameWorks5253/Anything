@@ -1,7 +1,9 @@
 export type NavigationPage = 
   | 'home' 
   | 'apps' 
-    | 'files' 
+  | 'files' 
+  | 'stats' 
+  | 'onetap' 
   | 'settings';
 
 export type AppCategory = 

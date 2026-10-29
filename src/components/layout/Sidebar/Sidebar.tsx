@@ -4,6 +4,8 @@ import {
   Compass,
   FolderClosed,
   Sliders,
+  BarChart3,
+  Sparkles,
 } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { SidebarLogo } from './SidebarLogo';
@@ -40,12 +42,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      title: 'SHELF & FILES',
+      title: 'STUDIO & ASSETS',
       items: [
         {
           id: 'files' as NavigationPage,
           label: 'Files',
           icon: <FolderClosed className="w-4 h-4" />,
+        },
+        {
+          id: 'stats' as NavigationPage,
+          label: 'Stats',
+          icon: <BarChart3 className="w-4 h-4" />,
+        },
+        {
+          id: 'onetap' as NavigationPage,
+          label: 'One Tap',
+          icon: <Sparkles className="w-4 h-4" />,
         },
       ],
     },

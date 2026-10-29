@@ -1908,6 +1908,12 @@ export function App() {
       case "files":
         return <FilesPage searchQuery={searchQuery} />;
 
+      case "stats":
+        return <MediaFlowStatsPage searchQuery={searchQuery} />;
+
+      case "onetap":
+        return <OneTapStudioPage searchQuery={searchQuery} />;
+
       case "settings":
         return (
           <SettingsPage

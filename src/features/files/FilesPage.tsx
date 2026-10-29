@@ -25,7 +25,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
   });
 
   const [selectedFile, setSelectedFile] = useState<CloudFileItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'shelf' | 'cloud' | 'shared' | 'mediaflow-stats' | 'onetap'>('shelf');
+  const [activeTab, setActiveTab] = useState<'shelf' | 'cloud' | 'shared'>('shelf');
 
   const saveFiles = (updated: CloudFileItem[]) => {
     setFiles(updated);
@@ -105,29 +105,9 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           <Folder className="w-3.5 h-3.5 text-purple-400" />
           <span>Shared Assets & MediaFlow Badges</span>
         </button>
-        <button
-          onClick={() => setActiveTab('mediaflow-stats')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'mediaflow-stats'
-              ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
-          }`}
-        >
-          <BarChart3 className="w-3.5 h-3.5 text-cyan-500" />
-          <span>MediaFlow Production Stats</span>
-        </button>
+        
 
-        <button
-          onClick={() => setActiveTab('onetap')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'onetap'
-              ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
-          }`}
-        >
-          <Film className="w-3.5 h-3.5 text-amber-500" />
-          <span>One Tap Production Titles</span>
-        </button>
+        
       </div>
 
       {/* Tab 1: Mac Drop Shelf & Mobile QR Direct Image Hub */}
@@ -171,19 +151,8 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
       )}
 
       
-      {/* Tab: MediaFlow Production & Safar Telemetry */}
-      {activeTab === 'mediaflow-stats' && (
-        <div className="space-y-6">
-          <MediaFlowStatsTab />
-        </div>
-      )}
-
-      {/* Tab 4: One Tap Final Titles Two-Way Synced Hub */}
-      {activeTab === 'onetap' && (
-        <div className="space-y-6">
-          <OneTapTitlesTab searchQuery={searchQuery} />
-        </div>
-      )}
+      
+      
     </div>
   );
 };

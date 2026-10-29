@@ -21,6 +21,14 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
     title: 'Drop Shelf & Shared Assets',
     subtitle: 'Mac-style drop shelf, QR mobile image hub & cross-app assets',
   },
+  stats: {
+    title: 'MediaFlow Production Stats',
+    subtitle: 'Live Safar telemetry, date breakdown & media processing metrics',
+  },
+  onetap: {
+    title: 'One Tap Production Studio',
+    subtitle: 'Live production tracker, Safar progress & automatic conversion engine',
+  },
   settings: {
     title: 'Preferences',
     subtitle: 'Account, workspace storage and ecosystem settings',
