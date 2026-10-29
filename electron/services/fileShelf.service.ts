@@ -681,6 +681,179 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
         return res.end(JSON.stringify({ success: true, count: shelfItems.length, items: shelfItems }));
       }
 
+      // 2.1 API: Ecosystem Health Check
+      if (pathname === '/api/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+          status: 'ok',
+          service: 'Anything Ecosystem Gateway',
+          port: SERVER_PORT,
+          version: '26.10.30',
+          timestamp: new Date().toISOString()
+        }));
+      }
+
+      // 2.2 API: Ecosystem Catalog for Desktop & Mobile Child Apps
+      if (pathname === '/api/catalog' || pathname === '/api/ecosystem/catalog') {
+        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
+        const catCandidates = [
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json'),
+          path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
+          path.join(appData, 'Anything', 'ecosystem_catalog.json'),
+          path.join(appData, 'anything', 'published-apps', 'catalog.json'),
+          path.join(appData, 'anything', 'ecosystem_catalog.json'),
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+        ];
+        let catalogData: any[] = [];
+        for (const c of catCandidates) {
+          if (fs.existsSync(c)) {
+            try {
+              const parsed = JSON.parse(fs.readFileSync(c, 'utf-8'));
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                catalogData = parsed;
+                break;
+              }
+            } catch {}
+          }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, count: catalogData.length, apps: catalogData, timestamp: Date.now() }));
+      }
+
+      // 2.3 API: Specific App Update Query
+      if (pathname.startsWith('/api/updates/')) {
+        const appId = pathname.replace('/api/updates/', '').toLowerCase().replace(/^app-/, '');
+        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
+        const catCandidates = [
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json'),
+          path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
+          path.join(appData, 'Anything', 'ecosystem_catalog.json'),
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+        ];
+        let matched: any = null;
+        for (const c of catCandidates) {
+          if (fs.existsSync(c)) {
+            try {
+              const list = JSON.parse(fs.readFileSync(c, 'utf-8'));
+              if (Array.isArray(list)) {
+                matched = list.find((a: any) => {
+                  const clean = (a.id || '').toLowerCase().replace(/^app-/, '');
+                  return clean === appId || (a.name || '').toLowerCase().replace(/\s+/g, '-') === appId;
+                });
+                if (matched) break;
+              }
+            } catch {}
+          }
+        }
+        if (matched) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: true, app: matched }));
+        }
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: `App "${appId}" not found in ecosystem catalog` }));
+      }
+
+      // 2.4 API: High-Speed LAN Download of Cached Installer from packages-inbox or releases
+      if (pathname.startsWith('/api/download-package/') || pathname.startsWith('/api/download/')) {
+        const appId = pathname.replace('/api/download-package/', '').replace('/api/download/', '').toLowerCase().replace(/^app-/, '');
+        
+        // Check if matching shelf item first
+        const shelfItem = shelfItems.find((it) => it.id === appId);
+        if (shelfItem && fs.existsSync(shelfItem.filePath)) {
+          res.writeHead(200, {
+            'Content-Type': shelfItem.mimeType,
+            'Content-Disposition': `attachment; filename="${encodeURIComponent(shelfItem.name)}"`,
+            'Content-Length': shelfItem.size,
+          });
+          return fs.createReadStream(shelfItem.filePath).pipe(res);
+        }
+
+        // Search local packages-inbox and release folders
+        const root = path.resolve(__dirname, '..', '..');
+        const searchDirs = [
+          path.join(root, 'packages-inbox'),
+          path.join(root, 'releases', appId),
+          path.join(root, 'published-apps', appId),
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\packages-inbox',
+          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\releases\\${appId}`,
+          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\${appId}`
+        ];
+
+        let foundExe: string | null = null;
+        for (const d of searchDirs) {
+          if (fs.existsSync(d)) {
+            try {
+              const files = fs.readdirSync(d, { recursive: true });
+              const match = files.find((f: any) => {
+                const s = String(f).toLowerCase();
+                return (s.endsWith('.exe') || s.endsWith('.apk') || s.endsWith('.zip')) && !s.includes('unins');
+              });
+              if (match) {
+                foundExe = path.join(d, String(match));
+                break;
+              }
+            } catch {}
+          }
+        }
+
+        if (foundExe && fs.existsSync(foundExe)) {
+          const stats = fs.statSync(foundExe);
+          const fileName = path.basename(foundExe);
+          res.writeHead(200, {
+            'Content-Type': 'application/octet-stream',
+            'Content-Disposition': `attachment; filename="${encodeURIComponent(fileName)}"`,
+            'Content-Length': stats.size,
+          });
+          return fs.createReadStream(foundExe).pipe(res);
+        }
+
+        // If not on local disk, check catalog for remote GitHub download URL and redirect
+        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
+        const catCandidates = [
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json'),
+          path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
+          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+        ];
+        for (const c of catCandidates) {
+          if (fs.existsSync(c)) {
+            try {
+              const list = JSON.parse(fs.readFileSync(c, 'utf-8'));
+              const entry = (Array.isArray(list) ? list : []).find((a: any) => (a.id || '').toLowerCase().replace(/^app-/, '') === appId);
+              if (entry?.downloadUrl) {
+                res.writeHead(302, { Location: entry.downloadUrl });
+                return res.end();
+              }
+            } catch {}
+          }
+        }
+
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: `Package for "${appId}" not found on disk or catalog` }));
+      }
+
+      // 2.5 API: Dynamic Splash Loader Configuration Delivery
+      if (pathname.startsWith('/api/loader/')) {
+        const appId = pathname.replace('/api/loader/', '').toLowerCase();
+        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
+        const loaderCandidates = [
+          path.join(appData, 'Anything', 'loaders', `${appId}.json`),
+          path.join(appData, 'anything', 'loaders', `${appId}.json`),
+          path.resolve(__dirname, '..', '..', 'releases', appId, 'loader-config.json'),
+          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\releases\\${appId}\\loader-config.json`
+        ];
+        for (const p of loaderCandidates) {
+          if (fs.existsSync(p)) {
+            try {
+              const data = JSON.parse(fs.readFileSync(p, 'utf-8'));
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify(data));
+            } catch {}
+          }
+        }
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: `Loader config for "${appId}" not found` }));
+      }
+
       // 3. API: Image Preview Stream
       if (pathname.startsWith('/preview/')) {
         const id = pathname.replace('/preview/', '');

@@ -227,14 +227,14 @@ export const MacDropShelf: React.FC = () => {
               <Layers className="w-4 h-4" />
             </div>
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
-              Mac-Style Drop Shelf & QR Image Hub
+              Universal Drop Shelf & Mobile Gateway
             </h2>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              {items.length} {items.length === 1 ? 'Item' : 'Items'} · {totalSizeFormatted}
+              {items.length} {items.length === 1 ? 'Staged Asset' : 'Staged Assets'} · {totalSizeFormatted}
             </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            Drag files & photos here to stage, download high-res images, or scan QR code to link mobile phone in real-time.
+            Stage media, graphics, and package builds for instant access across your desktop suite and peer-to-peer mobile transfer.
           </p>
         </div>
 
@@ -249,7 +249,7 @@ export const MacDropShelf: React.FC = () => {
               isQrOpen ? 'bg-indigo-500/15' : ''
             }`}
           >
-            {isQrOpen ? 'Hide Mobile QR' : '📱 Phone Live QR'}
+            {isQrOpen ? 'Hide Mobile Link' : 'Mobile QR Link'}
           </GlassButton>
 
           <GlassButton
@@ -259,7 +259,7 @@ export const MacDropShelf: React.FC = () => {
             onClick={handleSelectFiles}
             title="Browse files from your computer"
           >
-            Add Files
+            Add Files & Assets
           </GlassButton>
 
           {items.length > 0 && (
@@ -270,7 +270,7 @@ export const MacDropShelf: React.FC = () => {
                 icon={<ArrowDownToLine className="w-3.5 h-3.5" />}
                 onClick={handleDownloadAll}
                 className="font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20"
-                title="Download all images and files to your PC"
+                title="Download all staged assets to your local drive"
               >
                 Download All ({items.length})
               </GlassButton>
@@ -303,10 +303,10 @@ export const MacDropShelf: React.FC = () => {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-                    Scan with Mobile Phone (Instant Direct Link)
+                    Instant Peer-to-Peer Mobile Link
                   </h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    No app installation required. Works in Safari, Chrome, and any mobile browser.
+                    Direct Wi-Fi pipeline. Works in Safari, Chrome, and any mobile browser without cloud intermediaries.
                   </p>
                 </div>
               </div>
@@ -314,15 +314,15 @@ export const MacDropShelf: React.FC = () => {
               <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-300 font-medium">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span><strong>Download Images:</strong> Save high-res images directly to your phone's camera roll.</span>
+                  <span><strong>Direct Image Downloads:</strong> Preview and save high-resolution studio assets straight to your mobile camera roll.</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <span><strong>Upload Photos:</strong> Snap a photo on mobile and it drops straight onto your PC shelf!</span>
+                  <span><strong>Instant Mobile Ingest:</strong> Snap a photo or choose gallery items on your phone to stream straight onto this shelf.</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                  <span><strong>Local Network Speed:</strong> Direct peer-to-peer Wi-Fi connection without cloud limits.</span>
+                  <span><strong>High-Speed Local LAN:</strong> Direct Wi-Fi stream on port {serverInfo.port} without cloud compression or size limits.</span>
                 </li>
               </ul>
 
@@ -391,11 +391,23 @@ export const MacDropShelf: React.FC = () => {
 
           <div>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-              {isDragging ? 'Release to Drop on Shelf' : 'Drop Images & Files onto Shelf'}
+              {isDragging ? 'Release to Stage Assets on Shelf' : 'Drop Images, Videos & Files onto Shelf'}
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
-              Drag & drop photos, screenshots, PSDs, or documents from anywhere on your Mac/PC
+              Drag & drop high-res photos, 4K clips, PSDs, production graphics, or documents from any application or folder
             </p>
+          </div>
+
+          {/* Supported format pills */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
+            {['PNG', 'JPG', 'MP4', 'WAV', 'PSD', 'PDF', 'ZIP'].map((fmt) => (
+              <span
+                key={fmt}
+                className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-zinc-200/70 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400 border border-zinc-300/50 dark:border-white/10"
+              >
+                {fmt}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -404,8 +416,8 @@ export const MacDropShelf: React.FC = () => {
       {items.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold">
-            <span>Staged Shelf Items ({items.length})</span>
-            <span>{imageCount} Images Available for Download</span>
+            <span>Staged Production Assets ({items.length})</span>
+            <span>{imageCount} High-Res Assets Ready</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">

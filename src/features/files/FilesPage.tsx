@@ -77,7 +77,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-blue-500" />
-          <span>Mac Drop Shelf & Mobile QR</span>
+          <span>Universal Drop Shelf & Mobile QR</span>
         </button>
 
         <button
@@ -89,7 +89,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           }`}
         >
           <FileText className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Cloud Documents</span>
+          <span>Studio Cloud Documents</span>
         </button>
 
         <button
@@ -101,7 +101,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           }`}
         >
           <Folder className="w-3.5 h-3.5 text-purple-400" />
-          <span>Shared Library & MediaFlow Badges</span>
+          <span>Shared Assets & MediaFlow Badges</span>
         </button>
 
         <button
@@ -113,7 +113,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ searchQuery }) => {
           }`}
         >
           <Film className="w-3.5 h-3.5 text-amber-500" />
-          <span>Final Titles (One Tap)</span>
+          <span>One Tap Production Titles</span>
         </button>
       </div>
 

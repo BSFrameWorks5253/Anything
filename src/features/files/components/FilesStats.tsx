@@ -5,21 +5,21 @@ import { GlassCard } from '../../../components/ui/GlassCard';
 export const FilesStats: React.FC = () => {
   const stats = [
     {
-      label: 'Spatial Compositions',
+      label: 'Studio Master Projects',
       value: '28 Files',
       size: '8.4 GB',
       icon: <Layers className="w-4 h-4 text-cyan-400" />,
       gradient: 'from-cyan-500/20 to-blue-600/10',
     },
     {
-      label: 'ProRes 8K Renders',
+      label: 'ProRes & MediaFlow Cuts',
       value: '14 Cuts',
       size: '22.8 GB',
       icon: <Video className="w-4 h-4 text-purple-400" />,
       gradient: 'from-purple-500/20 to-indigo-600/10',
     },
     {
-      label: 'RAW Spatial Photos',
+      label: 'Production Graphics & Stills',
       value: '142 Images',
       size: '4.6 GB',
       icon: <Image className="w-4 h-4 text-emerald-400" />,
