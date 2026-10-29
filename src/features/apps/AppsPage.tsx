@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
+import { PackageOpen } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
 import { appCategoriesList } from '../../data/apps.data';
 import { AppsFilterBar } from './components/AppsFilterBar';
 import { CategoryPills } from './components/CategoryPills';
 import { AppsGrid } from './components/AppsGrid';
-import { CrazyAddAppModal } from './components/CrazyAppStudio/CrazyAddAppModal';
-import { EmptyHubHero } from './components/CrazyAppStudio/EmptyHubHero';
-import { AppDetailModal } from './components/AppDetailModal';
-import { EditAppModal } from './components/EditAppModal';
-import { useViewMode } from '../../context/ViewModeContext';
+import { AppDetailModal } from './components/AppDetailModal.tsx';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard } from '../../components/ui/GlassCard';
-import { CommunityAppStore } from './components/CommunityAppStore';
 
 interface AppsPageProps {
   apps: CatalogApp[];
@@ -23,9 +19,8 @@ interface AppsPageProps {
   onFixPathApp: (app: CatalogApp) => void;
   onUninstallApp: (appId: string) => void;
   onDeleteApp?: (appId: string) => void;
-  onAddCustomApp: (newApp: any) => void;
-  onImportApps: (imported: any[]) => void;
-  onNavigateToPublisher?: () => void;
+  onAddCustomApp?: (newApp: any) => void;
+  onImportApps?: (imported: any[]) => void;
   onCustomizeLoader?: (app: CatalogApp) => void;
   onOpenDetailApp?: (app: CatalogApp) => void;
   onEditApp?: (appId: string, updates: Partial<CatalogApp>) => Promise<void> | void;
@@ -44,9 +39,6 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   onFixPathApp,
   onUninstallApp,
   onDeleteApp,
-  onAddCustomApp,
-  onImportApps,
-  onNavigateToPublisher,
   onCustomizeLoader,
   onOpenDetailApp,
   onEditApp,
@@ -56,29 +48,31 @@ export const AppsPage: React.FC<AppsPageProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'desktop' | 'mobile' | 'installed' | 'updates'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailApp, setDetailApp] = useState<CatalogApp | null>(null);
-  const [editingApp, setEditingApp] = useState<CatalogApp | null>(null);
-  const { viewMode } = useViewMode();
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
   const updateCount = apps.filter((a) => a.status === 'update-available').length;
   const desktopCount = apps.filter((a) => !a.targetPlatforms || a.targetPlatforms.includes('desktop')).length;
-  const mobileCount = apps.filter((a) => a.targetPlatforms?.includes('mobile') || a.category.toLowerCase().includes('mobile')).length;
+  const mobileCount = apps.filter((a) => a.targetPlatforms?.includes('mobile') || (a.category && a.category.toLowerCase().includes('mobile'))).length;
 
   const filteredApps = apps.filter((app) => {
+    const q = (searchQuery || '').toLowerCase();
+    const name = (app?.name || '').toLowerCase();
+    const desc = (app?.description || '').toLowerCase();
+    const cat = (app?.category || '').toLowerCase();
+
     const matchesSearch =
-      !searchQuery ||
-      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.category.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      name.includes(q) ||
+      desc.includes(q) ||
+      cat.includes(q);
 
     const matchesCategory =
       selectedCategory === 'All' || app.category === selectedCategory;
 
     const isDesktopApp = !app.targetPlatforms || app.targetPlatforms.includes('desktop');
-    const isMobileApp = Boolean(app.targetPlatforms?.includes('mobile') || app.category.toLowerCase().includes('mobile'));
+    const isMobileApp = Boolean(app.targetPlatforms?.includes('mobile') || cat.includes('mobile'));
 
     const matchesTab =
       activeTab === 'all' ||
@@ -91,7 +85,7 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   });
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-14">
+    <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-14 animate-fadeIn">
       {/* Top Action Filter Bar */}
       <AppsFilterBar
         activeTab={activeTab}
@@ -103,33 +97,22 @@ export const AppsPage: React.FC<AppsPageProps> = ({
         onUpdateAll={() => {
           apps.filter((a) => a.status === 'update-available').forEach(onUpdateApp);
         }}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
         isCheckingUpdates={isCheckingUpdates}
         onCheckUpdates={onCheckUpdates}
       />
 
-      {activeTab === 'community' ? (
-        <CommunityAppStore apps={apps} />
-      ) : apps.length === 0 ? (
-        viewMode === 'user' ? (
-          <GlassCard variant="elevated" className="p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-3xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center mx-auto text-sky-600">
-              <PackageOpen className="w-8 h-8" />
-            </div>
-            <h3 className={`text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Application Catalog is Empty
-            </h3>
-            <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/60'} leading-relaxed`}>
-              No software packages have been published to this catalog yet. As soon as your publisher pushes apps or updates, they will appear here ready to install in 1 click.
-            </p>
-          </GlassCard>
-        ) : (
-          <EmptyHubHero
-            onOpenAddModal={() => setIsAddModalOpen(true)}
-            onAddPreset={onAddCustomApp}
-            onAutoAdd={onAddCustomApp}
-          />
-        )
+      {apps.length === 0 ? (
+        <GlassCard variant="elevated" className="p-12 text-center max-w-lg mx-auto space-y-4 shadow-2xl">
+          <div className="w-16 h-16 rounded-3xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center mx-auto text-sky-600">
+            <PackageOpen className="w-8 h-8" />
+          </div>
+          <h3 className={`text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Application Catalog is Empty
+          </h3>
+          <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/60'} leading-relaxed`}>
+            No software packages have been published to this catalog yet. Ready-to-install creative tools will appear here automatically.
+          </p>
+        </GlassCard>
       ) : (
         <>
           <CategoryPills
@@ -154,47 +137,28 @@ export const AppsPage: React.FC<AppsPageProps> = ({
             onUninstall={onUninstallApp}
             onDeleteApp={onDeleteApp}
             onCustomizeLoader={onCustomizeLoader}
-            onEditApp={(targetApp) => setEditingApp(targetApp)}
+            onEditApp={(_targetApp) => {}}
             onTryDemo={onTryDemoApp}
           />
         </>
       )}
 
-      {/* Crazy Power App Studio */}
-      <CrazyAddAppModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        existingApps={apps as any}
-        onAddApp={onAddCustomApp}
-        onImportApps={onImportApps}
-      />
-
       {/* App Detail Modal */}
-      <AppDetailModal
-        app={detailApp}
-        isOpen={Boolean(detailApp)}
-        onClose={() => setDetailApp(null)}
-        onLaunch={onLaunchApp}
-        onInstall={onInstallApp}
-        onUpdate={onUpdateApp}
-        onRollback={onRollbackApp}
-        onFixPath={onFixPathApp}
-        onUninstall={onUninstallApp}
-        onDeleteApp={onDeleteApp}
-        onEditApp={onEditApp}
-      />
-
-      {/* Quick Edit App & Icon Modal */}
-      <EditAppModal
-        app={editingApp}
-        isOpen={Boolean(editingApp)}
-        onClose={() => setEditingApp(null)}
-        onSave={async (id, updates) => {
-          if (onEditApp) {
-            await onEditApp(id, updates);
-          }
-        }}
-      />
+      {detailApp && (
+        <AppDetailModal
+          app={detailApp}
+          isOpen={Boolean(detailApp)}
+          onClose={() => setDetailApp(null)}
+          onLaunch={onLaunchApp}
+          onInstall={onInstallApp}
+          onUpdate={onUpdateApp}
+          onRollback={onRollbackApp}
+          onFixPath={onFixPathApp}
+          onUninstall={onUninstallApp}
+          onDeleteApp={onDeleteApp}
+          onEditApp={onEditApp}
+        />
+      )}
     </div>
   );
 };

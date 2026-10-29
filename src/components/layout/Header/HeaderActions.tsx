@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { GlassInput } from '../../ui/GlassInput';
 import { useTheme } from '../../../context/ThemeContext';
-import { useViewMode } from '../../../context/ViewModeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useWorkspace } from '../../../context/WorkspaceContext';
 import { getProfileInitial, getInitialGradient } from '../../../utils/userInitials';
@@ -32,15 +31,10 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
   onSearchChange,
 }) => {
   const { theme, toggleTheme } = useTheme();
-  const { viewMode, setViewMode } = useViewMode();
-  const { user, isAuthenticated, logout, openAuthModal } = useAuth();
+    const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const { activeWorkspace, setActiveWorkspace, workspaces } = useWorkspace();
   const isLight = theme === 'light';
-  const isCreator = Boolean(
-    user?.role?.includes('Creator') ||
-    user?.email === 'burhanuddin@zeninfosys.com' ||
-    user?.phone === '8369811201'
-  );
+  
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
@@ -127,65 +121,6 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         className="w-48 sm:w-64 md:w-72"
       />
 
-      {/* Mode Switcher - Only visible when in Creator Mode */}
-      {viewMode === 'creator' && isCreator && (
-        <div
-          className={`inline-flex p-0.5 rounded-lg border transition-colors select-none ${
-            isLight
-              ? 'bg-zinc-100 border-zinc-200'
-              : 'bg-zinc-800/80 border-zinc-700'
-          }`}
-        >
-          <button
-            onClick={() => setViewMode('creator')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${
-              viewMode === 'creator'
-                ? isLight
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'bg-zinc-700 text-white font-semibold shadow-xs'
-                : isLight
-                ? 'text-zinc-500 hover:text-zinc-900'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-            title="Creator Mode: Manage apps, push packages, link GitHub"
-          >
-            <Wrench className="w-3 h-3 text-cyan-500" />
-            <span className="hidden sm:inline">Creator</span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('user')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${
-              viewMode === 'user'
-                ? isLight
-                  ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                  : 'bg-zinc-700 text-white font-semibold shadow-xs'
-                : isLight
-                ? 'text-zinc-500 hover:text-zinc-900'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-            title="Switch back to User Mode"
-          >
-            <Eye className="w-3 h-3" />
-            <span className="hidden sm:inline">User Mode</span>
-          </button>
-        </div>
-      )}
-
-      {/* Theme Toggle */}
-      <button
-        onClick={toggleTheme}
-        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-          isLight
-            ? 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-            : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-        }`}
-        title={`Switch to ${isLight ? 'Dark' : 'Light'} Mode`}
-        aria-label="Toggle Theme"
-      >
-        {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-      </button>
-
       {/* Notifications */}
       <div className="relative" ref={notifRef}>
         <button
@@ -199,7 +134,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
           aria-label="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-red-600" />
+          
         </button>
 
         {showNotifications && (
@@ -290,23 +225,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
               </div>
 
               <div className="pt-2 space-y-1">
-                {isCreator && (
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setViewMode(viewMode === 'creator' ? 'user' : 'creator');
-                    }}
-                    className="w-full px-2.5 py-1.5 text-xs text-left rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 flex items-center justify-between transition-colors font-medium border border-cyan-500/20 mb-1"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Wrench className="w-3.5 h-3.5" />
-                      <span>{viewMode === 'creator' ? 'Switch to User Mode' : 'Switch to Creator Mode'}</span>
-                    </span>
-                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyan-500/10 font-bold">
-                      {viewMode === 'creator' ? 'Creator' : 'User'}
-                    </span>
-                  </button>
-                )}
+                
                 <div className="px-2 py-1 text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
                   Session: Verified
                 </div>

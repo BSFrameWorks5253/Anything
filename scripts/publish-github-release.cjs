@@ -101,11 +101,14 @@ function uploadAsset(uploadUrlTemplate, filePath, fileName, token) {
   });
 }
 
-async function publishReleaseForTarget({ repoOwner, repoName, version, title, body, assetPath, assetName }) {
+async function publishReleaseForTarget({ repoOwner, repoName, version, title, body, assetPath, assetName, extraAssets = [] }) {
   const tag = version.startsWith('v') ? version : `v${version}`;
   console.log(`\n======================================================`);
   console.log(`🚀 Preparing GitHub Release: ${repoOwner}/${repoName} [${tag}]`);
   console.log(`📦 Asset: ${assetName} (${(fs.statSync(assetPath).size / (1024 * 1024)).toFixed(1)} MB)`);
+  if (extraAssets.length > 0) {
+    console.log(`📎 Extra Assets: ${extraAssets.map((a) => a.name).join(', ')}`);
+  }
   console.log(`======================================================`);
 
   if (!GITHUB_TOKEN) {
@@ -137,20 +140,22 @@ async function publishReleaseForTarget({ repoOwner, repoName, version, title, bo
     console.log(`ℹ️ Existing release found for ${tag} (ID: ${checkRes.data.id}). Updating assets...`);
     releaseData = checkRes.data;
 
-    // Check if asset already exists and remove old one
+    // Check if asset or extra assets already exist and remove old ones
     if (Array.isArray(releaseData.assets)) {
-      const existingAsset = releaseData.assets.find((a) => a.name === assetName);
-      if (existingAsset) {
-        console.log(`🗑️ Removing older asset "${assetName}" (ID: ${existingAsset.id})...`);
-        await makeGitHubRequest({
-          hostname: 'api.github.com',
-          path: `/repos/${repoOwner}/${repoName}/releases/assets/${existingAsset.id}`,
-          method: 'DELETE',
-          headers: {
-            'User-Agent': 'Anything-Release-Publisher',
-            'Authorization': `Bearer ${GITHUB_TOKEN}`,
-          },
-        });
+      const allNamesToDelete = new Set([assetName, ...extraAssets.map((a) => a.name)]);
+      for (const existingAsset of releaseData.assets) {
+        if (allNamesToDelete.has(existingAsset.name)) {
+          console.log(`🗑️ Removing older asset "${existingAsset.name}" (ID: ${existingAsset.id})...`);
+          await makeGitHubRequest({
+            hostname: 'api.github.com',
+            path: `/repos/${repoOwner}/${repoName}/releases/assets/${existingAsset.id}`,
+            method: 'DELETE',
+            headers: {
+              'User-Agent': 'Anything-Release-Publisher',
+              'Authorization': `Bearer ${GITHUB_TOKEN}`,
+            },
+          });
+        }
       }
     }
   } else {
@@ -188,6 +193,20 @@ async function publishReleaseForTarget({ repoOwner, repoName, version, title, bo
   const uploadResult = await uploadAsset(releaseData.upload_url, assetPath, assetName, GITHUB_TOKEN);
   console.log(`✅ Asset successfully uploaded!`);
   console.log(`🔗 Direct Download URL: ${uploadResult.browser_download_url}`);
+
+  // 4. Upload Extra Assets (e.g. latest.yml for auto-updater, .blockmap)
+  for (const extra of extraAssets) {
+    if (fs.existsSync(extra.path)) {
+      console.log(`⬆️ Uploading ${extra.name} (auto-updater metadata)...`);
+      try {
+        await uploadAsset(releaseData.upload_url, extra.path, extra.name, GITHUB_TOKEN);
+        console.log(`✅ ${extra.name} uploaded successfully!`);
+      } catch (err) {
+        console.warn(`⚠️ Failed to upload ${extra.name}:`, err.message);
+      }
+    }
+  }
+
   console.log(`🎉 Release is live at: ${releaseData.html_url}`);
 
   return { success: true, releaseUrl: releaseData.html_url, downloadUrl: uploadResult.browser_download_url };
@@ -242,6 +261,20 @@ Apple WWDC26 Liquid Glass UI ecosystem for creative professionals and developer 
 ### 📥 Download & Install:
 Download **[${foundSetup.name}](https://github.com/${owner}/${repo}/releases/download/v${version}/${foundSetup.name})** and run to install or update.`;
 
+      // Collect electron-updater metadata assets (latest.yml, blockmaps)
+      const extraAssets = [];
+      for (const dir of possibleDirs) {
+        if (!fs.existsSync(dir)) continue;
+        const latestYml = path.join(dir, 'latest.yml');
+        if (fs.existsSync(latestYml)) {
+          extraAssets.push({ path: latestYml, name: 'latest.yml' });
+        }
+        const blockmap = path.join(dir, `${foundSetup.name}.blockmap`);
+        if (fs.existsSync(blockmap)) {
+          extraAssets.push({ path: blockmap, name: `${foundSetup.name}.blockmap` });
+        }
+      }
+
       try {
         await publishReleaseForTarget({
           repoOwner: owner,
@@ -251,6 +284,7 @@ Download **[${foundSetup.name}](https://github.com/${owner}/${repo}/releases/dow
           body: releaseBody,
           assetPath: foundSetup.path,
           assetName: foundSetup.name,
+          extraAssets,
         });
       } catch (err) {
         console.error('❌ Error publishing Anything:', err.message);
@@ -275,8 +309,10 @@ Download **[${foundSetup.name}](https://github.com/${owner}/${repo}/releases/dow
 
       for (const vDir of versionDirs) {
         const vPath = path.join(appPath, vDir.name);
-        const appJsonPath = path.join(vPath, 'app.json');
-        const releaseJsonPath = path.join(vPath, 'release.json');
+        let appJsonPath = path.join(vPath, 'app.json');
+        if (!fs.existsSync(appJsonPath)) appJsonPath = path.join(appPath, 'app.json');
+        let releaseJsonPath = path.join(vPath, 'release.json');
+        if (!fs.existsSync(releaseJsonPath)) releaseJsonPath = path.join(appPath, 'release.json');
 
         if (!fs.existsSync(appJsonPath)) continue;
         const appData = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));

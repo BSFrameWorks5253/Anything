@@ -2,18 +2,13 @@ import React from 'react';
 import {
   LayoutGrid,
   Compass,
-  Smartphone,
-  Cloud,
   FolderClosed,
   Sliders,
-  Sparkles,
-  ExternalLink
 } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarFooter } from './SidebarFooter';
 import { useTheme } from '../../../context/ThemeContext';
-import { useViewMode } from '../../../context/ViewModeContext';
 
 interface SidebarProps {
   activePage: NavigationPage;
@@ -24,10 +19,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activePage,
   onNavigate,
-  updateCount = 0,
 }) => {
   const { theme } = useTheme();
-  const { viewMode } = useViewMode();
   const isLight = theme === 'light';
 
   const sections = [
@@ -41,31 +34,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         },
         {
           id: 'apps' as NavigationPage,
-          label: 'Desktop Apps',
+          label: 'Apps',
           icon: <Compass className="w-4 h-4" />,
-          badge: updateCount > 0 ? updateCount : undefined,
-        },
-        {
-          id: 'mobile' as NavigationPage,
-          label: 'Mobile Apps',
-          icon: <Smartphone className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />,
         },
       ],
     },
     {
-      title: 'ECOSYSTEM',
+      title: 'SHELF & FILES',
       items: [
-        {
-          id: 'publisher' as NavigationPage,
-          label: 'Cloud Hub',
-          icon: <Cloud className="w-4 h-4" />,
-          creatorOnly: true,
-        },
-        {
-          id: 'creator' as NavigationPage,
-          label: 'Creator',
-          icon: <Sparkles className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />,
-        },
         {
           id: 'files' as NavigationPage,
           label: 'Files',
@@ -87,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`w-[84px] h-full flex flex-col items-center py-4 px-2 select-none z-30 relative transition-colors duration-200 shrink-0 ${
+      className={`w-[88px] h-full flex flex-col items-center py-4 px-2 select-none z-30 relative transition-colors duration-200 shrink-0 ${
         isLight
           ? 'bg-[#F2F3F5] border-r border-[#E0E2E6]'
           : 'bg-[#18181B] border-r border-[#27272A]'
@@ -95,12 +71,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <SidebarLogo />
 
-      {/* Nav stack with Adobe CC Section Dividers */}
-      <nav className="flex flex-col gap-3 w-full mt-1 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+      {/* Nav stack */}
+      <nav className="flex flex-col gap-3 w-full mt-2 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
         {sections.map((sec, sIdx) => {
-          const visibleItems = sec.items.filter((item) =>
-            viewMode === 'user' ? !item.creatorOnly : true
-          );
+          const visibleItems = sec.items;
           if (visibleItems.length === 0) return null;
 
           return (
@@ -114,21 +88,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
 
               <span
-                className={`text-[8px] font-mono tracking-widest uppercase mb-1 ${
+                className={`text-[8px] font-mono tracking-widest uppercase mb-1.5 ${
                   isLight ? 'text-zinc-400 font-bold' : 'text-zinc-500 font-semibold'
                 }`}
               >
                 {sec.title}
               </span>
 
-              <div className="flex flex-col gap-1 w-full px-0.5">
+              <div className="flex flex-col gap-1.5 w-full px-0.5">
                 {visibleItems.map((item) => {
                   const isActive = activePage === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => onNavigate(item.id)}
-                      className={`relative w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-150 group select-none ${
+                      className={`relative w-full flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-150 ease-out active:scale-[0.96] group select-none cursor-pointer ${
                         isActive
                           ? isLight
                             ? 'bg-white text-zinc-950 font-bold shadow-xs'
@@ -139,21 +113,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                       title={item.label}
                     >
-                      {/* Adobe Signature Active Red Indicator Bar */}
+                      {/* Signature Active Indicator Bar */}
                       {isActive && (
-                        <div className="absolute left-0 inset-y-2.5 w-[3px] bg-[#E00201] rounded-r-full shadow-[0_0_8px_rgba(224,2,1,0.7)]" />
+                        <div className="absolute left-0 inset-y-2.5 w-[3px] bg-blue-600 dark:bg-blue-500 rounded-r-full shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
                       )}
 
                       <div className="relative p-0.5 transition-transform duration-150 group-hover:scale-105">
                         {item.icon}
-                        {item.badge !== undefined && (
-                          <span className="absolute -top-1 -right-2 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#E00201] text-white shadow-xs">
-                            {item.badge}
-                          </span>
-                        )}
                       </div>
 
-                      <span className="text-[10px] mt-1 tracking-tight leading-tight text-center truncate max-w-full">
+                      <span className="text-[10.5px] mt-1 tracking-tight leading-tight text-center whitespace-nowrap font-medium">
                         {item.label}
                       </span>
                     </button>

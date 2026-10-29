@@ -457,7 +457,7 @@ export const PublisherPage: React.FC<PublisherPageProps> = ({
                 {sources.map((src, idx) => {
                   const repoSlug = src.url.replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
                   const catalogMatch = catalogApps.find(
-                    (a) => a.id === src.id || a.name.toLowerCase() === (src.name || '').toLowerCase()
+                    (a) => a.id === src.id || (a?.name && (src.name || '') && a.name.toLowerCase() === src.name.toLowerCase())
                   );
 
                   return (

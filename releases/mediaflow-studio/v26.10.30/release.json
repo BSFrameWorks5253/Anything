@@ -1,0 +1,35 @@
+{
+  "appId": "mediaflow-studio",
+  "appName": "MediaFlow Studio",
+  "version": "26.10.30",
+  "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
+  "setupExecutableName": "Mediaflow_studio_26.10.30_Setup.exe",
+  "releaseDate": "2026-10-28",
+  "releaseType": "major",
+  "tagline": "MediaFlow Studio v26.10.30 Official GitHub Release",
+  "summary": "MediaFlow Studio v26.10.30",
+  "newFeatures": [
+    "Automated production executable package built by Anything Exe Builder Studio.",
+    "**Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)",
+    "**Target Platform**: Windows x64 (NSIS Standalone Installer)",
+    "**Build Timestamp**: Wed, 28 Oct 2026 05:28:47 GMT",
+    "**Release Hub**: [Anything Ecosystem](https://github.com/BSFrameWorks5253/Anything)"
+  ],
+  "improvements": [
+    "Low latency event loop execution",
+    "Anything parent ecosystem integration",
+    "Liquid Glass styling"
+  ],
+  "fixes": [
+    "Stability enhancements and Windows 11 compatibility"
+  ],
+  "emailNotification": {
+    "subject": "🚀 MediaFlow Studio v26.10.30 is Available!",
+    "preview": "Download or evaluate MediaFlow Studio v26.10.30 now in Anything.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-blue-600 to-indigo-700"
+  },
+  "sizeFormatted": "82.2 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v26.10.30/Mediaflow_studio_26.10.30_Setup.exe",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases"
+}

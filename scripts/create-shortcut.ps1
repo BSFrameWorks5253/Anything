@@ -1,49 +1,80 @@
-# Creates and updates the Anything Start Menu shortcut with System.AppUserModel.ID for native Windows notifications
+param(
+    [string]$CurrentExePath = "",
+    [string]$AppRoot = "",
+    [string]$IconPath = ""
+)
+
+# Creates and updates the Anything Start Menu shortcut with System.AppUserModel.ID for native Windows taskbar & notifications
 $appId = "com.burhanuddin.anything"
 $appName = "Anything"
 $shortcutPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Anything.lnk"
+$desktopShortcutPath = "$env:USERPROFILE\Desktop\Anything.lnk"
 $installedExe = "$env:LOCALAPPDATA\Programs\Anything\Anything.exe"
 
-# 1. Target Executable
-$targetExe = if (Test-Path $installedExe) { $installedExe } else {
-    $e = (Get-Process -Name electron -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Path)
-    if ($e) { $e } else { $installedExe }
+# 1. Target Executable (detect dev mode electron vs production installed Anything.exe)
+$targetExe = if ($CurrentExePath -and (Test-Path $CurrentExePath)) {
+    $CurrentExePath
+} else {
+    $e = (Get-Process -Name electron -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*Anything*" } | Select-Object -First 1 -ExpandProperty Path)
+    if ($e) { 
+        $e 
+    } elseif (Test-Path $installedExe) { 
+        $installedExe 
+    } else { 
+        "electron.exe" 
+    }
 }
 
-# 2. Physical Icon Location (must be a real file outside asar)
+# 2. Physical Multi-Resolution ICO Location (must be a .ico file for Windows Shell & Taskbar)
 $userDataDir = "$env:APPDATA\Anything"
 if (-not (Test-Path $userDataDir)) {
     New-Item -ItemType Directory -Path $userDataDir -Force | Out-Null
 }
-$physicalIconPath = Join-Path $userDataDir "app-logo.png"
+$physicalIcoPath = Join-Path $userDataDir "icon.ico"
+$physicalPngPath = Join-Path $userDataDir "app-logo.png"
 
-$sourceIcon = "$PSScriptRoot\..\dist\app-logo.png"
-if (-not (Test-Path $sourceIcon)) { $sourceIcon = "$PSScriptRoot\..\public\app-logo.png" }
-if (Test-Path $sourceIcon) {
-    Copy-Item -Path $sourceIcon -Destination $physicalIconPath -Force -ErrorAction SilentlyContinue
+$sourceIco = if ($IconPath -and (Test-Path $IconPath)) { $IconPath } else { "$PSScriptRoot\..\dist\icon.ico" }
+if (-not (Test-Path $sourceIco)) { $sourceIco = "$PSScriptRoot\..\public\icon.ico" }
+if (-not (Test-Path $sourceIco)) { $sourceIco = "$PSScriptRoot\..\build\icon.ico" }
+if (Test-Path $sourceIco) {
+    Copy-Item -Path $sourceIco -Destination $physicalIcoPath -Force -ErrorAction SilentlyContinue
 }
 
-if (-not (Test-Path $physicalIconPath) -and (Test-Path $installedExe)) {
-    $physicalIconPath = "$installedExe,0"
+$sourcePng = "$PSScriptRoot\..\dist\app-logo.png"
+if (-not (Test-Path $sourcePng)) { $sourcePng = "$PSScriptRoot\..\public\app-logo.png" }
+if (Test-Path $sourcePng) {
+    Copy-Item -Path $sourcePng -Destination $physicalPngPath -Force -ErrorAction SilentlyContinue
 }
 
-# 3. Create Shortcut via WScript.Shell
+if (-not (Test-Path $physicalIcoPath) -and (Test-Path $installedExe)) {
+    $physicalIcoPath = "$installedExe,0"
+}
+
+# 3. Create / Update Shortcut via WScript.Shell
 $wsh = New-Object -ComObject WScript.Shell
-$sc = $wsh.CreateShortcut($shortcutPath)
-$sc.TargetPath = $targetExe
-if ($targetExe -like "*electron.exe*") {
-    $sc.Arguments = "."
-    $sc.WorkingDirectory = (Split-Path -Parent $PSScriptRoot)
-} else {
-    $sc.WorkingDirectory = Split-Path -Parent $targetExe
+
+function Update-ShortcutFile($path) {
+    $sc = $wsh.CreateShortcut($path)
+    $sc.TargetPath = $targetExe
+    if ($targetExe -like "*electron.exe*") {
+        $sc.Arguments = "."
+        $sc.WorkingDirectory = if ($AppRoot -and (Test-Path $AppRoot)) { $AppRoot } else { (Split-Path -Parent $PSScriptRoot) }
+    } else {
+        $sc.WorkingDirectory = Split-Path -Parent $targetExe
+    }
+    if (Test-Path $physicalIcoPath) {
+        $sc.IconLocation = "$physicalIcoPath,0"
+    } elseif (Test-Path $installedExe) {
+        $sc.IconLocation = "$installedExe,0"
+    }
+    $sc.Description = "Anything - Creative & Productivity Master Hub"
+    $sc.Save()
 }
-if (Test-Path $physicalIconPath) {
-    $sc.IconLocation = "$physicalIconPath,0"
-} elseif (Test-Path $installedExe) {
-    $sc.IconLocation = "$installedExe,0"
+
+Update-ShortcutFile $shortcutPath
+if (Test-Path $desktopShortcutPath) {
+    Update-ShortcutFile $desktopShortcutPath
 }
-$sc.Description = "Anything - Creative & Productivity Master Hub"
-$sc.Save()
 
 # 4. Attach System.AppUserModel.ID to the shortcut via COM IPropertyStore
 $cSharpCode = @"
@@ -120,16 +151,19 @@ public static class ShortcutPKeyHelper {
 try {
     Add-Type -TypeDefinition $cSharpCode -ErrorAction SilentlyContinue
     [ShortcutPKeyHelper]::ApplyAumid($shortcutPath, $appId) | Out-Null
+    if (Test-Path $desktopShortcutPath) {
+        [ShortcutPKeyHelper]::ApplyAumid($desktopShortcutPath, $appId) | Out-Null
+    }
 } catch {}
 
-# 5. Register in Windows Registry for notifications
+# 5. Register in Windows Registry for notifications and shell branding
 try {
     $regPath = "HKCU:\Software\Classes\AppUserModelId\$appId"
     if (-not (Test-Path $regPath)) {
         New-Item -Path $regPath -Force | Out-Null
     }
     Set-ItemProperty -Path $regPath -Name "DisplayName" -Value $appName -Force
-    Set-ItemProperty -Path $regPath -Name "IconUri" -Value $physicalIconPath -Force
+    Set-ItemProperty -Path $regPath -Name "IconUri" -Value $physicalIcoPath -Force
     Set-ItemProperty -Path $regPath -Name "IconBackgroundColor" -Value "FF030712" -Force
     Set-ItemProperty -Path $regPath -Name "ShowInSettings" -Value 1 -Type DWord -Force
 
@@ -143,3 +177,5 @@ try {
     Set-ItemProperty -Path $anythingReg -Name "FriendlyAppName" -Value "Anything" -Force
     Set-ItemProperty -Path $anythingReg -Name "ApplicationName" -Value "Anything" -Force
 } catch {}
+
+Write-Output "Anything shortcut successfully updated with Creative Cloud An icon!"

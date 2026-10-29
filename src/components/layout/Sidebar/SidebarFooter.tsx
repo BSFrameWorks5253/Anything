@@ -53,7 +53,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ onNavigate }) => {
       <button
         onClick={() => onNavigate('settings')}
         className="relative group p-0.5 rounded-full transition-transform active:scale-95"
-        title={user ? `${user.name} (${user.email})` : 'Burhanuddin Sounasath · 8369811201 · Architect'}
+        title={user ? `${user.name} (${user.email})` : 'Creative Workspace · Preferences'}
       >
         <div
           className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold border transition-colors ${

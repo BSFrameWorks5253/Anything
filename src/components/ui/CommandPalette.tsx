@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Command, Search, Sparkles, Zap, Package, Settings, FileText, User, Home, CornerDownLeft, ArrowDown, ArrowUp } from 'lucide-react';
+import { Command, Search, Sparkles, Zap, Package, Settings, FileText, User, Home, CornerDownLeft, ArrowDown, ArrowUp, Folder } from 'lucide-react';
 import type { CatalogApp, NavigationPage } from '../../types/app.types';
 
 interface CommandItem {
@@ -35,13 +35,50 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const navigationCommands: CommandItem[] = [
     { id: 'nav-home', label: 'Go to Home', category: 'Navigation', icon: <Home className="w-4 h-4" />, action: () => onNavigate('home') },
     { id: 'nav-apps', label: 'Go to Apps Hub', category: 'Navigation', icon: <Package className="w-4 h-4" />, action: () => onNavigate('apps') },
-    { id: 'nav-publisher', label: 'Go to Publisher Portal', category: 'Navigation', icon: <Sparkles className="w-4 h-4" />, action: () => onNavigate('publisher') },
     { id: 'nav-files', label: 'Go to Files & Assets', category: 'Navigation', icon: <FileText className="w-4 h-4" />, action: () => onNavigate('files') },
     { id: 'nav-settings', label: 'Go to Settings', category: 'Navigation', icon: <Settings className="w-4 h-4" />, action: () => onNavigate('settings') },
-    { id: 'nav-creator', label: 'Go to Creator Profile', category: 'Navigation', icon: <User className="w-4 h-4" />, action: () => onNavigate('creator') },
   ];
 
   const actionCommands: CommandItem[] = [
+    {
+      id: 'action-onetap-convert-files',
+      label: 'One Tap: Convert PNG Images to JPG...',
+      category: 'Actions',
+      icon: <FileText className="w-4 h-4 text-cyan-400" />,
+      action: () => {
+        window.electronAPI?.oneTapConvertFiles?.();
+      },
+    },
+    {
+      id: 'action-onetap-convert-folder',
+      label: 'One Tap: Batch Convert Folder to JPG...',
+      category: 'Actions',
+      icon: <Folder className="w-4 h-4 text-emerald-400" />,
+      action: () => {
+        window.electronAPI?.oneTapConvertFolder?.();
+      },
+    },
+    {
+      id: 'action-onetap-toggle-watcher',
+      label: 'One Tap: Toggle Screenshot Auto-Converter Daemon',
+      category: 'Actions',
+      icon: <Zap className="w-4 h-4 text-amber-400" />,
+      action: async () => {
+        const status = await window.electronAPI?.oneTapGetWatcherStatus?.();
+        if (status) {
+          await window.electronAPI?.oneTapToggleWatcher?.(!status.enabled);
+        }
+      },
+    },
+    {
+      id: 'action-onetap-open-folder',
+      label: 'One Tap: Open Screenshot Watch Folder',
+      category: 'Actions',
+      icon: <Package className="w-4 h-4 text-purple-400" />,
+      action: () => {
+        window.electronAPI?.oneTapOpenWatchFolder?.();
+      },
+    },
     { id: 'action-updates', label: 'Check for Updates', category: 'Actions', icon: <Zap className="w-4 h-4" />, action: onCheckUpdates },
     { id: 'action-theme', label: 'Toggle Theme', category: 'Actions', icon: <Sparkles className="w-4 h-4" />, action: () => {
       const current = document.documentElement.getAttribute('data-theme');
@@ -64,9 +101,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }));
 
   const allCommands = [...navigationCommands, ...appCommands, ...actionCommands];
+  const q = (query || '').toLowerCase();
   const filteredCommands = allCommands.filter(c =>
-    c.label.toLowerCase().includes(query.toLowerCase()) ||
-    c.category.toLowerCase().includes(query.toLowerCase())
+    (c.label || '').toLowerCase().includes(q) ||
+    (c.category || '').toLowerCase().includes(q)
   );
 
   useEffect(() => {
@@ -197,7 +235,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2 text-zinc-600">
-            Anything v26.10.26
+            Anything v26.10.30
           </div>
         </div>
       </div>

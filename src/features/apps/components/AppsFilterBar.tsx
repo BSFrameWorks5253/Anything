@@ -1,8 +1,7 @@
 import React from 'react';
-import { ArrowDownCircle, Sparkles, Plus, RefreshCw, Monitor, Smartphone } from 'lucide-react';
+import { ArrowDownCircle, RefreshCw, Monitor, Smartphone } from 'lucide-react';
 import { GlassButton } from '../../../components/ui/GlassButton';
 import { useTheme } from '../../../context/ThemeContext';
-import { useViewMode } from '../../../context/ViewModeContext';
 
 export type FilterTab = 'all' | 'desktop' | 'mobile' | 'installed' | 'updates';
 
@@ -14,7 +13,6 @@ interface AppsFilterBarProps {
   desktopCount?: number;
   mobileCount?: number;
   onUpdateAll: () => void;
-  onOpenAddModal: () => void;
   isCheckingUpdates?: boolean;
   onCheckUpdates?: () => void;
 }
@@ -27,16 +25,14 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
   desktopCount,
   mobileCount,
   onUpdateAll,
-  onOpenAddModal,
   isCheckingUpdates,
   onCheckUpdates,
 }) => {
   const { theme } = useTheme();
-  const { viewMode } = useViewMode();
   const isLight = theme === 'light';
 
   const tabs: { id: FilterTab; label: string; count?: number; icon?: React.ReactNode }[] = [
-    { id: 'all', label: viewMode === 'user' ? 'All Applications' : 'All Apps', count: totalCount },
+    { id: 'all', label: 'All Applications', count: totalCount },
     { id: 'desktop', label: 'Desktop', count: desktopCount, icon: <Monitor className="w-3.5 h-3.5" /> },
     { id: 'mobile', label: 'Mobile', count: mobileCount, icon: <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> },
     { id: 'installed', label: 'Installed' },
@@ -63,7 +59,7 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`relative px-3.5 py-1.5 rounded-md text-xs font-medium transition-all select-none flex items-center gap-1.5 ${
+              className={`relative px-3.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-out active:scale-[0.97] select-none flex items-center gap-1.5 ${
                 isActive
                   ? isLight
                     ? 'bg-white text-zinc-900 font-semibold shadow-xs'
@@ -106,17 +102,6 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
             icon={<RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isCheckingUpdates ? 'animate-spin' : ''}`} />}
           >
             {isCheckingUpdates ? 'Checking...' : 'Check for Updates'}
-          </GlassButton>
-        )}
-
-        {viewMode === 'creator' && (
-          <GlassButton
-            variant="glass"
-            size="sm"
-            onClick={onOpenAddModal}
-            icon={<Plus className="w-3.5 h-3.5 text-cyan-400" />}
-          >
-            Add Custom App
           </GlassButton>
         )}
 

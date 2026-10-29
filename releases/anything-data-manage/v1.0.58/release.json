@@ -1,0 +1,31 @@
+{
+  "appId": "anything-data-manage",
+  "appName": "Anything Data Manage",
+  "version": "1.0.58",
+  "executableName": "AIN53_Data_Management_Portable.exe",
+  "setupExecutableName": "AIN53_Data_Management_Setup.exe",
+  "releaseDate": "2026-08-23",
+  "releaseType": "major",
+  "tagline": "Anything Data Manage v1.0.58 Official GitHub Release",
+  "summary": "Release v1.0.58",
+  "newFeatures": [
+    "Automated Release build v1.0.58. Setup and Portable executables attached."
+  ],
+  "improvements": [
+    "Low latency event loop execution",
+    "Anything parent ecosystem integration",
+    "Liquid Glass styling"
+  ],
+  "fixes": [
+    "Stability enhancements and Windows 11 compatibility"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Anything Data Manage v1.0.58 is Available!",
+    "preview": "Download or evaluate Anything Data Manage v1.0.58 now in Anything.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-blue-600 to-indigo-700"
+  },
+  "sizeFormatted": "124.5 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/AIN53/releases"
+}

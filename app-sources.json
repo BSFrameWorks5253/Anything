@@ -21,6 +21,20 @@
     "autoSync": true
   },
   {
+    "id": "anything-data-manage",
+    "name": "Anything Data Manage",
+    "url": "https://github.com/BSFrameWorks5253/AIN53",
+    "category": "Productivity & Data",
+    "autoSync": true
+  },
+  {
+    "id": "auto-copier",
+    "name": "Auto Copier Pro",
+    "url": "https://github.com/BSFrameWorks5253/Anything",
+    "category": "Productivity & Utilities",
+    "autoSync": true
+  },
+  {
     "id": "pulsewave",
     "url": "https://github.com/BSFrameWorks5253/Plusewave",
     "name": "Pulse Wave",

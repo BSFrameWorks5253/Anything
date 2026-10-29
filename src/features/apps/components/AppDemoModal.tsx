@@ -91,10 +91,12 @@ export const AppDemoModal: React.FC<AppDemoModalProps> = ({
     onClose();
   };
 
+  const cat = (app.category || '').toLowerCase();
+  const name = (app.name || '').toLowerCase();
   const isMedia =
-    app.category.toLowerCase().includes('media') ||
-    app.category.toLowerCase().includes('video') ||
-    app.name.toLowerCase().includes('mediaflow');
+    cat.includes('media') ||
+    cat.includes('video') ||
+    name.includes('mediaflow');
 
   return (
     <div

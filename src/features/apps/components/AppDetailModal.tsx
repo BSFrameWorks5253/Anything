@@ -94,18 +94,9 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           }`}
         >
           <div className="flex items-center gap-4">
-            <div className="relative group/modal-icon">
+            <div className="relative shrink-0">
               <div className="p-0.5 rounded-2xl relative overflow-hidden">
                 <AppIconRenderer app={app} size="lg" />
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/modal-icon:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-2xl backdrop-blur-xs cursor-pointer z-10"
-                  title="Change App Icon"
-                >
-                  <Pencil className="w-3.5 h-3.5 text-cyan-400 mb-0.5" />
-                  <span className="text-[8px] font-bold">Edit</span>
-                </button>
               </div>
             </div>
 
@@ -118,14 +109,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                 >
                   {app.name}
                 </h2>
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors"
-                  title="Edit Application & Icon"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
+                
                 {(app.status === 'installed' || app.status === 'ready') && (
                   <GlassBadge variant="emerald" dot>Installed</GlassBadge>
                 )}
@@ -647,12 +631,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
       </GlassCard>
 
       {/* Edit Application & Icon Modal */}
-      <EditAppModal
-        app={app}
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSave={handleSaveEdit}
-      />
+      
     </div>
   );
 };

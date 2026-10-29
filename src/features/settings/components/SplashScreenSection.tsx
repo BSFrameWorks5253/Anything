@@ -178,7 +178,7 @@ export const SplashScreenSection: React.FC<SplashScreenSectionProps> = ({
               targetApp?.shortName ||
               (defaultChildAppSplashSettings[selectedAppId]?.logoText || selectedAppId.slice(0, 2).toUpperCase()),
             versionText:
-              appCleanVersion || cleanVersionText(defaultChildAppSplashSettings[selectedAppId]?.versionText || 'v26.10.26'),
+              appCleanVersion || cleanVersionText(defaultChildAppSplashSettings[selectedAppId]?.versionText || 'v26.10.30'),
           };
     setSettings(defaults);
     saveAppSplashSettings(selectedAppId, defaults);
@@ -550,7 +550,7 @@ function getLoaderConfig() {
                   value={cleanVersionText(settings.versionText)}
                   onChange={(e) => updateSettings({ versionText: cleanVersionText(e.target.value) })}
                   className="w-full px-3 py-1.5 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white font-mono"
-                  placeholder="e.g. v26.10.26"
+                  placeholder="e.g. v26.10.30"
                 />
               </div>
             </div>

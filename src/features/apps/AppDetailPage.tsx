@@ -14,10 +14,11 @@ import {
   HardDrive,
   CheckCircle2,
   AlertTriangle,
-  Pencil,
   Check,
   Copy,
   Cloud,
+  FolderOpen,
+  ShieldCheck,
 } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
 import { GlassCard } from '../../components/ui/GlassCard';
@@ -25,8 +26,8 @@ import { GlassButton } from '../../components/ui/GlassButton';
 import { GlassBadge } from '../../components/ui/GlassBadge';
 import { AppIconRenderer } from './components/CrazyAppStudio/AppIconRenderer';
 import { VersionHistoryTab } from './components/AppDetailModal/VersionHistoryTab';
-import { EditAppModal } from './components/EditAppModal';
 import { AppDemoModal } from './components/AppDemoModal';
+import { OneTapAutoConverterSection } from '../settings/components/OneTapAutoConverterSection';
 
 interface AppDetailPageProps {
   app: CatalogApp;
@@ -45,6 +46,15 @@ interface AppDetailPageProps {
   onStartTrial?: (app: CatalogApp) => void;
 }
 
+function cleanDescription(desc?: string): string {
+  if (!desc) return '';
+  return desc
+    .replace(/^#+\s*[^\n]*\n+/g, '')
+    .replace(/^#+\s+/g, '')
+    .replace(/^[🚀⚡✨🛠️📦]\s*[^\n]*\n+/gu, '')
+    .trim();
+}
+
 export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   app,
   onBack,
@@ -55,25 +65,15 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   onFixPath,
   onUninstall,
   onCustomizeLoader,
-  onDeleteApp,
-  onRenameApp,
   onEditApp,
   onVersionDeleted,
   onStartTrial,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'release-notes' | 'versions'>('overview');
-  const [currentAppName, setCurrentAppName] = useState(app.name);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [renameInput, setRenameInput] = useState(app.name);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [uninstallModalOpen, setUninstallModalOpen] = useState(false);
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isUninstalling, setIsUninstalling] = useState(false);
   const [copiedReleaseUrl, setCopiedReleaseUrl] = useState(false);
-  const [copiedTagUrl, setCopiedTagUrl] = useState(false);
   const [copiedAssetUrl, setCopiedAssetUrl] = useState(false);
   const [resolvedExePath, setResolvedExePath] = useState<string | undefined>(
     app.installedPath && !app.installedPath.toLowerCase().includes('setup') ? app.installedPath : undefined
@@ -106,18 +106,14 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
   }, [app.id, app.installedPath, app.executableName, app.name]);
 
   const repoReleasesUrl =
-    app.releasesUrl || (app.githubRepo ? `https://github.com/${app.githubRepo}/releases` : 'https://github.com/BSFrameWorks5253/TapDesk/releases');
-  const releasesTagBaseUrl =
-    app.releasesTagUrl ||
-    app.endpoints?.releasesTagUrl ||
-    (app.githubRepo ? `https://github.com/${app.githubRepo}/releases/tag/` : 'https://github.com/BSFrameWorks5253/TapDesk/releases/tag/');
+    app.releasesUrl ||
+    (app.githubRepo ? `https://github.com/${app.githubRepo}/releases` : 'https://github.com/BSFrameWorks5253/TapDesk/releases');
   const latestTag = `v${app.version || '1.2.0'}`;
-  const tagReleasesUrl = `${releasesTagBaseUrl.replace(/\/+$/, '')}/${latestTag}`;
   const setupExeName =
     app.setupExecutableName ||
     (app.packageFileName?.toLowerCase().includes('setup')
       ? app.packageFileName
-      : `${app.name.replace(/\s+/g, '')}_${app.version}_Setup.exe`);
+      : `${(app?.name || app?.id || 'App').replace(/\s+/g, '')}_${app?.version || '1.0.0'}_Setup.exe`);
   const setupDownloadUrl =
     app.downloadUrl && app.downloadUrl.startsWith('http')
       ? app.downloadUrl
@@ -135,15 +131,12 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     }
   };
 
-  const copyToClipboard = async (text: string, type: 'release' | 'asset' | 'tag') => {
+  const copyToClipboard = async (text: string, type: 'release' | 'asset') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'release') {
         setCopiedReleaseUrl(true);
         setTimeout(() => setCopiedReleaseUrl(false), 2000);
-      } else if (type === 'tag') {
-        setCopiedTagUrl(true);
-        setTimeout(() => setCopiedTagUrl(false), 2000);
       } else {
         setCopiedAssetUrl(true);
         setTimeout(() => setCopiedAssetUrl(false), 2000);
@@ -153,83 +146,24 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     }
   };
 
-  const handleSaveRename = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = renameInput.trim();
-    if (!trimmed) return;
-    setIsRenaming(true);
-    try {
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI?.renameApp) {
-        await electronAPI.renameApp({ appId: app.id, newName: trimmed });
-      }
-      setCurrentAppName(trimmed);
-      app.name = trimmed;
-      if (onRenameApp) {
-        onRenameApp(app.id, trimmed);
-      }
-      setRenameModalOpen(false);
-    } catch (err) {
-      console.error('Failed to rename app:', err);
-    } finally {
-      setIsRenaming(false);
-    }
-  };
-
-  const handleSaveEdit = async (appId: string, updates: Partial<CatalogApp>) => {
-    if (updates.name) {
-      setCurrentAppName(updates.name);
-      app.name = updates.name;
-    }
-    if (updates.category) app.category = updates.category;
-    if (updates.description !== undefined) app.description = updates.description;
-    if (updates.iconType) app.iconType = updates.iconType;
-    if (updates.iconValue) app.iconValue = updates.iconValue;
-    if (updates.shortName) app.shortName = updates.shortName;
-    if (updates.gradient) app.gradient = updates.gradient;
-    if (updates.textColor) app.textColor = updates.textColor;
-    if (updates.glowColor) app.glowColor = updates.glowColor;
-    (app as any).hasRealIcon = true;
-
-    if (onEditApp) {
-      await onEditApp(appId, updates);
-    } else {
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI?.updateApp) {
-        await electronAPI.updateApp({ appId, ...updates });
-      }
-      if (updates.name && onRenameApp) {
-        onRenameApp(appId, updates.name);
-      }
-    }
-  };
-
-  const handleConfirmDeleteApp = async () => {
-    setIsDeleting(true);
-    try {
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI?.deleteApp) {
-        await electronAPI.deleteApp(app.id);
-      }
-      if (onDeleteApp) {
-        onDeleteApp(app.id);
-      }
-      setDeleteModalOpen(false);
-      onBack();
-    } catch (err) {
-      console.error('Failed to delete app:', err);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   const handleCheckUpdate = async () => {
     let repo = app.githubRepo;
     if (!repo) {
-      if (app.id?.includes('mediaflow') || app.name?.toLowerCase().includes('mediaflow')) {
+      const lower = `${app.id || ''} ${app.name || ''}`.toLowerCase();
+      if (lower.includes('mediaflow')) {
         repo = 'BSFrameWorks5253/MediaFlow-Studio';
-      } else if (app.id?.includes('one-tap') || app.id?.includes('onetap') || app.name?.toLowerCase().includes('one tap')) {
+      } else if (lower.includes('one-tap') || lower.includes('onetap')) {
         repo = 'BSFrameWorks5253/onetap-workstation';
+      } else if (lower.includes('docuflow')) {
+        repo = 'BSFrameworks5253/DocuFlow-';
+      } else if (lower.includes('data-manage') || lower.includes('data manage') || lower.includes('ain53')) {
+        repo = 'BSFrameWorks5253/AIN53';
+      } else if (lower.includes('copier')) {
+        repo = 'BSFrameWorks5253/Anything';
+      } else if (lower.includes('pulse') || lower.includes('wave')) {
+        repo = 'BSFrameWorks5253/Plusewave';
+      } else if (lower.includes('anything')) {
+        repo = 'BSFrameWorks5253/Anything';
       }
     }
     if (!repo) return;
@@ -238,7 +172,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     try {
       const electronAPI = (window as any).electronAPI;
       if (electronAPI?.checkGitHubRelease) {
-        const res = await electronAPI.checkGitHubRelease(repo, app.localVersion || app.version);
+        const res = await electronAPI.checkGitHubRelease(repo, app.localVersion || app.version, app.id);
         if (res.success && res.hasUpdate && res.asset) {
           app.status = 'update-available';
           app.version = res.remoteVersion || app.version;
@@ -251,9 +185,22 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             sizeFormatted: res.asset.sizeFormatted,
             publishedAt: res.publishedAt,
           };
-          setUpdateFeedback(`⚡ Version ${res.remoteVersion} is available on GitHub! Click "Update Now" to install directly.`);
+          if (onEditApp) {
+            await onEditApp(app.id, {
+              status: 'update-available',
+              version: app.version,
+              latestRelease: app.latestRelease,
+            });
+          }
+          setUpdateFeedback(`⚡ Version ${res.remoteVersion} is available! Click "Update Now" to install.`);
         } else if (res.success) {
-          setUpdateFeedback(`✓ ${app.name} is on the latest release (v${app.localVersion || app.version}).`);
+          if (!res.hasUpdate && app.status === 'update-available') {
+            app.status = 'installed';
+            if (onEditApp) {
+              await onEditApp(app.id, { status: 'installed' });
+            }
+          }
+          setUpdateFeedback(`✓ ${app.name} is up to date (v${app.localVersion || app.version}).`);
         } else {
           setUpdateFeedback(res.error || 'Failed to check GitHub releases.');
         }
@@ -277,12 +224,19 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
     app.changelog && app.changelog.length > 0
       ? app.changelog
       : [
-          'Ultra low-latency global macro and hotkey triggers',
-          'USB Stream Deck & hardware peripheral dynamic keymaps',
-          'Automatic Anything Ecosystem background release updater',
-          'Customizable startup loader and splash screen receiver',
-          'Windows 11 Start Menu shortcut & NSIS packaging',
+          'Optimized real-time engine with ultra low-latency background processing',
+          'Seamless integration with Anything master hub and quick launchers',
+          'Full native 64-bit Windows compatibility with dark mode support',
+          'Clean silent package installation and atomic update verification',
         ];
+
+  const isInstalled =
+    app.status === 'installed' ||
+    app.status === 'ready' ||
+    Boolean(resolvedExePath) ||
+    (Boolean(app.installedPath) && !app.installedPath?.toLowerCase().includes('setup'));
+
+  const cleanedDescription = cleanDescription(app.description);
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 animate-fadeIn">
@@ -295,19 +249,19 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             icon={<ArrowLeft className="w-3.5 h-3.5" />}
             onClick={onBack}
           >
-            Back to All Apps
+            All Applications
           </GlassButton>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400">
-            <span>Ecosystem</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span>Creative Cloud</span>
             <span>/</span>
-            <span>{app.category}</span>
+            <span>{app.category || 'Desktop'}</span>
             <span>/</span>
-            <span className="text-zinc-900 dark:text-white font-semibold">{app.name}</span>
+            <span className="text-zinc-900 dark:text-white font-bold">{app.name}</span>
           </div>
         </div>
 
-        {/* Quick Launch / Action Buttons */}
+        {/* Header Action Shortcuts */}
         <div className="flex items-center gap-2">
           {onCustomizeLoader && (
             <GlassButton
@@ -320,98 +274,27 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             </GlassButton>
           )}
 
-          {(app.status === 'installed' || app.status === 'ready') && (
+          {isInstalled && (
             <GlassButton
               variant="primary"
               size="sm"
               icon={<Play className="w-3.5 h-3.5 fill-current" />}
               onClick={() => onLaunch(app)}
-              className="font-bold"
+              className="font-bold shadow-md shadow-blue-500/20"
             >
               Launch App
             </GlassButton>
           )}
 
-          {app.status === 'update-available' && (
-            <div className="flex items-center gap-2">
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<RefreshCw className="w-3.5 h-3.5" />}
-                onClick={() => onUpdate(app)}
-                className="font-bold"
-              >
-                Update Now
-              </GlassButton>
-              {app.installedPath && (
-                <GlassButton
-                  variant="glass"
-                  size="sm"
-                  icon={<Play className="w-3.5 h-3.5 fill-current" />}
-                  onClick={() => onLaunch(app)}
-                  className="font-bold"
-                >
-                  Launch App
-                </GlassButton>
-              )}
-            </div>
-          )}
-
-          {app.status === 'not-installed' && (
-            <div className="flex items-center gap-2">
-              <GlassButton
-                variant="accent"
-                size="sm"
-                icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
-                onClick={() => setIsDemoModalOpen(true)}
-                className="font-semibold border-cyan-500/40 text-cyan-300"
-              >
-                Try Free Demo
-              </GlassButton>
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<Download className="w-3.5 h-3.5" />}
-                onClick={() => onInstall(app)}
-                className="font-bold"
-              >
-                Download & Install
-              </GlassButton>
-            </div>
-          )}
-
-          {app.status === 'trial' && (
-            <div className="flex items-center gap-2">
-              <GlassButton
-                variant="accent"
-                size="sm"
-                icon={<Play className="w-3.5 h-3.5 fill-current" />}
-                onClick={() => setIsDemoModalOpen(true)}
-                className="font-bold bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/40 text-emerald-300"
-              >
-                Open Demo
-              </GlassButton>
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<Download className="w-3.5 h-3.5" />}
-                onClick={() => onInstall(app)}
-                className="font-bold"
-              >
-                Install Full Version
-              </GlassButton>
-            </div>
-          )}
-
-          {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
+          {!isInstalled && app.status !== 'update-available' && (
             <GlassButton
-              variant="glass"
+              variant="primary"
               size="sm"
-              icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
-              onClick={() => setUninstallModalOpen(true)}
-              className="hover:bg-rose-500/10 hover:text-rose-600 text-rose-500 dark:text-rose-400 border-rose-500/30 font-medium"
+              icon={<Download className="w-3.5 h-3.5" />}
+              onClick={() => onInstall(app)}
+              className="font-bold shadow-md shadow-blue-500/20"
             >
-              Uninstall
+              Download & Install
             </GlassButton>
           )}
         </div>
@@ -419,155 +302,164 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
       {/* Main Hero Header Card */}
       <GlassCard
-        variant="interactive"
-        className="p-6 sm:p-8 border-zinc-200 dark:border-white/10 relative overflow-hidden"
+        variant="static"
+        className="p-6 sm:p-8 border-zinc-200/80 dark:border-white/10 relative overflow-hidden bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-xl rounded-2xl"
       >
         <div
-          className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-30"
-          style={{ background: app.glowColor || 'rgba(56, 189, 248, 0.45)' }}
+          className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-25"
+          style={{ background: app.glowColor || 'rgba(56, 189, 248, 0.35)' }}
         />
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start sm:items-center gap-5">
-            <div className="relative shrink-0 group/icon">
-              <div className="p-1 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg relative overflow-hidden">
-                <AppIconRenderer app={{ ...app, name: currentAppName }} size="lg" />
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/icon:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-2xl backdrop-blur-xs cursor-pointer z-10"
-                  title="Change / Edit App Icon"
-                >
-                  <Pencil className="w-4 h-4 text-cyan-400 mb-0.5" />
-                  <span className="text-[9px] font-bold tracking-tight">Edit Icon</span>
-                </button>
+          {/* App Emblem & Title Details */}
+          <div className="flex items-start sm:items-center gap-5 flex-1 min-w-0">
+            <div className="relative shrink-0">
+              <div className="p-2 rounded-2xl border border-zinc-200/80 dark:border-white/15 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-lg ring-1 ring-black/5">
+                <AppIconRenderer app={app} size="xl" />
               </div>
-              {!(app as any).hasRealIcon && !(app.id?.includes('tap-studio')) && !(app.name?.toLowerCase().includes('mediaflow')) && (
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="absolute -bottom-1.5 -right-1.5 bg-amber-500 hover:bg-amber-400 rounded-full p-1 shadow-md cursor-pointer transition-transform hover:scale-110 z-20"
-                  title="No custom icon — Click to set app icon"
-                >
-                  <Pencil className="w-2.5 h-2.5 text-slate-950" />
-                </button>
-              )}
             </div>
 
-            <div>
+            <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                  {currentAppName}
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight truncate">
+                  {app.name}
                 </h1>
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(true)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-cyan-500 hover:bg-cyan-500/10 transition-colors flex items-center gap-1"
-                  title="Edit Application & Icon"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                {app.status === 'installed' && (
-                  <GlassBadge variant="emerald" dot>
-                    Installed & Ready
-                  </GlassBadge>
-                )}
-                {app.status === 'trial' && (
-                  <GlassBadge variant="emerald" dot className="bg-emerald-500/15 border-emerald-500/30 text-emerald-300">
-                    ⚡ Demo Mode Active
-                  </GlassBadge>
-                )}
-                {app.status === 'update-available' && (
-                  <GlassBadge variant="cyan" dot>
-                    Update Available
-                  </GlassBadge>
-                )}
-                {app.status === 'path-broken' && (
-                  <GlassBadge variant="amber" dot>
-                    Path Needs Repair
-                  </GlassBadge>
-                )}
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-zinc-100 dark:bg-white/10 border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 font-semibold">
-                  {app.category}
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700/60">
+                  {app.category || 'Desktop Application'}
                 </span>
+                {isInstalled ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Installed
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3 h-3" />
+                    Ready to Install
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-xs font-mono text-zinc-500 dark:text-zinc-400">
-                <span>Version {app.localVersion || app.version}</span>
+              <div className="flex flex-wrap items-center gap-2.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                <span>Version {app.localVersion || app.version || '1.0.0'}</span>
                 <span>•</span>
-                <span>Package Size: {app.size || '42.8 MB'}</span>
+                <span>{(app as any).packageSize || app.size || '122.8 MB'}</span>
                 <span>•</span>
-                <span className="text-cyan-600 dark:text-cyan-400 font-semibold">
-                  Architect: Burhanuddin Sounasath (8369811201)
-                </span>
+                <span className="text-zinc-400 dark:text-zinc-500">Official Creative Cloud Ecosystem Build</span>
               </div>
             </div>
           </div>
 
           {/* Action Row */}
-          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <GlassButton
-              variant="glass"
-              size="sm"
-              icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
-              onClick={() => setIsDemoModalOpen(true)}
-              className="text-cyan-400 border-cyan-500/30 hover:border-cyan-400 font-medium"
-              title="Interactive Demo Simulator"
-            >
-              Try / Demo
-            </GlassButton>
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
+            {isInstalled ? (
+              <>
+                <GlassButton
+                  variant="primary"
+                  size="md"
+                  icon={<Play className="w-4 h-4 fill-current" />}
+                  onClick={() => onLaunch(app)}
+                  className="font-bold px-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25"
+                >
+                  Launch App
+                </GlassButton>
 
-            <GlassButton
-              variant="glass"
-              size="sm"
-              icon={<Wrench className="w-3.5 h-3.5 text-cyan-500" />}
-              onClick={() => onFixPath(app)}
-            >
-              Locate Path
-            </GlassButton>
+                {app.status === 'update-available' && (
+                  <GlassButton
+                    variant="accent"
+                    size="md"
+                    icon={<Download className="w-4 h-4" />}
+                    onClick={() => onUpdate(app)}
+                    className="font-bold text-emerald-300 border-emerald-500/40"
+                  >
+                    Update Now
+                  </GlassButton>
+                )}
 
-            {(app.status === 'installed' || app.status === 'ready' || app.status === 'update-available' || Boolean(app.installedPath)) && (
-              <GlassButton
-                variant="glass"
-                size="sm"
-                icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
-                onClick={() => setUninstallModalOpen(true)}
-                className="hover:bg-rose-500/10 hover:text-rose-600 text-rose-500 dark:text-rose-400 border-rose-500/30 font-medium"
-              >
-                Uninstall
-              </GlassButton>
+                <GlassButton
+                  variant="glass"
+                  size="md"
+                  icon={<FolderOpen className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />}
+                  onClick={() => onFixPath(app)}
+                  title="Locate or change executable path"
+                >
+                  Locate Path
+                </GlassButton>
+
+                <GlassButton
+                  variant="glass"
+                  size="md"
+                  icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+                  onClick={() => setIsDemoModalOpen(true)}
+                  title="Interactive Demo Simulator"
+                >
+                  Try Demo
+                </GlassButton>
+
+                <GlassButton
+                  variant="glass"
+                  size="md"
+                  icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
+                  onClick={() => setUninstallModalOpen(true)}
+                  className="hover:bg-rose-500/10 hover:text-rose-600 text-rose-500 dark:text-rose-400 border-rose-500/30"
+                  title="Uninstall App"
+                >
+                  Uninstall
+                </GlassButton>
+              </>
+            ) : (
+              <>
+                <GlassButton
+                  variant="primary"
+                  size="md"
+                  icon={<Download className="w-4 h-4" />}
+                  onClick={() => onInstall(app)}
+                  className="font-bold px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25"
+                >
+                  Download & Install
+                </GlassButton>
+
+                <GlassButton
+                  variant="glass"
+                  size="md"
+                  icon={<Sparkles className="w-3.5 h-3.5 text-cyan-400" />}
+                  onClick={() => setIsDemoModalOpen(true)}
+                  className="text-cyan-600 dark:text-cyan-300 font-semibold border-cyan-500/30"
+                >
+                  Try Free Demo
+                </GlassButton>
+
+                <GlassButton
+                  variant="glass"
+                  size="md"
+                  icon={<FolderOpen className="w-3.5 h-3.5" />}
+                  onClick={() => onFixPath(app)}
+                  title="Link already installed local file"
+                >
+                  Locate Local Path
+                </GlassButton>
+              </>
             )}
 
             {app.githubRepo && (
               <GlassButton
                 variant="glass"
-                size="sm"
-                icon={<RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isCheckingUpdate ? 'animate-spin' : ''}`} />}
+                size="md"
+                icon={<RefreshCw className={`w-3.5 h-3.5 text-cyan-500 ${isCheckingUpdate ? 'animate-spin' : ''}`} />}
                 onClick={handleCheckUpdate}
                 disabled={isCheckingUpdate}
-                className="text-cyan-400 border-cyan-500/30 hover:border-cyan-400 font-medium"
-                title="Directly check child app's GitHub repository for latest release .exe"
+                title="Check for updates on GitHub"
               >
-                {isCheckingUpdate ? 'Checking GitHub...' : 'Check GitHub'}
+                {isCheckingUpdate ? 'Checking...' : 'Check GitHub'}
               </GlassButton>
             )}
-
-            <GlassButton
-              variant="glass"
-              size="sm"
-              icon={<Trash2 className="w-3.5 h-3.5 text-rose-600" />}
-              onClick={() => setDeleteModalOpen(true)}
-              className="hover:bg-rose-600/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
-            >
-              Delete App
-            </GlassButton>
           </div>
         </div>
 
         {updateFeedback && (
-          <div className="mt-4 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center justify-between z-10 relative">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+          <div className="mt-4 p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-800 dark:text-blue-300 text-xs flex items-center justify-between z-10 relative">
+            <span className="flex items-center gap-2 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
               <span>{updateFeedback}</span>
             </span>
             {app.status === 'update-available' && (
@@ -588,17 +480,17 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
       {/* Navigation Tabs */}
       <div className="border-b border-zinc-200 dark:border-white/10 flex items-center gap-2">
         {[
-          { id: 'overview', label: 'Overview & Installation Path' },
-          { id: 'requirements', label: 'Hardware & System Specs' },
-          { id: 'release-notes', label: 'Changelog & Updates' },
-          { id: 'versions', label: 'Other Versions & Rollback' },
+          { id: 'overview', label: 'Overview' },
+          { id: 'requirements', label: 'System Requirements' },
+          { id: 'release-notes', label: 'Release Notes' },
+          { id: 'versions', label: 'Version History' },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`pb-3 px-4 text-xs font-medium border-b-2 transition-all ${
+            className={`pb-3 px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
               activeTab === tab.id
-                ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400 font-bold'
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold'
                 : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
             }`}
           >
@@ -607,125 +499,97 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
         ))}
       </div>
 
-      {/* Tab 1: Overview & Path */}
+      {/* Tab 1: Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-
-          {/* ── No Icon Notice for Creator ────────────────────────────────────── */}
-          {!(app as any).hasRealIcon && !(app.id?.includes('tap-studio')) && !(app.name?.toLowerCase().includes('mediaflow')) && (
-            <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400">
-              <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 shrink-0 mt-0.5">
-                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd"/>
-              </svg>
-              <div className="text-xs leading-relaxed">
-                <p className="font-bold mb-0.5">No app icon found</p>
-                <p className="opacity-80">
-                  Anything couldn't extract an icon from the EXE or find a logo image in your release folder.
-                  To show the real app icon, add a <code className="font-mono bg-amber-500/15 rounded px-1">logo.png</code> or <code className="font-mono bg-amber-500/15 rounded px-1">app-logo.png</code> (512×512 px recommended) inside{' '}
-                  <code className="font-mono bg-amber-500/15 rounded px-1">releases/{app.id}/</code>, or set an icon directly using the button below.
-                </p>
-                <div className="mt-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setEditModalOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>Upload / Set App Icon Now</span>
-                  </button>
-                </div>
-              </div>
+          {/* One Tap Auto-Converter Daemon section when viewing One Tap app */}
+          {(app.id === 'one-tap' || app.id === 'onetap' || app.id?.includes('tap') || app.name?.toLowerCase().includes('one tap')) && (
+            <div className="mb-2">
+              <OneTapAutoConverterSection />
             </div>
           )}
-          {/* Creative Cloud Style Demo Spotlight */}
+
+          {/* About App Card */}
+          <GlassCard variant="interactive" className="p-6 border-zinc-200/80 dark:border-white/10 space-y-4">
+            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold">
+              About {app.name}
+            </h3>
+            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 font-medium">
+              {cleanedDescription ||
+                'High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls integrated natively into the Anything ecosystem.'}
+            </p>
+
+            {app.releaseInfo?.newFeatures && app.releaseInfo.newFeatures.length > 0 && (
+              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-2 font-semibold">
+                  Key Capabilities
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {app.releaseInfo.newFeatures.slice(0, 4).map((f, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 font-medium max-w-md truncate"
+                      title={f}
+                    >
+                      {f.replace(/^[^:]+:\s*/, '')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </GlassCard>
+
+          {/* Interactive Demo Sandbox Card */}
           <GlassCard
             variant="interactive"
-            className="p-6 border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-emerald-500/5 to-transparent relative overflow-hidden"
+            className="p-6 border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-transparent relative overflow-hidden"
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="p-1 rounded-lg bg-cyan-500/20 text-cyan-400">
+                  <span className="p-1 rounded-lg bg-blue-500/10 text-blue-500">
                     <Sparkles className="w-4 h-4" />
                   </span>
                   <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
-                    Experience {app.name} in Trial Sandbox / Interactive Demo
+                    Interactive Trial Sandbox
                   </h4>
-                  <GlassBadge variant="cyan" size="sm" className="font-mono text-[10px]">
-                    Adobe Creative Cloud Style
-                  </GlassBadge>
                 </div>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
-                  Test-drive the full UI, real-time macro event engine, and child app loader handoff with zero commitment. Launch the interactive video & multi-camera timeline simulator or evaluate with a full trial license.
+                  Test-drive the full UI, real-time macro event engine, and child app loader handoff with zero commitment. Launch the interactive video & multi-camera timeline simulator directly.
                 </p>
-                {app.status === 'trial' && (
-                  <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-emerald-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Free Demo Mode Active</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <GlassButton
                   variant="glass"
                   size="sm"
-                  icon={<Play className="w-3.5 h-3.5 fill-current text-cyan-400" />}
+                  icon={<Play className="w-3.5 h-3.5 fill-current text-blue-500" />}
                   onClick={() => setIsDemoModalOpen(true)}
-                  className="font-semibold text-xs border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
+                  className="font-semibold text-xs border-blue-500/30 hover:border-blue-400 text-blue-600 dark:text-blue-300"
                 >
-                  Try Demo Simulator
+                  Launch Demo ↗
                 </GlassButton>
-                {app.status !== 'trial' && app.status !== 'installed' && (
-                  <GlassButton
-                    variant="accent"
-                    size="sm"
-                    icon={<Sparkles className="w-3.5 h-3.5" />}
-                    onClick={() => {
-                      if (onStartTrial) onStartTrial(app);
-                      setIsDemoModalOpen(true);
-                    }}
-                    className="font-bold text-xs"
-                  >
-                    Start Free Demo
-                  </GlassButton>
-                )}
               </div>
             </div>
           </GlassCard>
 
-          <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-4">
-            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
-              About {app.name}
-            </h3>
-            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 font-medium">
-              {app.description ||
-                'High-performance desktop companion for hardware macro automation, hotkey triggers, and system controls integrated natively into the Anything ecosystem.'}
-            </p>
-          </GlassCard>
-
-          {/* GitHub Repository Releases Source (REPO RELEASE LINK) */}
+          {/* Verified Cloud Release Distribution Card */}
           {(app.githubRepo || repoReleasesUrl) && (
             <GlassCard
               variant="interactive"
-              className="p-6 border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-sky-500/5 to-transparent space-y-4"
+              className="p-6 border-zinc-200/80 dark:border-white/10 space-y-4"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                     <GitBranch className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono uppercase tracking-wider text-cyan-700 dark:text-cyan-300 font-bold">
-                        Repository Release Source (GitHub)
-                      </span>
-                      <GlassBadge variant="cyan" size="sm" className="font-mono text-[10px]">
-                        Cloud Source (Not Computer)
-                      </GlassBadge>
-                    </div>
-                    <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
-                      Child app binary packages are fetched directly from GitHub cloud releases
+                    <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold">
+                      Verified Distribution Source
+                    </h4>
+                    <p className="text-[11px] text-zinc-500 font-medium">
+                      Packages are verified and streamed directly from GitHub Cloud Releases
                     </p>
                   </div>
                 </div>
@@ -736,150 +600,89 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                     size="sm"
                     icon={<ExternalLink className="w-3.5 h-3.5" />}
                     onClick={() => openExternalUrl(repoReleasesUrl)}
-                    className="text-xs font-mono font-semibold"
+                    className="text-xs font-semibold"
                   >
-                    Open Releases Page
+                    View on GitHub ↗
                   </GlassButton>
                 </div>
               </div>
 
-              {/* Official Repository Releases Link Display */}
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
-                  Official GitHub Repository Releases Link:
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 p-3 rounded-xl bg-zinc-100 dark:bg-black/60 border border-cyan-500/30 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold flex items-center justify-between gap-2">
-                    <span className="truncate">{repoReleasesUrl}</span>
-                    <button
-                      onClick={() => copyToClipboard(repoReleasesUrl, 'release')}
-                      title="Copy Repository Release Link"
-                      className="p-1 rounded-lg hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
-                    >
-                      {copiedReleaseUrl ? (
-                        <Check className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  <GlassButton
-                    variant="glass"
-                    size="sm"
-                    icon={<ExternalLink className="w-3 h-3" />}
-                    onClick={() => openExternalUrl(repoReleasesUrl)}
-                    className="font-mono text-xs shrink-0"
-                  >
-                    View All
-                  </GlassButton>
+              {/* Release Metadata Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Repository</span>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{app.githubRepo || 'BSFrameworks5253'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Release Tag</span>
+                  <p className="font-semibold text-blue-600 dark:text-blue-400 truncate">{latestTag}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/60 dark:border-white/5 space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Setup Package</span>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{setupExeName}</p>
                 </div>
               </div>
 
-              {/* Specific Release Tag Endpoint Link */}
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider">
-                  Release Tag Repository Endpoint ({latestTag}):
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 p-3 rounded-xl bg-zinc-100 dark:bg-black/60 border border-cyan-500/30 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold flex items-center justify-between gap-2">
-                    <span className="truncate">{tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`}</span>
-                    <button
-                      onClick={() => copyToClipboard(tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`, 'tag')}
-                      title="Copy Release Tag URL"
-                      className="p-1 rounded-lg hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 transition-colors shrink-0"
-                    >
-                      {copiedTagUrl ? (
-                        <Check className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  <GlassButton
-                    variant="glass"
-                    size="sm"
-                    onClick={() => openExternalUrl(tagReleasesUrl || `${releasesTagBaseUrl}${latestTag}`)}
-                    className="font-mono text-xs shrink-0 text-cyan-600 dark:text-cyan-400 font-bold"
+              {setupDownloadUrl && (
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Installer executes silently without manual configuration dialogs</span>
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(setupDownloadUrl, 'asset')}
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    Tag {latestTag}
-                  </GlassButton>
-                </div>
-              </div>
-
-              {/* Latest Setup Exe Release Asset */}
-              <div className="p-3.5 rounded-xl bg-white/40 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <Cloud className="w-3.5 h-3.5 text-cyan-500" />
-                    <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                      Latest Release Setup Exe:
-                    </span>
-                    <span className="font-mono font-semibold text-cyan-600 dark:text-cyan-400">
-                      {setupExeName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {setupDownloadUrl && (
-                      <button
-                        onClick={() => copyToClipboard(setupDownloadUrl, 'asset')}
-                        className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
-                      >
-                        {copiedAssetUrl ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-500" />
-                            <span>URL Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy Asset URL</span>
-                          </>
-                        )}
-                      </button>
+                    {copiedAssetUrl ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Link Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Download Link</span>
+                      </>
                     )}
-                  </div>
+                  </button>
                 </div>
-
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed font-mono">
-                  When you click <strong>Download & Install</strong> or <strong>Update</strong>, Anything takes this setup executable directly from GitHub Releases and runs it silently without showing setup dialogs. It does not take files from your computer.
-                </p>
-              </div>
+              )}
             </GlassCard>
           )}
 
           {/* Executable Disk Location */}
-          <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-3">
+          <GlassCard variant="interactive" className="p-6 border-zinc-200/80 dark:border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
-                  Application Executable (Installed Disk Location)
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold">
+                  Local Installation Status
                 </span>
               </div>
               <button
                 onClick={() => onFixPath(app)}
-                className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline font-mono flex items-center gap-1 font-semibold"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <Wrench className="w-3.5 h-3.5" />
-                <span>Change / Locate Executable</span>
+                <span>Locate Executable</span>
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-black/50 border border-zinc-200 dark:border-white/10 font-mono text-xs text-cyan-700 dark:text-cyan-300 break-all select-all font-semibold">
+            <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-black/40 border border-zinc-200/80 dark:border-white/10 font-mono text-xs text-zinc-800 dark:text-zinc-200 break-all select-all font-medium">
               {resolvedExePath ||
                 (app.installedPath && !app.installedPath.toLowerCase().includes('setup')
                   ? app.installedPath
-                  : `Status: Not installed locally • Click "Download & Install" above to fetch latest setup from GitHub`)}
+                  : `Not currently installed • Click "Download & Install" above to stream from GitHub Releases`)}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-zinc-500 font-mono">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-500">
               <span>
-                Target Program Binary: <strong>{app.executableName || `${app.name}.exe`}</strong>
+                Binary Name: <strong className="text-zinc-700 dark:text-zinc-300">{app.executableName || `${app.name}.exe`}</strong>
               </span>
-              <span className="text-cyan-600 dark:text-cyan-400">
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                 {resolvedExePath || (app.installedPath && !app.installedPath.toLowerCase().includes('setup'))
                   ? '✓ Verified native installed executable'
-                  : 'Installer is downloaded from GitHub and executed silently'}
+                  : 'Automated 1-click silent installation available'}
               </span>
             </div>
           </GlassCard>
@@ -904,11 +707,11 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
         </div>
       )}
 
-      {/* Tab 2: Hardware Specs (Clean High-Contrast Cards) */}
+      {/* Tab 2: Hardware Specs */}
       {activeTab === 'requirements' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassCard variant="interactive" className="p-5 border-zinc-200 dark:border-white/10 space-y-2">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+          <GlassCard variant="interactive" className="p-5 border-zinc-200/80 dark:border-white/10 space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Monitor className="w-4 h-4" />
             </div>
             <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block font-bold">
@@ -920,7 +723,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <p className="text-xs text-zinc-500">Native 64-bit architecture with DirectX 12 hardware acceleration.</p>
           </GlassCard>
 
-          <GlassCard variant="interactive" className="p-5 border-zinc-200 dark:border-white/10 space-y-2">
+          <GlassCard variant="interactive" className="p-5 border-zinc-200/80 dark:border-white/10 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
               <Cpu className="w-4 h-4" />
             </div>
@@ -933,7 +736,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <p className="text-xs text-zinc-500">Multi-core processor recommended for low-latency macro dispatching.</p>
           </GlassCard>
 
-          <GlassCard variant="interactive" className="p-5 border-zinc-200 dark:border-white/10 space-y-2">
+          <GlassCard variant="interactive" className="p-5 border-zinc-200/80 dark:border-white/10 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
               <Sparkles className="w-4 h-4" />
             </div>
@@ -946,7 +749,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <p className="text-xs text-zinc-500">Hardware rasterization for fluid UI animations and transparent overlays.</p>
           </GlassCard>
 
-          <GlassCard variant="interactive" className="p-5 border-zinc-200 dark:border-white/10 space-y-2">
+          <GlassCard variant="interactive" className="p-5 border-zinc-200/80 dark:border-white/10 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <HardDrive className="w-4 h-4" />
             </div>
@@ -956,25 +759,25 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
               {defaultReqs.storage}
             </h4>
-            <p className="text-xs text-zinc-500">High-speed NVMe/SSD space with USB HID & Stream Deck device support.</p>
+            <p className="text-xs text-zinc-500">High-speed NVMe/SSD space with USB HID & peripheral device support.</p>
           </GlassCard>
         </div>
       )}
 
-      {/* Tab 3: Changelog (High-Contrast Bullets) */}
+      {/* Tab 3: Changelog */}
       {activeTab === 'release-notes' && (
-        <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 space-y-5">
+        <GlassCard variant="interactive" className="p-6 border-zinc-200/80 dark:border-white/10 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
             <div>
               <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-                Release Notes · Version {app.version}
+                Release Notes · Version {app.version || '1.0.0'}
               </h3>
-              <p className="text-xs text-zinc-500 font-mono mt-0.5">
-                Official release verified by Burhanuddin Sounasath (8369811201)
+              <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                Official verified build package
               </p>
             </div>
             <GlassBadge variant="cyan" dot>
-              Current Build
+              Current Release
             </GlassBadge>
           </div>
 
@@ -985,7 +788,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
             <ul className="space-y-2.5">
               {defaultNotes.map((note, idx) => (
                 <li key={idx} className="flex items-start gap-3 text-xs leading-relaxed text-zinc-700 dark:text-zinc-200 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 mt-1 shadow-xs" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />
                   <span>{note}</span>
                 </li>
               ))}
@@ -996,7 +799,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
 
       {/* Tab 4: Other Versions & Rollback */}
       {activeTab === 'versions' && (
-        <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10">
+        <GlassCard variant="interactive" className="p-6 border-zinc-200/80 dark:border-white/10">
           <VersionHistoryTab
             app={app}
             onRollback={async (targetApp: CatalogApp, release: any) => {
@@ -1014,121 +817,26 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
           />
         </GlassCard>
       )}
-      {/* Rename Application Modal */}
-      {renameModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-sm p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center gap-3 text-cyan-600 dark:text-cyan-400">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                <Pencil className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Rename Application</h4>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Updates the display name in Anything and app.json</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveRename} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold mb-1">
-                  Application Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={renameInput}
-                  onChange={(e) => setRenameInput(e.target.value)}
-                  placeholder="App Name"
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setRenameModalOpen(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <GlassButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isRenaming}
-                  icon={<Check className="w-3.5 h-3.5" />}
-                >
-                  {isRenaming ? 'Saving...' : 'Save Name'}
-                </GlassButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Application Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-sm p-6 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center gap-3 text-rose-500">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">Delete {currentAppName}?</h4>
-                <p className="text-xs text-zinc-400">Permanently removes all release executables and files from Anything.</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-zinc-300 bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/60 font-mono">
-              App ID: <span className="text-white font-bold">{app.id}</span>
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteModalOpen(false)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleConfirmDeleteApp}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5"
-              >
-                {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                <span>{isDeleting ? 'Deleting...' : 'Delete Completely'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Uninstall Application Modal */}
       {uninstallModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-sm p-6 rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xl text-left space-y-4 animate-in zoom-in-95">
             <div className="flex items-center gap-3 text-rose-500">
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">Uninstall {currentAppName}?</h4>
-                <p className="text-xs text-zinc-400">Removes the installed app from your PC. You can reinstall it anytime from Anything.</p>
+                <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Uninstall {app.name}?</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">Removes the installed application from your PC. You can reinstall it anytime from Anything.</p>
               </div>
             </div>
-
-            <p className="text-xs text-zinc-300 bg-zinc-800/60 p-3 rounded-xl border border-zinc-700/60 font-mono">
-              Status: <span className="text-white font-bold">{app.status}</span> • Version: <span className="text-white font-bold">{app.localVersion || app.version}</span>
-            </p>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setUninstallModalOpen(false)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1142,6 +850,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                     app.status = 'not-installed';
                     app.installedPath = undefined;
                     app.localVersion = undefined;
+                    setResolvedExePath(undefined);
                   } catch (err) {
                     console.error('Uninstall failed:', err);
                   } finally {
@@ -1149,7 +858,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
                     setUninstallModalOpen(false);
                   }
                 }}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5"
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 {isUninstalling ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>{isUninstalling ? 'Uninstalling...' : 'Yes, Uninstall'}</span>
@@ -1159,15 +868,7 @@ export const AppDetailPage: React.FC<AppDetailPageProps> = ({
         </div>
       )}
 
-      {/* Edit Application & Icon Modal */}
-      <EditAppModal
-        app={app}
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSave={handleSaveEdit}
-      />
-
-      {/* Interactive Demo Simulator & Free Demo Modal */}
+      {/* Interactive Demo Simulator Modal */}
       <AppDemoModal
         app={app}
         isOpen={isDemoModalOpen}

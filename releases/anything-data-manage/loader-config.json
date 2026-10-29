@@ -1,13 +1,13 @@
 {
   "appId": "anything-data-manage",
   "appName": "Anything Data Manage",
-  "monogram": "DM",
-  "tagline": "Advanced Data Extraction & Sequence Workspace",
-  "gradient": "from-cyan-500 via-indigo-600 to-purple-700",
-  "presetId": "dark-obsidian",
+  "monogram": "AD",
+  "tagline": "Automated Release build v1.0.58. Setup and Portable executables attached.",
+  "gradient": "from-emerald-500 via-teal-400 to-cyan-400",
+  "presetId": "apple-ambient",
   "bootPhrases": [
-    "Initializing Tabular Parsing Kernel...",
-    "Loading Sequence Directory Shifter...",
+    "Connecting Anything Data Manage to Anything...",
+    "Initializing graphics pipeline...",
     "Ready."
   ]
 }

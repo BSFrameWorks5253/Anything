@@ -1,0 +1,29 @@
+{
+  "id": "anything-data-manage",
+  "name": "Anything Data Manage",
+  "shortName": "AN",
+  "version": "1.0.58",
+  "category": "Productivity & Data",
+  "description": "Automated Release build v1.0.58. Setup and Portable executables attached.",
+  "executableName": "AIN53_Data_Management_Portable.exe",
+  "setupExecutableName": "AIN53_Data_Management_Setup.exe",
+  "packageFileName": "AIN53_Data_Management_Setup.exe",
+  "targetPlatforms": [
+    "desktop"
+  ],
+  "gradient": "from-blue-600 to-indigo-700",
+  "textColor": "#0066ee",
+  "glowColor": "rgba(0, 102, 238, 0.45)",
+  "githubRepo": "BSFrameWorks5253/AIN53",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/AIN53/releases",
+  "releasesTagUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/tag/",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
+  "iconType": "monogram",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i7 / AMD Ryzen 7",
+    "ram": "16 GB RAM",
+    "graphics": "DirectX 11 / DirectX 12 compatible GPU",
+    "storage": "1 GB available space"
+  }
+}

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { AccountSection } from './components/AccountSection';
 import { SplashScreenSection } from './components/SplashScreenSection';
 import { AutoUpdateSection } from './components/AutoUpdateSection';
+import { OneTapAutoConverterSection } from './components/OneTapAutoConverterSection';
 import { AuthEmailNotificationSection } from './components/AuthEmailNotificationSection';
 import { DiagnosticLogsViewer } from './components/DiagnosticLogsViewer';
-import { GitAutoCommitSection } from './components/GitAutoCommitSection';
-import { MasterBuilderSection } from './components/MasterBuilderSection';
+import { PlanSection } from './components/PlanSection';
 import { AnythingFontsManager } from '../fonts/AnythingFontsManager';
 import { EcosystemThemeSync } from '../theme/EcosystemThemeSync';
 import { AdobeSplashScreen } from '../../components/ui/AdobeSplashScreen';
@@ -57,8 +57,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         isCheckingUpdates={isCheckingUpdates}
       />
 
-      {/* Intelligent Git Auto-Commit & Ecosystem Synchronizer */}
-      <GitAutoCommitSection />
+      {/* One Tap PNG to JPG Auto-Converter Background Daemon */}
+      <OneTapAutoConverterSection />
+
+      
 
       {/* Authentication & Animated Email Release Dispatch */}
       <AuthEmailNotificationSection />
@@ -75,30 +77,30 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* Subscription Tier Details */}
       <PlanSection />
 
-      {/* Creator & Architect Signature Card */}
+      {/* About Anything Suite */}
       <GlassCard variant="interactive" className="p-6 border-zinc-200 dark:border-white/10 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-400 to-indigo-600 flex items-center justify-center text-slate-950 font-extrabold text-lg shadow-md shadow-cyan-500/20">
-              BS
+              ⚡
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-zinc-900 dark:text-white">
-                  Burhanuddin Sounasath
+                  Anything Desktop Suite
                 </h4>
                 <GlassBadge variant="cyan" dot>
-                  Lead Architect
+                  Creative Ecosystem
                 </GlassBadge>
               </div>
               <p className="text-xs text-zinc-600 dark:text-white/60 font-mono mt-0.5">
-                Creator of Anything Ecosystem · Direct Contact: +91 8369811201
+                Modern Child Apps & Automation Workstation
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 dark:text-white/50">
-            <span>Anything v26.10.27</span>
+            <span>Version 26.10.30</span>
             <span>•</span>
             <span>Build 2026.10</span>
           </div>

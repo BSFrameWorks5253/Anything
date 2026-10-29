@@ -1,7 +1,13 @@
 {
+  "appId": "docuflow-studio",
   "appName": "DocuFlow Studio Pro",
-  "version": "1.0.0",
-  "primaryColor": "#38bdf8",
-  "tagline": "Universal Document Fusion, Vector Engineering & PDF Studio",
-  "theme": "dark-glass"
+  "monogram": "DS",
+  "tagline": "## 🚀 DocuFlow Studio Pro v26.10.30\n\nDocuFlow Studio Pro v1.0.0 introduces PDFella-grade in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline O",
+  "gradient": "from-violet-700 via-purple-600 to-indigo-500",
+  "presetId": "apple-ambient",
+  "bootPhrases": [
+    "Connecting DocuFlow Studio Pro to Anything...",
+    "Initializing graphics pipeline...",
+    "Ready."
+  ]
 }

@@ -12,13 +12,25 @@ export interface UserProfile {
   createdAt?: string;
 }
 
-export const ARCHITECT_USER: UserProfile = {
-  name: 'Burhanuddin Sounasath',
-  email: 'burhanuddin@anything.io',
-  phone: '8369811201',
-  role: 'Creator & Lead Architect',
+export const DEFAULT_MEMBER_USER: UserProfile = {
+  name: 'Creative Member',
+  email: 'member@anything.local',
+  phone: '',
+  role: 'Member',
   avatar: null,
-  uid: 'BURHANUDDIN-8369811201',
+  uid: 'CREATIVE-MEMBER',
+  verified: true,
+  provider: 'credentials',
+  createdAt: '2026-01-01',
+};
+
+export const ARCHITECT_USER: UserProfile = {
+  name: 'Creative Pro',
+  email: 'pro@anything.local',
+  phone: '',
+  role: 'Pro Member',
+  avatar: null,
+  uid: 'CREATIVE-PRO',
   verified: true,
   provider: 'architect',
   createdAt: '2026-01-01',
@@ -65,7 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.error('Failed to parse auth session:', e);
     }
-    return null;
+    // Default to free local workspace member - Login is completely optional & non-compulsory
+    return DEFAULT_MEMBER_USER;
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -74,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const handleStorageChange = () => {
       const currentAvatar = localStorage.getItem('anything_user_avatar');
-      setUser((prev) => (prev ? { ...prev, avatar: currentAvatar } : null));
+      setUser((prev) => (prev ? { ...prev, avatar: currentAvatar } : DEFAULT_MEMBER_USER));
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -93,134 +106,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     passkey?: string,
     rememberMe = true
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!emailOrPhone.trim()) {
-      return { success: false, error: 'Please enter your email address or phone number.' };
-    }
-
-    const trimmed = emailOrPhone.trim();
-    const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
-
-    // Check Architect credentials
-    if (
-      trimmed === '8369811201' ||
-      trimmed.toLowerCase() === 'burhanuddin@anything.io' ||
-      trimmed.toLowerCase().includes('burhanuddin')
-    ) {
-      const profile = { ...ARCHITECT_USER, avatar: currentAvatar };
-      setUser(profile);
-      if (rememberMe) {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-      }
-      setIsAuthModalOpen(false);
-      return { success: true };
-    }
-
-    // Check registered users in local mock database
-    try {
-      const rawUsers = localStorage.getItem(USERS_DB_KEY);
-      const registry: any[] = rawUsers ? JSON.parse(rawUsers) : [];
-      const found = registry.find(
-        (u) =>
-          u.email.toLowerCase() === trimmed.toLowerCase() ||
-          (u.phone && u.phone === trimmed)
-      );
-
-      if (found) {
-        if (passkey && found.password && found.password !== passkey) {
-          return { success: false, error: 'Incorrect password entered.' };
-        }
-        const profile: UserProfile = {
-          name: found.name,
-          email: found.email,
-          phone: found.phone || '',
-          role: found.role || 'Workspace Member',
-          avatar: currentAvatar || found.avatar || null,
-          uid: found.uid,
-          verified: true,
-          provider: 'credentials',
-          createdAt: found.createdAt,
-        };
-        setUser(profile);
-        if (rememberMe) {
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-        }
-        setIsAuthModalOpen(false);
-        return { success: true };
-      }
-    } catch (e) {}
-
-    // Password validation for new/ad-hoc login
-    if (passkey && passkey.length < 4) {
-      return { success: false, error: 'Password must be at least 4 characters long.' };
-    }
-
-    // Automatic onboarding profile
-    const derivedName = trimmed.includes('@')
-      ? trimmed.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-      : 'Workspace Member';
-
-    const customUser: UserProfile = {
-      name: derivedName,
-      email: trimmed.includes('@') ? trimmed : `${trimmed}@anything.local`,
-      phone: trimmed.includes('@') ? '' : trimmed,
-      role: 'Registered Member',
-      avatar: currentAvatar,
-      uid: `USR-${Date.now().toString().slice(-6)}`,
-      verified: true,
-      provider: 'credentials',
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-
-    setUser(customUser);
-    if (rememberMe) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(customUser));
-    }
-    setIsAuthModalOpen(false);
-    return { success: true };
-  };
-
-  const signUp = async (
-    name: string,
-    email: string,
-    password: string,
-    phone = '',
-    rememberMe = true
-  ): Promise<{ success: boolean; error?: string }> => {
-    if (!name.trim()) return { success: false, error: 'Please enter your full name.' };
-    if (!email.trim() || !email.includes('@')) return { success: false, error: 'Please enter a valid email address.' };
-    if (!password || password.length < 6) return { success: false, error: 'Password must be at least 6 characters.' };
+    const input = emailOrPhone.trim();
+    if (!input) return { success: false, error: 'Please enter your email or phone.' };
 
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
-    const newUid = `USR-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const newUserRecord = {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      password,
-      role: 'Workspace Member',
-      uid: newUid,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-
-    // Save into users registry
-    try {
-      const rawUsers = localStorage.getItem(USERS_DB_KEY);
-      const registry: any[] = rawUsers ? JSON.parse(rawUsers) : [];
-      registry.push(newUserRecord);
-      localStorage.setItem(USERS_DB_KEY, JSON.stringify(registry));
-    } catch (e) {}
-
     const profile: UserProfile = {
-      name: newUserRecord.name,
-      email: newUserRecord.email,
-      phone: newUserRecord.phone,
-      role: newUserRecord.role,
+      name: input.includes('@') ? input.split('@')[0] : 'Workspace Member',
+      email: input.includes('@') ? input : `${input}@anything.local`,
+      phone: input.includes('@') ? '' : input,
+      role: 'Member',
       avatar: currentAvatar,
-      uid: newUid,
+      uid: `USR-${Date.now()}`,
       verified: true,
       provider: 'credentials',
-      createdAt: newUserRecord.createdAt,
     };
 
     setUser(profile);
@@ -231,28 +129,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  const loginWithSocial = async (
-    provider: 'google' | 'github',
-    simulatedEmail?: string
-  ): Promise<{ success: boolean }> => {
+  const signUp = async (
+    name: string,
+    email: string,
+    _password: string,
+    phone?: string,
+    rememberMe = true
+  ): Promise<{ success: boolean; error?: string }> => {
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
-    const email =
-      simulatedEmail ||
-      (provider === 'google' ? 'zeninfosys@gmail.com' : 'burhanuddin@github.com');
-    const name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-
     const profile: UserProfile = {
-      name,
-      email,
-      phone: '',
-      role: provider === 'google' ? 'Google Workspace User' : 'GitHub Developer',
+      name: name.trim() || 'Workspace Member',
+      email: email.trim(),
+      phone: phone?.trim() || '',
+      role: 'Member',
       avatar: currentAvatar,
-      uid: `${provider.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`,
+      uid: `USR-${Date.now()}`,
       verified: true,
-      provider,
-      createdAt: new Date().toISOString().slice(0, 10),
+      provider: 'credentials',
     };
 
+    setUser(profile);
+    if (rememberMe) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+    }
+    setIsAuthModalOpen(false);
+    return { success: true };
+  };
+
+  const loginWithSocial = async (provider: 'google' | 'github', simulatedEmail?: string) => {
+    const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
+    const profile: UserProfile = {
+      name: provider === 'google' ? 'Google User' : 'GitHub Developer',
+      email: simulatedEmail || `${provider}@anything.local`,
+      phone: '',
+      role: 'Member',
+      avatar: currentAvatar,
+      uid: `${provider.toUpperCase()}-${Date.now()}`,
+      verified: true,
+      provider,
+    };
     setUser(profile);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
     setIsAuthModalOpen(false);
@@ -260,15 +175,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    setIsAuthModalOpen(true);
+    // Reset to free workspace member session rather than forcing an auth wall
+    setUser(DEFAULT_MEMBER_USER);
   };
 
   const updateUser = (updates: Partial<UserProfile>) => {
     setUser((prev) => {
-      if (!prev) return null;
-      const next = { ...prev, ...updates };
+      const next = prev ? { ...prev, ...updates } : { ...DEFAULT_MEMBER_USER, ...updates };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
@@ -278,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: Boolean(user),
+        isAuthenticated: true, // Login is optional & non-compulsory
         loginAsArchitect,
         loginWithCredentials,
         signUp,
@@ -295,10 +209,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = (): AuthContextType => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return ctx;
+  return context;
 };

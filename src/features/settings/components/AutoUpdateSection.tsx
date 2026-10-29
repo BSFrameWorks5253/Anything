@@ -51,13 +51,14 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
       mode: 'manual',
       frequency: 'startup',
       silentInstall: true,
-      notifyAvailable: true,
-      notifyComplete: true,
+      notifyAvailable: false,
+      notifyComplete: false,
       lastCheckedAt: Date.now(),
     };
   });
 
   const [savedToast, setSavedToast] = useState(false);
+  const [updateDownloaded, setUpdateDownloaded] = useState(false);
 
   // Sync settings across localStorage and Electron backend
   const updateSettings = (updates: Partial<ChildAppUpdateSettings>) => {
@@ -76,6 +77,38 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
     setTimeout(() => setSavedToast(false), 2000);
   };
 
+  // Subscribe to electron-updater real-time events
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onUpdateStatus) {
+      const unsub = electronAPI.onUpdateStatus((data: any) => {
+        if (data.status === 'checking') {
+          setCheckingParent(true);
+          setParentStatusText('Checking GitHub Releases repository...');
+        } else if (data.status === 'available') {
+          setCheckingParent(false);
+          setParentStatusText(`Update v${data.version || ''} available! Downloading in background...`);
+        } else if (data.status === 'downloading') {
+          setCheckingParent(false);
+          setParentStatusText(`Downloading update... ${data.percent || 0}%`);
+        } else if (data.status === 'downloaded') {
+          setCheckingParent(false);
+          setUpdateDownloaded(true);
+          setParentStatusText(`Update v${data.version || ''} downloaded! Ready to install.`);
+        } else if (data.status === 'not-available') {
+          setCheckingParent(false);
+          setParentStatusText('Your Anything app is running the latest version');
+        } else if (data.status === 'error') {
+          setCheckingParent(false);
+          setParentStatusText(`Status: ${data.error || 'Check completed'}`);
+        }
+      });
+      return () => {
+        if (typeof unsub === 'function') unsub();
+      };
+    }
+  }, []);
+
   // Check parent Anything app updates
   const handleCheckParent = async () => {
     setCheckingParent(true);
@@ -85,14 +118,16 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
     if (electronAPI?.checkForUpdates) {
       try {
         const res = await electronAPI.checkForUpdates();
-        setTimeout(() => {
+        if (res?.status === 'dev-mode') {
           setCheckingParent(false);
-          if (res?.status === 'dev-mode') {
-            setParentStatusText('Development mode · Auto-update active in packaged builds');
-          } else {
-            setParentStatusText('Your Anything app is running the latest version');
-          }
-        }, 1200);
+          setParentStatusText('Development mode · Auto-update active in packaged builds');
+        } else if (res?.status === 'not-available') {
+          setCheckingParent(false);
+          setParentStatusText('Your Anything app is running the latest version');
+        } else if (res?.status === 'error') {
+          setCheckingParent(false);
+          setParentStatusText(`Status: ${res.error || 'Failed to check'}`);
+        }
       } catch (err: any) {
         setCheckingParent(false);
         setParentStatusText(`Status: ${err.message || 'Complete'}`);
@@ -100,7 +135,7 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
     } else {
       setTimeout(() => {
         setCheckingParent(false);
-        setParentStatusText('Latest version installed (v26.10.27)');
+        setParentStatusText('Latest version installed (v26.10.30)');
       }, 800);
     }
   };
@@ -485,7 +520,7 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-bold text-zinc-900 dark:text-white tracking-tight">
-                  Anything Host App v26.10.27
+                  Anything Host App v26.10.30
                 </h4>
                 <GlassBadge variant="emerald" dot>Live Channel</GlassBadge>
               </div>
@@ -495,21 +530,38 @@ export const AutoUpdateSection: React.FC<AutoUpdateSectionProps> = ({
             </div>
           </div>
 
-          <GlassButton
-            variant="glass"
-            size="sm"
-            onClick={handleCheckParent}
-            disabled={checkingParent}
-            icon={
-              <RefreshCw
-                className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${
-                  checkingParent ? 'animate-spin' : ''
-                }`}
-              />
-            }
-          >
-            {checkingParent ? 'Checking GitHub...' : 'Check Host Updates'}
-          </GlassButton>
+          <div className="flex items-center gap-2">
+            {updateDownloaded && (
+              <GlassButton
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const electronAPI = (window as any).electronAPI;
+                  if (electronAPI?.installUpdate) electronAPI.installUpdate();
+                }}
+                icon={<Download className="w-3.5 h-3.5" />}
+                className="font-bold text-xs"
+              >
+                Restart & Install Update
+              </GlassButton>
+            )}
+
+            <GlassButton
+              variant="glass"
+              size="sm"
+              onClick={handleCheckParent}
+              disabled={checkingParent}
+              icon={
+                <RefreshCw
+                  className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${
+                    checkingParent ? 'animate-spin' : ''
+                  }`}
+                />
+              }
+            >
+              {checkingParent ? 'Checking GitHub...' : 'Check Host Updates'}
+            </GlassButton>
+          </div>
         </div>
 
         {/* 3 Steps Pipeline Architecture */}

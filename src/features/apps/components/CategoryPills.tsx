@@ -23,7 +23,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
           <button
             key={cat}
             onClick={() => onSelectCategory(cat)}
-            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors border select-none ${
+            className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-150 ease-out active:scale-[0.96] border select-none ${
               isSelected
                 ? isLight
                   ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'

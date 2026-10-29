@@ -1,7 +1,7 @@
 {
   "name": "anything",
   "private": true,
-  "version": "26.10.27",
+  "version": "26.10.30",
   "description": "Anything — Professional Creative & Productivity Ecosystem Desktop Suite",
   "author": "Burhanuddin",
   "type": "module",
@@ -15,9 +15,9 @@
     "collect-releases": "node scripts/collect-releases.cjs",
     "collect-releases:watch": "node scripts/collect-releases.cjs --watch",
     "build": "npm run build:vite && npm run build:electron",
-    "dist": "npm run build && electron-builder --win --publish never",
-    "release": "npm run build && electron-builder --publish always",
-    "release:github": "node scripts/publish-github-release.cjs",
+    "dist": "npm run build && electron-builder --win --publish never && node scripts/publish-github-release.cjs --app=anything",
+    "release": "npm run build && electron-builder --win --publish never && node scripts/publish-github-release.cjs --app=anything",
+    "release:github": "node scripts/publish-github-release.cjs --app=anything",
     "release:all": "node scripts/publish-github-release.cjs --all",
     "commit": "node scripts/auto-commit.cjs",
     "commit:push": "node scripts/auto-commit.cjs --push",
@@ -27,7 +27,9 @@
     "start": "electron .",
     "preview": "vite preview",
     "builder": "python scripts/master_builder.py",
-    "sync:versions": "python scripts/sync_all_versions.py"
+    "sync:versions": "python scripts/sync_all_versions.py",
+    "build:exe": "npm run build && electron-builder --win --publish never && node scripts/publish-github-release.cjs --app=anything",
+    "make-exe": "npm run build && electron-builder --win --publish never && node scripts/publish-github-release.cjs --app=anything"
   },
   "build": {
     "appId": "com.burhanuddin.anything",
@@ -74,12 +76,14 @@
     "cross-env": "^10.1.0",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.16.0",
+    "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "wait-on": "^9.5.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

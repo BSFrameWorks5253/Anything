@@ -1,6 +1,7 @@
 import React from 'react';
 import type { CatalogApp, NavigationPage } from '../../types/app.types';
 import { HeroBanner } from './components/HeroBanner';
+import { OneTapProductionWidget } from '../../components/OneTapProductionWidget';
 import { UpdatesAlertBar } from './components/UpdatesAlertBar';
 import { QuickLaunchGrid } from './components/QuickLaunchGrid';
 import { WhatIsNewSection } from './components/WhatIsNewSection';
@@ -29,6 +30,9 @@ export const HomePage: React.FC<HomePageProps> = ({
     <div className="p-6 lg:p-8 space-y-7 max-w-7xl mx-auto pb-14">
       {/* Liquid Glass Hero Banner */}
       <HeroBanner onOpenApps={() => onNavigate('apps')} />
+
+      {/* One Tap Live Production Tracker Widget */}
+      <OneTapProductionWidget />
 
       {/* Updates Alert Bar */}
       <UpdatesAlertBar

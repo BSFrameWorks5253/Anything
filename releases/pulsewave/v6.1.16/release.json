@@ -1,0 +1,31 @@
+{
+  "appId": "pulsewave",
+  "appName": "Pulse Wave",
+  "version": "6.1.16",
+  "executableName": "PulseWave-v6.1.16-universal-release.apk",
+  "setupExecutableName": "PulseWave-v6.1.16-universal-release.apk",
+  "releaseDate": "2026-10-28",
+  "releaseType": "major",
+  "tagline": "Pulse Wave v6.1.16 Official GitHub Release",
+  "summary": "Pulse Wave v6.1.16 (Universal Release)",
+  "newFeatures": [
+    "*Full Changelog**: https://github.com/BSFrameWorks5253/Plusewave/compare/v6.1.14...v6.1.16"
+  ],
+  "improvements": [
+    "Low latency event loop execution",
+    "Anything parent ecosystem integration",
+    "Liquid Glass styling"
+  ],
+  "fixes": [
+    "Stability enhancements and Windows 11 compatibility"
+  ],
+  "emailNotification": {
+    "subject": "🚀 Pulse Wave v6.1.16 is Available!",
+    "preview": "Download or evaluate Pulse Wave v6.1.16 now in Anything.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-emerald-500 via-teal-600 to-cyan-700"
+  },
+  "sizeFormatted": "42.9 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.16/PulseWave-v6.1.16-universal-release.apk",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/Plusewave/releases"
+}

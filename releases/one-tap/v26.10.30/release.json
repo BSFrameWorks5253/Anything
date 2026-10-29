@@ -1,0 +1,31 @@
+{
+  "appId": "one-tap",
+  "appName": "One Tap",
+  "version": "26.10.30",
+  "executableName": "One Tap.exe",
+  "setupExecutableName": "OneTap-V-26.10.30.exe",
+  "releaseDate": "2026-10-28",
+  "releaseType": "major",
+  "tagline": "Automated Batch Rendering Engine & VisionOS Design System",
+  "summary": "One Tap v26.10.30",
+  "newFeatures": [
+    "One Tap v26.10.30 - Automated Video Production Workstation"
+  ],
+  "improvements": [
+    "Low latency event loop execution",
+    "Anything parent ecosystem integration",
+    "Liquid Glass styling"
+  ],
+  "fixes": [
+    "Stability enhancements and Windows 11 compatibility"
+  ],
+  "emailNotification": {
+    "subject": "🚀 One Tap v26.10.30 is Available!",
+    "preview": "Download or evaluate One Tap v26.10.30 now in Anything.",
+    "ctaText": "Open in Anything",
+    "heroGradient": "from-rose-600 via-red-600 to-amber-500"
+  },
+  "sizeFormatted": "91.6 MB",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases/download/v26.10.30/OneTap-V-26.10.30.exe",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/onetap-workstation/releases"
+}

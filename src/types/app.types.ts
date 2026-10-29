@@ -1,10 +1,7 @@
 export type NavigationPage = 
   | 'home' 
   | 'apps' 
-  | 'mobile'
-  | 'publisher'
-  | 'creator'
-  | 'files' 
+    | 'files' 
   | 'settings';
 
 export type AppCategory = 

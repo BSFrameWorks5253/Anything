@@ -1,11 +1,11 @@
 import React from 'react';
-import type { NavigationPage } from '../../../types/app.types';
+import type { CatalogApp, NavigationPage } from '../../../types/app.types';
 import { useTheme } from '../../../context/ThemeContext';
-import { useViewMode } from '../../../context/ViewModeContext';
 
 interface HeaderTitleProps {
   page: NavigationPage;
   appName?: string;
+  activeApp?: CatalogApp | null;
 }
 
 const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = {
@@ -14,60 +14,48 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
     subtitle: 'Quick access, child apps & ecosystem updates',
   },
   apps: {
-    title: 'Desktop Apps',
-    subtitle: 'Download, update and manage desktop creative applications',
-  },
-  mobile: {
-    title: 'Mobile Apps',
-    subtitle: 'Android APKs, iOS companion apps & mobile suite sync',
-  },
-  publisher: {
-    title: 'Catalog Publisher',
-    subtitle: 'Distribute software & manage releases',
-  },
-  creator: {
-    title: 'Creator & Lead Architect',
-    subtitle: 'Burhanuddin Sounasath · Frameworks & Child Apps',
+    title: 'Creative Apps',
+    subtitle: 'Download, update and manage creative workstation applications',
   },
   files: {
-    title: 'Cloud Documents',
-    subtitle: 'Synchronized assets & cloud storage',
+    title: 'Drop Shelf & Shared Assets',
+    subtitle: 'Mac-style drop shelf, QR mobile image hub & cross-app assets',
   },
   settings: {
     title: 'Preferences',
-    subtitle: 'Account, storage and system settings',
+    subtitle: 'Account, workspace storage and ecosystem settings',
   },
 };
 
-export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page, appName }) => {
-  const meta = appName
-    ? { title: appName, subtitle: 'Child Application Details & Configuration' }
-    : pageTitles[page] || pageTitles.apps;
+export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page, appName, activeApp }) => {
   const { theme } = useTheme();
-  const { viewMode } = useViewMode();
   const isLight = theme === 'light';
 
-  return (
-    <div className="flex items-center gap-2.5 select-none">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <h1
-            className={`text-sm font-semibold tracking-tight ${
-              isLight ? 'text-zinc-900' : 'text-zinc-100'
-            }`}
-          >
-            {meta.title}
-          </h1>
-        </div>
+  const defaultMeta = pageTitles[page] || pageTitles.apps;
+  const title = appName || (activeApp ? activeApp.name : defaultMeta.title);
+  const subtitle = activeApp
+    ? (activeApp.category ? `${activeApp.category} · Desktop Application` : 'Desktop Creative Application')
+    : (appName ? 'Desktop Creative Application' : defaultMeta.subtitle);
 
-        <p
-          className={`text-[11px] hidden sm:block ${
-            isLight ? 'text-zinc-500' : 'text-zinc-400'
-          }`}
-        >
-          {meta.subtitle}
-        </p>
+  return (
+    <div className="flex flex-col min-w-0">
+      <div className="flex items-center gap-2">
+        <h2 className="text-sm font-bold text-zinc-900 dark:text-white tracking-tight truncate">
+          {title}
+        </h2>
+        {activeApp && (
+          <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-200/80 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 font-semibold">
+            {activeApp.version ? `v${activeApp.version}` : 'Desktop'}
+          </span>
+        )}
       </div>
+      <p
+        className={`text-[11px] truncate ${
+          isLight ? 'text-zinc-500 font-medium' : 'text-zinc-400 font-normal'
+        }`}
+      >
+        {subtitle}
+      </p>
     </div>
   );
 };

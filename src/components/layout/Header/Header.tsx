@@ -1,14 +1,16 @@
 import React from 'react';
-import type { NavigationPage } from '../../../types/app.types';
+import type { CatalogApp, NavigationPage } from '../../../types/app.types';
 import { WindowControls } from './WindowControls';
 import { HeaderTitle } from './HeaderTitle';
 import { HeaderActions } from './HeaderActions';
 import { useTheme } from '../../../context/ThemeContext';
 import { AnythingBrandEmblem } from '../../ui/AdobeSplashScreen';
+import { AppIconRenderer } from '../../../features/apps/components/CrazyAppStudio/AppIconRenderer';
 
 interface HeaderProps {
   page: NavigationPage;
   appName?: string;
+  activeApp?: CatalogApp | null;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
@@ -16,6 +18,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   page,
   appName,
+  activeApp,
   searchQuery,
   onSearchChange,
 }) => {
@@ -43,8 +46,14 @@ export const Header: React.FC<HeaderProps> = ({
         className="flex items-center gap-2.5 shrink-0 py-1"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        <AnythingBrandEmblem size={24} glow={false} className="rounded-lg shrink-0 shadow-none border border-black/5 dark:border-white/10" />
-        <HeaderTitle page={page} appName={appName} />
+        {activeApp ? (
+          <div className="shrink-0 flex items-center justify-center w-6 h-6 rounded-lg overflow-hidden shadow-xs border border-black/5 dark:border-white/10">
+            <AppIconRenderer app={activeApp} size="sm" className="scale-[0.75] origin-center" />
+          </div>
+        ) : (
+          <AnythingBrandEmblem size={24} glow={false} className="rounded-lg shrink-0 shadow-none border border-black/5 dark:border-white/10" />
+        )}
+        <HeaderTitle page={page} appName={appName} activeApp={activeApp} />
       </div>
 
       {/* Center Draggable Spacer */}

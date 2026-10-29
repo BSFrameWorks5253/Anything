@@ -43,12 +43,16 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({
   const isLight = theme === 'light';
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
-  const creatorApps = catalog.filter(
+  const creatorApps = (catalog || []).filter(
     (app) =>
       app.addedByCreator ||
       app.id === 'tap-studio' ||
       app.id === 'photo-studio' ||
-      app.author?.includes('Burhanuddin')
+      app.id === 'one-tap' ||
+      app.id === 'mediaflow-studio' ||
+      app.id === 'docuflow-studio' ||
+      app.author?.includes('Burhanuddin') ||
+      (app.githubRepo && app.githubRepo.toLowerCase().includes('bsframeworks5253'))
   );
 
   const promptPreview = `You are building a dedicated professional child desktop application for the "Anything" app ecosystem (created by Burhanuddin Sounasath · Phone: 8369811201).

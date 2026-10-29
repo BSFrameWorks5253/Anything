@@ -1,0 +1,13 @@
+{
+  "appId": "auto-copier",
+  "appName": "Auto Copier Pro",
+  "monogram": "AC",
+  "tagline": "## Anything Master Hub v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Anything_26.10.30_Setup.exe` (112.6 MB)\n- **Target Platform**: Windows x64 (NSIS Standa",
+  "gradient": "from-emerald-500 via-teal-400 to-cyan-400",
+  "presetId": "apple-ambient",
+  "bootPhrases": [
+    "Connecting Auto Copier Pro to Anything...",
+    "Initializing graphics pipeline...",
+    "Ready."
+  ]
+}

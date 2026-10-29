@@ -1,15 +1,15 @@
 import React from 'react';
-import type { NavigationPage } from '../../types/app.types';
+import type { CatalogApp, NavigationPage } from '../../types/app.types';
 import { LiquidBackground } from '../ui/LiquidBackground';
 import { Sidebar } from './Sidebar/Sidebar';
 import { Header } from './Header/Header';
 import { UpdateNotificationModal } from '../ui/UpdateNotificationModal';
 import { useTheme } from '../../context/ThemeContext';
-import { useViewMode } from '../../context/ViewModeContext';
 
 interface AppLayoutProps {
   currentPage: NavigationPage;
   appName?: string;
+  activeApp?: CatalogApp | null;
   onNavigate: (page: NavigationPage) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -20,6 +20,7 @@ interface AppLayoutProps {
 export const AppLayout: React.FC<AppLayoutProps> = ({
   currentPage,
   appName,
+  activeApp,
   onNavigate,
   searchQuery,
   onSearchChange,
@@ -27,7 +28,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
 }) => {
   const { theme } = useTheme();
-  const { viewMode, setViewMode } = useViewMode();
   const isLight = theme === 'light';
 
   return (
@@ -39,7 +39,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           : 'bg-[#121214] text-zinc-100 selection:bg-red-500/30 selection:text-white'
       }`}
     >
-      {/* WWDC26 Ambient Liquid Glow Background */}
+      {/* Ambient Liquid Glow Background */}
       <LiquidBackground />
 
       {/* Frosted Floating Glass Navigation Bar */}
@@ -54,6 +54,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <Header
           page={currentPage}
           appName={appName}
+          activeApp={activeApp}
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
         />

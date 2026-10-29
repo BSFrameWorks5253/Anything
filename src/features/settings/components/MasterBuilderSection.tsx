@@ -24,12 +24,12 @@ interface AppInfo {
 }
 
 const APPS: AppInfo[] = [
-  { name: 'MediaFlow Studio', tag: 'Mf', color: 'from-amber-500 to-orange-600', version: '26.10.26', repo: 'BSFrameWorks5253/MediaFlow-Studio', destination: 'Own Repo + Anything' },
-  { name: 'One Tap Workstation', tag: 'Ot', color: 'from-blue-600 to-cyan-500', version: '26.10.26', repo: 'BSFrameWorks5253/onetap-workstation', destination: 'Own Repo + Anything' },
-  { name: 'DocuFlow Studio Pro', tag: 'Df', color: 'from-emerald-500 to-teal-700', version: '26.10.26', repo: 'BSFrameWorks5253/DocuFlow-', destination: 'Own Repo + Anything' },
-  { name: 'Anything Master Hub', tag: 'An', color: 'from-cyan-400 to-indigo-600', version: '26.10.26', repo: 'BSFrameWorks5253/Anything', destination: 'Anything Release' },
-  { name: 'Anything Data Manage', tag: 'Dm', color: 'from-purple-600 to-indigo-700', version: '26.10.26', repo: 'Local Hub Only', destination: 'Anything Release Only' },
-  { name: 'Auto Copier Pro', tag: 'Ac', color: 'from-rose-500 to-pink-600', version: '26.10.26', repo: 'Local Hub Only', destination: 'Anything Release Only' },
+  { name: 'MediaFlow Studio', tag: 'Mf', color: 'from-amber-500 to-orange-600', version: "26.10.30", repo: 'BSFrameWorks5253/MediaFlow-Studio', destination: 'Own Repo + Anything' },
+  { name: 'One Tap Workstation', tag: 'Ot', color: 'from-blue-600 to-cyan-500', version: "26.10.30", repo: 'BSFrameWorks5253/onetap-workstation', destination: 'Own Repo + Anything' },
+  { name: 'DocuFlow Studio Pro', tag: 'Df', color: 'from-emerald-500 to-teal-700', version: "26.10.30", repo: 'BSFrameWorks5253/DocuFlow-', destination: 'Own Repo + Anything' },
+  { name: 'Anything Master Hub', tag: 'An', color: 'from-cyan-400 to-indigo-600', version: "26.10.30", repo: 'BSFrameWorks5253/Anything', destination: 'Anything Release' },
+  { name: 'Anything Data Manage', tag: 'Dm', color: 'from-purple-600 to-indigo-700', version: "26.10.30", repo: 'Local Hub Only', destination: 'Anything Release Only' },
+  { name: 'Auto Copier Pro', tag: 'Ac', color: 'from-rose-500 to-pink-600', version: "26.10.30", repo: 'Local Hub Only', destination: 'Anything Release Only' },
 ];
 
 export const MasterBuilderSection: React.FC = () => {
@@ -101,7 +101,7 @@ export const MasterBuilderSection: React.FC = () => {
                   Anything Exe Builder Studio
                 </h3>
                 <GlassBadge variant="cyan" dot>
-                  v26.10.26 Synced
+                  v26.10.30 Synced
                 </GlassBadge>
               </div>
               <p className="text-xs text-zinc-600 dark:text-white/60">

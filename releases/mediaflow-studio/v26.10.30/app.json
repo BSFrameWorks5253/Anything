@@ -1,0 +1,29 @@
+{
+  "id": "mediaflow-studio",
+  "name": "MediaFlow Studio",
+  "shortName": "ME",
+  "version": "26.10.30",
+  "category": "Media & Video",
+  "description": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
+  "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
+  "setupExecutableName": "Mediaflow_studio_26.10.30_Setup.exe",
+  "packageFileName": "Mediaflow_studio_26.10.30_Setup.exe",
+  "targetPlatforms": [
+    "desktop"
+  ],
+  "gradient": "from-blue-600 to-indigo-700",
+  "textColor": "#0066ee",
+  "glowColor": "rgba(0, 102, 238, 0.45)",
+  "githubRepo": "BSFrameWorks5253/MediaFlow-Studio",
+  "releasesUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases",
+  "releasesTagUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/tag/",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases/download/v26.10.30/Mediaflow_studio_26.10.30_Setup.exe",
+  "iconType": "monogram",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i7 / AMD Ryzen 7",
+    "ram": "16 GB RAM",
+    "graphics": "DirectX 11 / DirectX 12 compatible GPU",
+    "storage": "1 GB available space"
+  }
+}

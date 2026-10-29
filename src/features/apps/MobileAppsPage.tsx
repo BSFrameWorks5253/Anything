@@ -22,7 +22,7 @@ export const MobileAppsPage: React.FC<MobileAppsPageProps> = ({
 
   // Filter apps that have mobile releases (Android APK/AAB or iOS IPA) or have category 'Mobile'
   const mobileApps = apps.filter(
-    (a) => a.targetPlatforms?.includes('mobile') || Boolean(a.mobileInfo) || a.category.toLowerCase().includes('mobile')
+    (a) => a.targetPlatforms?.includes('mobile') || Boolean(a.mobileInfo) || (a.category && a.category.toLowerCase().includes('mobile'))
   );
 
   return (

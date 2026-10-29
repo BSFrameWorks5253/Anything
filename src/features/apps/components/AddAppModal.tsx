@@ -69,7 +69,7 @@ export const AddAppModal: React.FC<AddAppModalProps> = ({
       gradient: selectedColor.gradient,
       textColor: selectedColor.textColor,
       glowColor: selectedColor.glow,
-      version: "26.10.26",
+      version: "26.10.30",
       status: 'installed',
       size: 'Local Executable',
       executablePath: executablePath.trim() || undefined,

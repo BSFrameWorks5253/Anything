@@ -27,24 +27,24 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 
   const variantClasses = {
     primary: isLight
-      ? 'bg-zinc-900 hover:bg-black !text-white font-semibold shadow-xs active:scale-[0.99]'
-      : 'bg-white hover:bg-zinc-200 !text-zinc-950 font-semibold shadow-xs active:scale-[0.99]',
+      ? 'bg-zinc-900 hover:bg-black !text-white font-semibold shadow-xs'
+      : 'bg-white hover:bg-zinc-200 !text-zinc-950 font-semibold shadow-xs',
     accent:
-      'bg-red-600 hover:bg-red-700 !text-white font-semibold shadow-xs active:scale-[0.99]',
+      'bg-red-600 hover:bg-red-700 !text-white font-semibold shadow-xs',
     glass: isLight
-      ? 'bg-white hover:bg-zinc-50 !text-zinc-800 border border-zinc-300 shadow-xs active:scale-[0.99]'
-      : 'bg-zinc-800/80 hover:bg-zinc-700 !text-zinc-100 border border-zinc-700 shadow-xs active:scale-[0.99]',
+      ? 'bg-white hover:bg-zinc-50 !text-zinc-800 border border-zinc-300 shadow-xs'
+      : 'bg-zinc-800/80 hover:bg-zinc-700 !text-zinc-100 border border-zinc-700 shadow-xs',
     ghost: isLight
-      ? 'bg-transparent hover:bg-zinc-100 !text-zinc-600 hover:!text-zinc-900 active:scale-[0.99]'
-      : 'bg-transparent hover:bg-zinc-800 !text-zinc-400 hover:!text-zinc-100 active:scale-[0.99]',
+      ? 'bg-transparent hover:bg-zinc-100 !text-zinc-600 hover:!text-zinc-900'
+      : 'bg-transparent hover:bg-zinc-800 !text-zinc-400 hover:!text-zinc-100',
     danger: isLight
-      ? 'bg-rose-50 hover:bg-rose-100 !text-rose-700 border border-rose-200 active:scale-[0.99]'
-      : 'bg-rose-950/40 hover:bg-rose-900/60 !text-rose-300 border border-rose-800/60 active:scale-[0.99]',
+      ? 'bg-rose-50 hover:bg-rose-100 !text-rose-700 border border-rose-200'
+      : 'bg-rose-950/40 hover:bg-rose-900/60 !text-rose-300 border border-rose-800/60',
   }[variant];
 
   return (
     <button
-      className={`inline-flex items-center justify-center font-medium transition-colors select-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${sizeClasses} ${variantClasses} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-all duration-150 ease-out active:scale-[0.97] select-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${sizeClasses} ${variantClasses} ${className}`}
       disabled={disabled}
       {...props}
     >

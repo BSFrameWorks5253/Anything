@@ -1,0 +1,29 @@
+{
+  "id": "docuflow-studio",
+  "name": "DocuFlow Studio Pro",
+  "shortName": "DO",
+  "version": "26.10.30",
+  "category": "Productivity & Documents",
+  "description": "## 🚀 DocuFlow Studio Pro v26.10.30\n\nDocuFlow Studio Pro v1.0.0 introduces PDFella-grade in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline O",
+  "executableName": "DocuFlow_Studio_26.10.30.exe",
+  "setupExecutableName": "DocuFlow_Studio_26.10.30_Setup.exe",
+  "packageFileName": "DocuFlow_Studio_26.10.30_Setup.exe",
+  "targetPlatforms": [
+    "desktop"
+  ],
+  "gradient": "from-blue-600 to-indigo-700",
+  "textColor": "#0066ee",
+  "glowColor": "rgba(0, 102, 238, 0.45)",
+  "githubRepo": "BSFrameworks5253/DocuFlow-",
+  "releasesUrl": "https://github.com/BSFrameworks5253/DocuFlow-/releases",
+  "releasesTagUrl": "https://github.com/BSFrameworks5253/DocuFlow-/releases/tag/",
+  "downloadUrl": "https://github.com/BSFrameWorks5253/DocuFlow-/releases/download/v26.10.30/DocuFlow_Studio_26.10.30_Setup.exe",
+  "iconType": "monogram",
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (64-bit)",
+    "processor": "Intel Core i7 / AMD Ryzen 7",
+    "ram": "16 GB RAM",
+    "graphics": "DirectX 11 / DirectX 12 compatible GPU",
+    "storage": "1 GB available space"
+  }
+}

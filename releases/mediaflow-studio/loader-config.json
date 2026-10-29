@@ -2,7 +2,7 @@
   "appId": "mediaflow-studio",
   "appName": "MediaFlow Studio",
   "monogram": "MS",
-  "tagline": "## 🚀 MediaFlow Studio v6.0.0\nProfessional Media Ingestion, Synchronization and Report Fusion Desktop Suite.\n\n### ✨ What's Included:\n- **Standalone Frameless Adobe Splash Window**: Instant transparent zero-backdrop boot screen with live tel",
+  "tagline": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
   "gradient": "from-violet-700 via-purple-600 to-indigo-500",
   "presetId": "apple-ambient",
   "bootPhrases": [

@@ -1,9 +1,9 @@
 {
   "appId": "docuflow",
   "appName": "DocuFlow Studio Pro",
-  "version": "26.10.27",
-  "setupFile": "DocuFlow_Studio_26.10.27.exe",
+  "version": "26.10.30",
+  "setupFile": "DocuFlow_Studio_26.10.30.exe",
   "size": "122.5 MB",
-  "publishedAt": "2026-10-26T17:33:29.317Z",
+  "publishedAt": "2026-10-28T05:35:07.262Z",
   "destination": "both"
 }

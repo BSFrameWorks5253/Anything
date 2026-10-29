@@ -15,7 +15,17 @@ from pathlib import Path
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-TARGET_VERSION = sys.argv[1] if len(sys.argv) > 1 else '26.10.26'
+def get_default_version():
+    try:
+        pkg_path = Path(__file__).resolve().parent.parent / 'package.json'
+        if pkg_path.exists():
+            with open(pkg_path, 'r', encoding='utf-8') as f:
+                return json.load(f).get('version', '26.10.30')
+    except Exception:
+        pass
+    return '26.10.30'
+
+TARGET_VERSION = sys.argv[1] if len(sys.argv) > 1 else get_default_version()
 
 APPS_CONFIG = [
     {

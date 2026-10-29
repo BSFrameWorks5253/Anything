@@ -78,6 +78,37 @@ const shaderPresets = [
   { gradient: 'from-pink-600 via-rose-500 to-orange-400', textColor: '#fb7185', glow: 'rgba(251, 113, 133, 0.45)' },
 ];
 
+function pickReleaseExecutable(files, targetVersion) {
+  if (!Array.isArray(files) || files.length === 0) return null;
+  const valid = files.filter((f) => {
+    const l = f.toLowerCase();
+    return (
+      (l.endsWith('.exe') || l.endsWith('.msix') || l.endsWith('.appx') || l.endsWith('.msi') || l.endsWith('.zip')) &&
+      !l.includes('uninstall') &&
+      !l.endsWith('.blockmap')
+    );
+  });
+  if (valid.length === 0) return null;
+  if (targetVersion) {
+    const cleanVer = String(targetVersion).replace(/^[vV]/, '');
+    const verMatch = valid.find((f) => {
+      const l = f.toLowerCase();
+      return f.includes(cleanVer) && (l.includes('_setup') || l.includes('-setup') || l.includes('setup') || l.includes('installer'));
+    }) || valid.find((f) => f.includes(cleanVer));
+    if (verMatch) return verMatch;
+  }
+  valid.sort((a, b) => {
+    const verA = extractVersion(a);
+    const verB = extractVersion(b);
+    const cmp = compareVersions(verB, verA);
+    if (cmp !== 0) return cmp;
+    const aSetup = (a.toLowerCase().includes('setup') || a.toLowerCase().includes('installer')) ? 1 : 0;
+    const bSetup = (b.toLowerCase().includes('setup') || b.toLowerCase().includes('installer')) ? 1 : 0;
+    return bSetup - aSetup;
+  });
+  return valid[0];
+}
+
 function collectReleases() {
   console.log(`\n🔍 Scanning releases folder: ${RELEASES_DIR}`);
   const catalog = loadCatalog();
@@ -116,18 +147,44 @@ function collectReleases() {
         }
       }
 
-      // Find executable or installer
-      const exeFile = appFiles.find((f) => {
-        const ext = path.extname(f).toLowerCase();
-        return ext === '.exe' || ext === '.msix' || ext === '.zip';
-      });
+      // Check version subdirectories first for newest release
+      const subEntries = fs.readdirSync(appDir, { withFileTypes: true });
+      const versionDirs = subEntries.filter((e) => e.isDirectory() && (e.name.toLowerCase().startsWith('v') || /^\d+\.\d+/.test(e.name)));
+      let vSubRelease = null;
+      if (versionDirs.length > 0) {
+        versionDirs.sort((a, b) => compareVersions(extractVersion(b.name), extractVersion(a.name)));
+        for (const vd of versionDirs) {
+          const vdPath = path.join(appDir, vd.name);
+          const vdFiles = fs.readdirSync(vdPath);
+          const candExe = pickReleaseExecutable(vdFiles, extractVersion(vd.name));
+          if (candExe) {
+            let vdRel = {};
+            const rF = vdFiles.find((f) => f.toLowerCase().startsWith('release') && f.toLowerCase().endsWith('.json'));
+            if (rF) {
+              try { vdRel = JSON.parse(fs.readFileSync(path.join(vdPath, rF), 'utf-8')); } catch(e) {}
+            }
+            vSubRelease = { dir: vdPath, exe: candExe, relMeta: vdRel, ver: vdRel.version || extractVersion(vd.name) || extractVersion(candExe) };
+            break;
+          }
+        }
+      }
+
+      const preferredVer = (vSubRelease && vSubRelease.ver) || releaseMeta.version || manifest.version;
+      let exeFile = pickReleaseExecutable(appFiles, preferredVer);
+      let actualExeDir = appDir;
+      if (vSubRelease && (!exeFile || compareVersions(vSubRelease.ver, extractVersion(exeFile)) >= 0)) {
+        exeFile = vSubRelease.exe;
+        actualExeDir = vSubRelease.dir;
+        releaseMeta = { ...releaseMeta, ...vSubRelease.relMeta };
+      }
+      if (!exeFile) exeFile = pickReleaseExecutable(appFiles);
 
       if (!exeFile) {
         console.log(`  ℹ️ Skipping ${entry.name} (no .exe, .msix, or .zip found yet)`);
         continue;
       }
 
-      const exeFullPath = path.join(appDir, exeFile);
+      const exeFullPath = path.join(actualExeDir, exeFile);
       const stats = fs.statSync(exeFullPath);
       const ext = path.extname(exeFile).toLowerCase();
 
@@ -136,7 +193,65 @@ function collectReleases() {
       const appVersion = releaseMeta.version || manifest.version || extractVersion(exeFile) || '1.0.0';
       const category = manifest.category || 'Custom Tools';
       const description = releaseMeta.summary || manifest.description || `Child application ${appName} running inside Anything.`;
-      const githubRepo = manifest.githubRepo || undefined;
+      const normId = appId.toLowerCase().replace(/^app-/, '').replace(/[^a-z0-9]/g, '');
+      const KNOWN_ECOSYSTEM_REPOS = {
+        'onetap': 'BSFrameWorks5253/onetap-workstation',
+        'one-tap': 'BSFrameWorks5253/onetap-workstation',
+        'onetap-workstation': 'BSFrameWorks5253/onetap-workstation',
+        'mediaflow': 'BSFrameWorks5253/MediaFlow-Studio',
+        'mediaflow-studio': 'BSFrameWorks5253/MediaFlow-Studio',
+        'docuflow': 'BSFrameworks5253/DocuFlow-',
+        'docuflow-studio': 'BSFrameworks5253/DocuFlow-',
+        'pulsewave': 'BSFrameWorks5253/Plusewave',
+        'plusewave': 'BSFrameWorks5253/Plusewave',
+        'anything-data-manage': 'BSFrameWorks5253/AIN53',
+        'app-anything-data-manage': 'BSFrameWorks5253/AIN53',
+        'ain53': 'BSFrameWorks5253/AIN53',
+        'auto-copier': 'BSFrameWorks5253/Anything',
+        'anything': 'BSFrameWorks5253/Anything',
+      };
+      const githubRepo = manifest.githubRepo || KNOWN_ECOSYSTEM_REPOS[normId] || KNOWN_ECOSYSTEM_REPOS[appId] || undefined;
+            const VERIFIED_GITHUB_ASSETS = {
+        autocopier: {
+          url: 'https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.29/Auto_Copier_Pro_Setup_26.10.28.exe',
+          fileName: 'Auto_Copier_Pro_Setup_26.10.28.exe',
+          version: '26.10.28'
+        },
+        'auto-copier': {
+          url: 'https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.29/Auto_Copier_Pro_Setup_26.10.28.exe',
+          fileName: 'Auto_Copier_Pro_Setup_26.10.28.exe',
+          version: '26.10.28'
+        },
+        anythingdatamanage: {
+          url: 'https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe',
+          fileName: 'AIN53_Data_Management_Setup.exe',
+          version: '1.0.58'
+        },
+        'anything-data-manage': {
+          url: 'https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe',
+          fileName: 'AIN53_Data_Management_Setup.exe',
+          version: '1.0.58'
+        },
+        ain53: {
+          url: 'https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe',
+          fileName: 'AIN53_Data_Management_Setup.exe',
+          version: '1.0.58'
+        },
+        pulsewave: {
+          url: 'https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.11/PulseWave-v6.1.11-universal-release.apk',
+          fileName: 'PulseWave-v6.1.11-universal-release.apk',
+          version: '6.1.11'
+        }
+      };
+
+      const verified = VERIFIED_GITHUB_ASSETS[normId] || VERIFIED_GITHUB_ASSETS[appId];
+      const remoteDownloadUrl = verified
+        ? verified.url
+        : (manifest.downloadUrl?.startsWith('http')
+            ? manifest.downloadUrl
+            : (githubRepo
+                ? `https://github.com/${githubRepo}/releases/download/v${appVersion}/${exeFile}`
+                : undefined));
 
       // Copy package to published directory: published-apps/<appId>/<exeFile>
       const targetDir = path.join(PUBLISHED_DIR, appId);
@@ -171,7 +286,7 @@ function collectReleases() {
         fixes: Array.isArray(releaseMeta.fixes) ? releaseMeta.fixes : [],
         emailNotification: releaseMeta.emailNotification,
         sizeFormatted: formatBytes(stats.size),
-        downloadUrl: destPath,
+        downloadUrl: remoteDownloadUrl || destPath,
       };
 
       const existingIndex = catalog.findIndex((a) => a.id === appId);
@@ -197,7 +312,8 @@ function collectReleases() {
         packageFileName: exeFile,
         packageSize: formatBytes(stats.size),
         packageFormat: ext,
-        localPackagePath: destPath,
+        localPackagePath: githubRepo ? undefined : destPath,
+        downloadUrl: remoteDownloadUrl,
         gradient: manifest.gradient || shader.gradient,
         textColor: manifest.textColor || shader.textColor,
         glowColor: manifest.glowColor || shader.glow,
@@ -222,7 +338,12 @@ function collectReleases() {
 
       if (existingIndex >= 0) {
         const hasNewerVersion = compareVersions(appVersion, existing.version) > 0;
-        if (hasNewerVersion || isNewFile) {
+        const isSameVersion = compareVersions(appVersion, existing.version) === 0;
+        const isOlder = compareVersions(appVersion, existing.version) < 0;
+        if (isOlder) {
+          console.log(`  \u2713 ${appName} is up to date (v${existing.version})`);
+          catalog[existingIndex].history = history;
+        } else if (hasNewerVersion || (isSameVersion && (isNewFile || catalog[existingIndex].packageFileName !== exeFile))) {
           console.log(`  🚀 [UPDATE DETECTED] ${appName}: v${existing.version} ➔ v${appVersion}`);
           catalog[existingIndex] = {
             ...existing,
