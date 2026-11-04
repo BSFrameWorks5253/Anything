@@ -215,8 +215,45 @@ async function publishReleaseForTarget({ repoOwner, repoName, version, title, bo
 async function main() {
   const args = process.argv.slice(2);
   const targetAppArg = args.find((a) => a.startsWith('--app='));
-  const targetApp = targetAppArg ? targetAppArg.split('=')[1] : null;
+  let targetApp = targetAppArg ? targetAppArg.split('=')[1].replace(/^["']|["']$/g, '').trim() : null;
+  const directExeArg = args.find((a) => a.startsWith('--exe='));
+  const directExe = directExeArg ? directExeArg.split('=')[1].replace(/^["']|["']$/g, '').trim() : null;
+  const directRepoArg = args.find((a) => a.startsWith('--repo='));
+  const directRepo = directRepoArg ? directRepoArg.split('=')[1].replace(/^["']|["']$/g, '').trim() : null;
+  const directVersionArg = args.find((a) => a.startsWith('--version='));
+  const directVersion = directVersionArg ? directVersionArg.split('=')[1].replace(/^["']|["']$/g, '').trim() : null;
   const isAll = args.includes('--all');
+
+  // Direct Upload Pathway (Called from master_builder or CLI)
+  if (directExe && fs.existsSync(directExe) && directRepo) {
+    const [owner, repo] = directRepo.replace(/^https?:\/\/github\.com\//i, '').split('/');
+    const version = directVersion || '1.0.0';
+    const exeName = path.basename(directExe);
+    const extraAssets = [];
+    const dir = path.dirname(directExe);
+    const latestYml = path.join(dir, 'latest.yml');
+    if (fs.existsSync(latestYml)) extraAssets.push({ path: latestYml, name: 'latest.yml' });
+    const blockmap = path.join(dir, `${exeName}.blockmap`);
+    if (fs.existsSync(blockmap)) extraAssets.push({ path: blockmap, name: `${exeName}.blockmap` });
+
+    const body = `## 🚀 ${repo} v${version}
+Production release for ${repo} within the Anything ecosystem.
+
+### 📥 Installation:
+Download **[${exeName}](https://github.com/${owner}/${repo}/releases/download/v${version}/${encodeURIComponent(exeName)})** to install or update directly.`;
+
+    await publishReleaseForTarget({
+      repoOwner: owner,
+      repoName: repo,
+      version,
+      title: `${repo} v${version} Release`,
+      body,
+      assetPath: directExe,
+      assetName: exeName,
+      extraAssets
+    });
+    return;
+  }
 
   const rootDir = path.resolve(__dirname, '..');
   const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8'));

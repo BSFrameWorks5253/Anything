@@ -46,7 +46,7 @@ DEFAULT_APPS = [
         "id": "anything",
         "name": "Anything Master Hub",
         "category": "Ecosystem Launcher & Hub",
-        "path": r"C:\Users\Burhanuddin\OneDrive\Desktop\Anything\Anything",
+        "path": str(ROOT_DIR),
         "type": "electron",
         "repo": "BSFrameWorks5253/Anything",
         "has_own_repo": True,
@@ -58,7 +58,7 @@ DEFAULT_APPS = [
         "id": "mediaflow-studio",
         "name": "MediaFlow Studio",
         "category": "Media & Video Processing",
-        "path": r"C:\Users\Burhanuddin\OneDrive\Desktop\Anything Apps\MediaFlow-Studio",
+        "path": str(ROOT_DIR.parent / "Anything Apps" / "MediaFlow-Studio"),
         "type": "electron",
         "repo": "BSFrameWorks5253/MediaFlow-Studio",
         "has_own_repo": True,
@@ -70,13 +70,26 @@ DEFAULT_APPS = [
         "id": "one-tap",
         "name": "One Tap Workstation",
         "category": "Batch Video Rendering",
-        "path": r"C:\Users\Burhanuddin\OneDrive\Desktop\Anything Apps\One Tap",
+        "path": str(ROOT_DIR.parent / "Anything Apps" / "One Tap"),
         "type": "electron",
         "repo": "BSFrameWorks5253/onetap-workstation",
         "has_own_repo": True,
         "default_dest": "both",
         "monogram": "Ot",
         "accent": "#FF416C"
+    },
+    {
+        "id": "anything-file-manager",
+        "alt_ids": ["media-viewer", "file-manager", "afm"],
+        "name": "Anything File Manager",
+        "category": "Media & Production Explorer",
+        "path": str(ROOT_DIR.parent / "Anything Apps" / "Media Viewer"),
+        "type": "electron",
+        "repo": "BSFrameWorks5253/Anything-File-Manager",
+        "has_own_repo": True,
+        "default_dest": "both",
+        "monogram": "Fm",
+        "accent": "#38BDF8"
     },
     {
         "id": "docuflow-studio",
@@ -414,9 +427,13 @@ class BuilderEngine:
                         # Invoke Node release script or API upload
                         rel_script = SCRIPT_DIR / "publish-github-release.cjs"
                         if rel_script.exists():
-                            cmd_pub = f'node "{rel_script}"'
-                            subprocess.run(cmd_pub, cwd=str(ROOT_DIR), shell=True, timeout=90)
-                            append_log("  ✅ Asset successfully uploaded to GitHub release!")
+                            target_flag = f'--app="{app_id}" --version="{version_to_build}" --exe="{upload_target.resolve()}" --repo="{app.get("repo", "")}"'
+                            cmd_pub = f'node "{rel_script}" {target_flag}'
+                            res = subprocess.run(cmd_pub, cwd=str(ROOT_DIR), shell=True, timeout=120)
+                            if res.returncode == 0:
+                                append_log("  ✅ Asset successfully uploaded to GitHub release!")
+                            else:
+                                append_log(f"  ⚠️ GitHub release publisher returned exit code {res.returncode}")
                 except Exception as up_err:
                     append_log(f"  ❌ GitHub upload error: {up_err}")
 
