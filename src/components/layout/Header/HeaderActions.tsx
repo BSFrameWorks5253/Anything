@@ -18,20 +18,23 @@ import {
 import { GlassInput } from '../../ui/GlassInput';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
+import type { NavigationPage } from '../../../types/app.types';
 import { useWorkspace } from '../../../context/WorkspaceContext';
 import { getProfileInitial, getInitialGradient } from '../../../utils/userInitials';
 
 interface HeaderActionsProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onNavigate?: (page: NavigationPage) => void;
 }
 
 export const HeaderActions: React.FC<HeaderActionsProps> = ({
   searchQuery,
   onSearchChange,
+  onNavigate,
 }) => {
   const { theme, toggleTheme } = useTheme();
-    const { user, isAuthenticated, logout, openAuthModal } = useAuth();
+    const { user, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
   const { activeWorkspace, setActiveWorkspace, workspaces } = useWorkspace();
   const isLight = theme === 'light';
   
@@ -171,6 +174,18 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         )}
       </div>
 
+      {/* Admin Golden Shield Action (Only visible to Admin) */}
+      {isAdmin && (
+        <button
+          onClick={() => onNavigate?.('admin')}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 shadow-xs transition-transform hover:scale-105"
+          title="Open Confidential Admin Portal"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+          <span className="hidden sm:inline">Admin Portal</span>
+        </button>
+      )}
+
       {/* User Authentication & Profile Menu */}
       {isAuthenticated && user ? (
         <div className="relative" ref={userMenuRef}>
@@ -226,6 +241,19 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
 
               <div className="pt-2 space-y-1">
                 
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onNavigate?.('admin');
+                    }}
+                    className="w-full px-2.5 py-1.5 text-xs text-left rounded-lg text-amber-500 hover:bg-amber-500/10 flex items-center gap-2 transition-colors font-bold"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Admin Portal</span>
+                  </button>
+                )}
+
                 <div className="px-2 py-1 text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
                   Session: Verified
                 </div>

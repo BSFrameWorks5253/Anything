@@ -3,44 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
   launchApp: (target: string | { path?: string; name?: string; id?: string; executableName?: string }) => {
-    let pathString = '';
-    if (typeof target === 'string') {
-      pathString = target;
-    } else if (target && typeof target === 'object') {
-      pathString = target.path || target.executableName || '';
-      const isTap =
-        target.id === 'tap-studio' ||
-        Boolean(target.name && target.name.toLowerCase().includes('tap studio'));
-      const isOneTap =
-        target.id === 'one-tap' ||
-        target.id === 'onetap-workstation' ||
-        Boolean(target.name && target.name.toLowerCase().includes('one tap'));
-      const isMediaFlow =
-        target.id === 'mediaflow-studio' ||
-        Boolean(target.name && target.name.toLowerCase().includes('mediaflow'));
-      const isDataManage =
-        target.id === 'anything-data-manage' ||
-        Boolean(target.name && target.name.toLowerCase().includes('data manage'));
-      if (
-        !pathString ||
-        pathString.toLowerCase().includes('setup') ||
-        pathString.toLowerCase().includes('published-apps') ||
-        pathString.toLowerCase().includes('uni desk')
-      ) {
-        const localAppData = process.env.LOCALAPPDATA || '';
-        const appData = process.env.APPDATA || '';
-        if (isTap && localAppData) {
-          pathString = `${localAppData}\\Programs\\Tap Studio\\Tap Studio.exe`;
-        } else if (isOneTap && appData) {
-          pathString = `${appData}\\Anything\\installed-apps\\one-tap\\OneTap-V-26.10.28.exe`;
-        } else if (isMediaFlow && localAppData) {
-          pathString = `${localAppData}\\Programs\\MediaFlow Studio\\MediaFlow Studio.exe`;
-        } else if (isDataManage && appData) {
-          pathString = `${appData}\\Anything\\installed-apps\\anything-data-manage\\AIN53_Data_Management_Setup.exe`;
-        }
-      }
-    }
-    return ipcRenderer.invoke('app:launch', typeof target === 'object' && target ? { ...target, path: pathString || target.path } : pathString);
+    return ipcRenderer.invoke('app:launch', target);
   },
   launchAppDemo: (appData: any) => ipcRenderer.invoke('app:launch-demo', appData),
   resolveInstalledPath: (data: { appId?: string; name?: string; currentPath?: string; executableName?: string }) =>
@@ -229,6 +192,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const subscription = (_: any, data: any) => callback(data);
     ipcRenderer.on('fileshelf:item-received-from-mobile', subscription);
     return () => ipcRenderer.removeListener('fileshelf:item-received-from-mobile', subscription);
+  },
+
+  // Ecosystem Auth & Cross-App Identity Sync
+  saveEcosystemSession: (session: any) => ipcRenderer.invoke('auth:save-ecosystem-session', session),
+  loadEcosystemSession: () => ipcRenderer.invoke('auth:load-ecosystem-session'),
+  clearEcosystemSession: () => ipcRenderer.invoke('auth:clear-ecosystem-session'),
+  onAppClosedDuration: (callback: (data: { appId: string; appName: string; durationSeconds: number; endedAt: string }) => void) => {
+    const subscription = (_: any, data: any) => callback(data);
+    ipcRenderer.on('app:closed-duration', subscription);
+    return () => ipcRenderer.removeListener('app:closed-duration', subscription);
   },
 });
 

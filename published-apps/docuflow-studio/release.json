@@ -1,14 +1,10 @@
 {
-  "appId": "docuflow-studio",
-  "appName": "DocuFlow Studio Pro",
-  "version": "1.0.0",
-  "executableName": "DocuFlow Studio.exe",
-  "setupExecutableName": "DocuFlow_Studio_1.0.0_Setup.exe",
-  "downloadUrl": "https://github.com/BSFrameworks5253/DocuFlow-/releases/download/v1.0.0/DocuFlow_Studio_1.0.0_Setup.exe",
-  "releaseDate": "2026-10-25",
+  "version": "26.11.05",
+  "executableName": "VectorForge_Studio_26.11.5_Setup.exe",
+  "releaseDate": "2026-10-29",
   "releaseType": "major",
-  "tagline": "PDFella-Grade Vector PDF Editor, AutoCAD DWG/DXF Engine & Universal Document Fusion",
-  "summary": "DocuFlow Studio Pro v1.0.0 introduces PDFella-grade in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+  "tagline": "Precision Vector PDF & Document Engineering Studio",
+  "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
   "newFeatures": [
     "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
     "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
@@ -30,10 +26,6 @@
     "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
     "Fixed drag-and-drop file detection and multi-document ordering"
   ],
-  "emailNotification": {
-    "subject": "🚀 DocuFlow Studio Pro v1.0.0 is Live in Anything!",
-    "preview": "PDFella-grade PDF editing, AutoCAD DWG conversions, and universal document fusion.",
-    "ctaText": "Launch DocuFlow Studio",
-    "heroGradient": "from-cyan-500 via-sky-600 to-blue-700"
-  }
+  "sizeFormatted": "118.2 MB",
+  "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
 }

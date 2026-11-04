@@ -33,6 +33,10 @@ const pageTitles: Record<NavigationPage, { title: string; subtitle: string }> = 
     title: 'Preferences',
     subtitle: 'Account, workspace storage and ecosystem settings',
   },
+  admin: {
+    title: 'Ecosystem Admin Portal',
+    subtitle: 'Confidential user-wise analytics, video renders, safar telemetry & app stay time',
+  },
 };
 
 export const HeaderTitle: React.FC<HeaderTitleProps> = ({ page, appName, activeApp }) => {

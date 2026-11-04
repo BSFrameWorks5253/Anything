@@ -17,6 +17,8 @@ import { GlassBadge } from '../../../components/ui/GlassBadge';
 import { InstagramImageCropModal } from '../../../components/ui/InstagramImageCropModal';
 import { useAuth } from '../../../context/AuthContext';
 import { getProfileInitial } from '../../../utils/userInitials';
+import { UserAppStayTimeCard } from '../../../components/user/UserAppStayTimeCard';
+import { CreatorProfileEditor } from './CreatorProfileEditor';
 
 export const AccountSection: React.FC = () => {
   const { user, isAuthenticated, logout, openAuthModal, updateUser } = useAuth();
@@ -127,9 +129,16 @@ export const AccountSection: React.FC = () => {
 
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                  {user ? user.name : 'Signed Out'}
-                </h4>
+                <div className="flex flex-col">
+                  <h4 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                    {user ? user.name : 'Signed Out'}
+                  </h4>
+                  {user && (
+                    <span className="text-xs font-mono font-semibold text-cyan-600 dark:text-cyan-400">
+                      @{user.username || user.email.split('@')[0]}
+                    </span>
+                  )}
+                </div>
                 {user ? (
                   <>
                     <ShieldCheck className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
@@ -219,6 +228,22 @@ export const AccountSection: React.FC = () => {
           </div>
         </div>
       </GlassCard>
+
+      {/* Creator Identity, Custom User ID & Avatar Picker */}
+      <CreatorProfileEditor
+        onAvatarSelect={(avatarUrl) => {
+          setAvatar(avatarUrl);
+          localStorage.setItem('anything_user_avatar', avatarUrl);
+          if (updateUser) updateUser({ avatar: avatarUrl });
+          window.dispatchEvent(new Event('storage'));
+        }}
+        onOpenUploadCropper={() => fileInputRef.current?.click()}
+      />
+
+      {/* User-facing App Stay Time & Activity Telemetry */}
+      <div className="mt-6">
+        <UserAppStayTimeCard />
+      </div>
 
       {/* Instagram Image Cropper Modal */}
       {cropperOpen && tempImageSrc && (

@@ -571,21 +571,33 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
               Done
             </GlassButton>
 
-            {app.status === 'installed' && (
-              <GlassButton
-                variant="primary"
-                size="sm"
-                icon={<Play className="w-3.5 h-3.5 fill-current" />}
-                onClick={() => {
-                  onLaunch(app);
-                  onClose();
-                }}
-              >
-                Launch App
-              </GlassButton>
-            )}
-
-            {app.status === 'not-installed' && (
+            {Boolean(app.installedPath && !app.installedPath.toLowerCase().includes('setup')) ? (
+              <div className="flex items-center gap-2">
+                <GlassButton
+                  variant="ghost"
+                  size="sm"
+                  icon={<Download className="w-3.5 h-3.5" />}
+                  onClick={() => {
+                    onInstall(app);
+                    onClose();
+                  }}
+                  title="Download latest installer or reinstall"
+                >
+                  Download / Reinstall
+                </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  size="sm"
+                  icon={<Play className="w-3.5 h-3.5 fill-current" />}
+                  onClick={() => {
+                    onLaunch(app);
+                    onClose();
+                  }}
+                >
+                  Launch App
+                </GlassButton>
+              </div>
+            ) : (
               <GlassButton
                 variant="primary"
                 size="sm"

@@ -35,6 +35,55 @@ import { exec, spawn, execSync, execFile, execFileSync } from "child_process";
 
 app.name = "Anything";
 
+// Hardware acceleration & GPU rasterization optimizations for high frame rate
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+
+// Load environment variables (.env)
+try {
+  const envCandidates = [
+    path.join(__dirname, '..', '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '..', '..', '.env'),
+  ];
+  for (const p of envCandidates) {
+    if (fs.existsSync(p)) {
+      const lines = fs.readFileSync(p, 'utf-8').split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+      break;
+    }
+  }
+} catch (e) {}
+
+// Authenticated GitHub Headers helper for rate-limit protection (5,000 req/hr)
+function getGitHubHeaders(): Record<string, string> {
+  const token =
+    process.env.GH_TOKEN ||
+    process.env.GITHUB_TOKEN ||
+    '';
+  const headers: Record<string, string> = {
+    'User-Agent': 'Anything-DesktopApp',
+    Accept: 'application/vnd.github.v3+json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+
 const ANYTHING_AUMID = "com.burhanuddin.anything";
 if (process.platform === "win32") {
   app.setAppUserModelId(ANYTHING_AUMID);
@@ -50,75 +99,143 @@ process.on("unhandledRejection", (reason) => {
 
 const isDev = process.env.NODE_ENV === "development";
 
-// Central Ecosystem GitHub Repositories for Online Child App Ingestion & Direct Setup Streaming
-
-const VERIFIED_GITHUB_ASSETS: Record<
-  string,
-  { url: string; fileName: string; version?: string }
-> = {
-  autocopier: {
-    url: "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.29/Auto_Copier_Pro_Setup_26.10.28.exe",
-    fileName: "Auto_Copier_Pro_Setup_26.10.28.exe",
-    version: "26.10.28",
-  },
-  "auto-copier": {
-    url: "https://github.com/BSFrameWorks5253/Anything/releases/download/v26.10.29/Auto_Copier_Pro_Setup_26.10.28.exe",
-    fileName: "Auto_Copier_Pro_Setup_26.10.28.exe",
-    version: "26.10.28",
-  },
-  anythingdatamanage: {
-    url: "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
-    fileName: "AIN53_Data_Management_Setup.exe",
-    version: "1.0.58",
-  },
-  "anything-data-manage": {
-    url: "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
-    fileName: "AIN53_Data_Management_Setup.exe",
-    version: "1.0.58",
-  },
-  ain53: {
-    url: "https://github.com/BSFrameWorks5253/AIN53/releases/download/v1.0.58/AIN53_Data_Management_Setup.exe",
-    fileName: "AIN53_Data_Management_Setup.exe",
-    version: "1.0.58",
-  },
-  pulsewave: {
-    url: "https://github.com/BSFrameWorks5253/Plusewave/releases/download/v6.1.11/PulseWave-v6.1.11-universal-release.apk",
-    fileName: "PulseWave-v6.1.11-universal-release.apk",
-    version: "6.1.11",
-  },
-};
-
+// Central Ecosystem GitHub Repositories for Dynamic Child App Releases & Setup Streaming
 const KNOWN_ECOSYSTEM_REPOS: Record<string, string> = {
   onetap: "BSFrameWorks5253/onetap-workstation",
-
   "one-tap": "BSFrameWorks5253/onetap-workstation",
-
   "onetap-workstation": "BSFrameWorks5253/onetap-workstation",
-
   mediaflow: "BSFrameWorks5253/MediaFlow-Studio",
-
   "mediaflow-studio": "BSFrameWorks5253/MediaFlow-Studio",
-
-  docuflow: "BSFrameworks5253/DocuFlow-",
-
-  "docuflow-studio": "BSFrameworks5253/DocuFlow-",
-
-  pulsewave: "BSFrameWorks5253/Plusewave",
-
-  plusewave: "BSFrameWorks5253/Plusewave",
-
+  dataflow: "BSFrameWorks5253/MediaFlow-Studio",
+  "dataflow-studio": "BSFrameWorks5253/MediaFlow-Studio",
+  docuflow: "BSFrameWorks5253/DocuFlow",
+  "docuflow-studio": "BSFrameWorks5253/DocuFlow",
+  vectorforge: "BSFrameWorks5253/DocuFlow",
+  "vectorforge-studio": "BSFrameWorks5253/DocuFlow",
+  pdfmaster: "BSFrameWorks5253/DocuFlow",
+  "pdf-master": "BSFrameWorks5253/DocuFlow",
   "anything-data-manage": "BSFrameWorks5253/AIN53",
-
   "app-anything-data-manage": "BSFrameWorks5253/AIN53",
-
   ain53: "BSFrameWorks5253/AIN53",
-
-  "auto-copier": "BSFrameWorks5253/Anything",
-
-  autocopier: "BSFrameWorks5253/Anything",
-
-  anything: "BSFrameWorks5253/Anything",
+  pixelcharm: "BSFrameWorks5253/Pixelcharm",
+  "anything-office": "BSFrameworks5253/Anything-Office",
+  office: "BSFrameworks5253/Anything-Office",
+  "anything-file-manager": "BSFrameWorks5253/Anything-File-Manager",
+  "file-manager": "BSFrameWorks5253/Anything-File-Manager",
+  afm: "BSFrameWorks5253/Anything-File-Manager",
+  "media-viewer": "BSFrameWorks5253/Anything-File-Manager",
 };
+
+interface DynamicGitHubRelease {
+  version: string;
+  tag: string;
+  setupExeName: string;
+  downloadUrl: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  releaseNotes: string;
+  publishedAt: string;
+}
+
+// In-memory cache for dynamic release queries (TTL: 60s)
+const releaseCache = new Map<string, { data: DynamicGitHubRelease; timestamp: number }>();
+const RELEASE_CACHE_TTL = 60 * 1000;
+
+/**
+ * Dynamically fetches the latest GitHub release for any child application repository.
+ * Strictly resolves ONLY Windows Setup installer .exe assets from the release.
+ */
+async function fetchLatestSetupRelease(
+  repoOrAppId: string,
+  appName?: string,
+): Promise<DynamicGitHubRelease | null> {
+  const normId = (repoOrAppId || "").toLowerCase().trim();
+  const repoSlug =
+    KNOWN_ECOSYSTEM_REPOS[normId] ||
+    KNOWN_ECOSYSTEM_REPOS[normId.replace(/^app-/, "")] ||
+    (repoOrAppId.includes("/") ? repoOrAppId : null);
+
+  if (!repoSlug) return null;
+
+  const parsed = parseGitHubRepo(repoSlug);
+  if (!parsed) return null;
+
+  const cacheKey = `${parsed.owner}/${parsed.repo}`.toLowerCase();
+  const cached = releaseCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < RELEASE_CACHE_TTL) {
+    return cached.data;
+  }
+
+  const headers = getGitHubHeaders();
+
+  try {
+    // 1. Fetch latest release from GitHub API
+    let res = await fetch(
+      `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases/latest`,
+      { headers },
+    );
+
+    let releaseData: any = null;
+
+    if (res.ok) {
+      releaseData = await res.json();
+    } else {
+      // 2. Fallback to /releases list (picks first release with a setup exe)
+      const listRes = await fetch(
+        `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases?per_page=5`,
+        { headers },
+      );
+      if (listRes.ok) {
+        const releases = await listRes.json();
+        if (Array.isArray(releases) && releases.length > 0) {
+          for (const rel of releases) {
+            if (pickWindowsAsset(rel.assets || [], appName || parsed.repo)) {
+              releaseData = rel;
+              break;
+            }
+          }
+          if (!releaseData) releaseData = releases[0];
+        }
+      }
+    }
+
+    if (!releaseData || !Array.isArray(releaseData.assets)) return null;
+
+    // Strictly fetch setup .exe installers only
+    const setupAsset = pickWindowsAsset(
+      releaseData.assets,
+      appName || parsed.repo,
+      releaseData.tag_name || releaseData.name,
+    );
+
+    if (!setupAsset || !setupAsset.browser_download_url) {
+      console.warn(`[GitHub Release] No Windows setup .exe found for ${repoSlug}`);
+      return null;
+    }
+
+    const version = String(releaseData.tag_name || releaseData.name || "1.0.0").replace(/^[vV]/, "");
+    const sizeBytes = Number(setupAsset.size) || 0;
+
+    const result: DynamicGitHubRelease = {
+      version,
+      tag: releaseData.tag_name || `v${version}`,
+      setupExeName: setupAsset.name,
+      downloadUrl: setupAsset.browser_download_url,
+      sizeBytes,
+      sizeFormatted: sizeBytes > 0 ? (sizeBytes / (1024 * 1024)).toFixed(1) + " MB" : "Setup Package",
+      releaseNotes: releaseData.body || "",
+      publishedAt: releaseData.published_at
+        ? new Date(releaseData.published_at).toLocaleDateString()
+        : "",
+    };
+
+    releaseCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    return result;
+  } catch (err: any) {
+    console.warn(`[GitHub Release] Error fetching latest release for ${repoSlug}:`, err.message);
+    return null;
+  }
+}
 
 // Bulletproof asset resolver across both dev and packaged modes
 
@@ -317,6 +434,59 @@ function isSafeExecutablePath(targetPath: string): boolean {
 
   const normLower = normalized.toLowerCase();
   return allowedRoots.some((root) => normLower.startsWith(root));
+}
+
+/**
+ * Universal Ecosystem Explorer Bridge
+ * - If Anything File Manager is installed on this machine: Opens the target in AFM.
+ * - Otherwise: Opens in the default Windows File Explorer.
+ */
+async function openInEcosystemExplorer(folderOrFilePath: string): Promise<boolean> {
+  if (!folderOrFilePath) return false;
+  const target = folderOrFilePath.trim();
+
+  try {
+    const localAppData = process.env.LOCALAPPDATA || "";
+    const candidateAfmExes = [
+      path.join(localAppData, "Programs", "Anything File Manager", "Anything File Manager.exe"),
+      path.join(getInstalledAppsDir(), "anything-file-manager", "Anything File Manager.exe"),
+      path.join(process.env["ProgramFiles"] || "C:\\Program Files", "Anything File Manager", "Anything File Manager.exe"),
+      path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Anything File Manager", "Anything File Manager.exe"),
+    ];
+
+    for (const afmExe of candidateAfmExes) {
+      if (fs.existsSync(afmExe)) {
+        try {
+          const child = spawn(afmExe, [target], {
+            detached: true,
+            stdio: "ignore",
+          });
+          child.unref();
+          return true;
+        } catch (spawnErr) {
+          console.warn("[EcosystemExplorer] AFM spawn notice:", spawnErr);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[EcosystemExplorer] AFM resolution notice:", err);
+  }
+
+  // Graceful fallback to default Windows Explorer
+  try {
+    let stat: fs.Stats | null = null;
+    try {
+      stat = fs.statSync(target);
+    } catch {}
+    if (stat && stat.isFile()) {
+      shell.showItemInFolder(target);
+      return true;
+    }
+    const res = await shell.openPath(target);
+    return !res;
+  } catch {
+    return false;
+  }
 }
 
 function matchesApp(
@@ -785,12 +955,14 @@ function isLikelyInstaller(filePath: string): boolean {
     return false;
   }
 
-  // If explicitly named uninstaller or setup or installer
+  // Explicit installer / uninstaller names
   if (
     baseName.includes("setup") ||
     baseName.includes("installer") ||
     baseName.includes("uninstall") ||
-    baseName.includes("elevate")
+    baseName.includes("elevate") ||
+    baseName.startsWith("onetap-v-") ||
+    (baseName.startsWith("onetap") && !baseName.includes("one tap.exe"))
   ) {
     return true;
   }
@@ -799,7 +971,8 @@ function isLikelyInstaller(filePath: string): boolean {
   if (
     (lower.includes("\\programs\\") ||
       lower.includes("\\program files\\") ||
-      lower.includes("\\program files (x86)\\")) &&
+      lower.includes("\\program files (x86)\\") ||
+      lower.includes("win-unpacked")) &&
     !baseName.includes("setup") &&
     !baseName.includes("installer") &&
     !baseName.includes("uninstall")
@@ -807,27 +980,34 @@ function isLikelyInstaller(filePath: string): boolean {
     return false;
   }
 
+  // Staging / release directories where packages are stored as installers
+  if (
+    lower.includes("child app realse") ||
+    lower.includes("packages-inbox") ||
+    lower.includes("installed-apps") ||
+    lower.includes("published-apps") ||
+    lower.includes("releases") ||
+    lower.includes("temp-downloads")
+  ) {
+    if (baseName.endsWith(".exe")) {
+      return true;
+    }
+  }
+
   // Versioned release binaries, e.g. OneTap-V-26.10.30.exe in staging directories
   if (
     /[-_]v[-_]?\d+/i.test(baseName) ||
     /^[a-z0-9_-]+[-_]\d+(\.\d+)+/i.test(baseName)
   ) {
-    if (
-      lower.includes("installed-apps") ||
-      lower.includes("published-apps") ||
-      lower.includes("releases") ||
-      lower.includes("temp-downloads")
-    ) {
-      return true;
-    }
+    return true;
   }
 
   // Deep inspection: check binary header for NSIS/InnoSetup signatures if file exists on disk
   if (fs.existsSync(filePath)) {
     try {
       const fd = fs.openSync(filePath, "r");
-      const buf = Buffer.alloc(131072);
-      fs.readSync(fd, buf, 0, 131072, 0);
+      const buf = Buffer.alloc(262144);
+      fs.readSync(fd, buf, 0, 262144, 0);
       fs.closeSync(fd);
       const str = buf.toString("latin1");
       if (
@@ -964,6 +1144,18 @@ async function scanAndCollectReleases(): Promise<{
       for (const entry of entries) {
         if (entry.name.startsWith(".") || entry.name === "node_modules")
           continue;
+
+        const lowerEntryName = entry.name.toLowerCase();
+        if (
+          lowerEntryName === "anything" ||
+          lowerEntryName === "auto-copier" ||
+          lowerEntryName === "autocopier" ||
+          lowerEntryName === "pulsewave" ||
+          lowerEntryName === "sample-app" ||
+          lowerEntryName.includes("master hub")
+        ) {
+          continue;
+        }
 
         if (entry.isDirectory()) {
           const appDir = path.join(releasesDir, entry.name);
@@ -1200,15 +1392,8 @@ async function scanAndCollectReleases(): Promise<{
               }
             }
 
-            if (needsCopy) {
-              fs.copyFileSync(rel.exeFullPath, destPath);
-
-              try {
-                fs.utimesSync(destPath, rel.stats.atime, rel.stats.mtime);
-              } catch {}
-
-              if (rel === latest) isNewFile = true;
-            }
+            // Keep canonical binary reference directly on disk (DO NOT duplicate .exe)
+            if (rel === latest) isNewFile = false;
 
             const relReleasesUrl = githubRepo
               ? `https://github.com/${githubRepo}/releases`
@@ -1279,15 +1464,9 @@ async function scanAndCollectReleases(): Promise<{
             ? `https://github.com/${githubRepo}/releases`
             : manifest.releasesUrl;
 
-          const verifiedTarget =
-            VERIFIED_GITHUB_ASSETS[normAppId] || VERIFIED_GITHUB_ASSETS[appId];
-          const remoteDownloadUrl = verifiedTarget
-            ? verifiedTarget.url
-            : manifest.downloadUrl?.startsWith("http")
-              ? manifest.downloadUrl
-              : githubRepo
-                ? `https://github.com/${githubRepo}/releases/download/v${latest.version}/${latest.exeFile}`
-                : undefined;
+          const remoteDownloadUrl = manifest.downloadUrl?.startsWith("http")
+            ? manifest.downloadUrl
+            : undefined;
 
           // Real installed executable name (not the setup installer)
 
@@ -1607,6 +1786,29 @@ async function scanAndCollectReleases(): Promise<{
               markAppUpdateNotified(appId, `registered-${appVersion}`);
             }
           }
+        }
+      }
+    }
+
+    // Real-time verification of installed paths and versions across ecosystem
+    for (const item of catalog) {
+      const detected = findInstalledExecutable({
+        appName: item.name,
+        appId: item.id,
+        currentPath: item.installedPath,
+        executableName: item.executableName,
+      });
+
+      if (detected && fs.existsSync(detected)) {
+        item.installedPath = detected;
+        item.executableName = path.basename(detected);
+        const ver = getExecutableVersion(detected);
+        if (ver) {
+          item.localVersion = ver;
+          const isOutdated = compareVersions(item.version, ver) > 0;
+          item.status = isOutdated ? "update-available" : "installed";
+        } else {
+          item.status = "installed";
         }
       }
     }
@@ -2467,28 +2669,29 @@ function compareVersions(remote: string, current: string): number {
   return 0;
 }
 
-function pickWindowsAsset(assets: any[], appHint?: string): any {
+function pickWindowsAsset(assets: any[], appHint?: string, targetVersion?: string): any {
   if (!Array.isArray(assets) || assets.length === 0) return null;
 
+  // STRICT REQUIREMENT: Only fetch setup .exe installers!
   const candidates = assets.filter((a: any) => {
-    const name = String(a.name || "").toLowerCase();
+    const name = String(a?.name || "").toLowerCase();
 
+    // Must strictly be an .exe file (reject .zip, .msix, .appx, .blockmap, .yml, .apk, etc.)
+    if (!name.endsWith(".exe")) return false;
+
+    // Reject uninstallers and elevation helpers
     if (
+      name.includes("uninstall") ||
+      name.includes("elevate") ||
+      name.includes("helper") ||
       name.endsWith(".blockmap") ||
-      name.endsWith(".yml") ||
-      name.endsWith(".yaml") ||
       name.endsWith(".sha256") ||
       name.endsWith(".asc")
-    )
+    ) {
       return false;
+    }
 
-    return (
-      name.endsWith(".exe") ||
-      name.endsWith(".msix") ||
-      name.endsWith(".appx") ||
-      name.endsWith(".zip") ||
-      name.endsWith(".apk")
-    );
+    return true;
   });
 
   if (candidates.length === 0) return null;
@@ -2500,93 +2703,66 @@ function pickWindowsAsset(assets: any[], appHint?: string): any {
     .trim();
 
   const hintTokens = hint.split(/\s+/).filter((t) => t.length > 2);
+  const cleanTargetVer = (targetVersion || "").replace(/^[vV]/, "").trim();
+  const normalizedTargetVer = cleanTargetVer.replace(/\.0/g, ".");
 
   candidates.sort((a: any, b: any) => {
     let scoreA = 0;
-
     let scoreB = 0;
 
     const nameA = String(a.name).toLowerCase();
-
     const nameB = String(b.name).toLowerCase();
 
-    // Specific app match boosts
+    // Highest boost: Explicit setup installer keywords
+    if (nameA.includes("setup") || nameA.includes("-setup") || nameA.includes("_setup")) scoreA += 200;
+    if (nameB.includes("setup") || nameB.includes("-setup") || nameB.includes("_setup")) scoreB += 200;
 
+    if (nameA.includes("installer") || nameA.includes("install")) scoreA += 150;
+    if (nameB.includes("installer") || nameB.includes("install")) scoreB += 150;
+
+    // Direct version matching boost
+    if (cleanTargetVer.length > 0) {
+      if (nameA.includes(cleanTargetVer.toLowerCase()) || nameA.includes(normalizedTargetVer.toLowerCase())) scoreA += 500;
+      if (nameB.includes(cleanTargetVer.toLowerCase()) || nameB.includes(normalizedTargetVer.toLowerCase())) scoreB += 500;
+    }
+
+    // Specific app match boosts
     if (hintTokens.length > 0) {
       for (const t of hintTokens) {
-        if (nameA.includes(t)) scoreA += 200;
-
-        if (nameB.includes(t)) scoreB += 200;
+        if (nameA.includes(t)) scoreA += 50;
+        if (nameB.includes(t)) scoreB += 50;
       }
 
       // If looking for a child app in Anything repo, avoid picking the host Anything installer
-
       if (
         !hint.includes("anything") &&
         (hint.includes("copier") || hint.includes("auto"))
       ) {
         if (nameA.startsWith("anything_") || nameA.includes("anything_26"))
           scoreA -= 500;
-
         if (nameB.startsWith("anything_") || nameB.includes("anything_26"))
           scoreB -= 500;
       }
     }
 
     if (nameA.includes("win") || nameA.includes("windows")) scoreA += 10;
-
     if (nameB.includes("win") || nameB.includes("windows")) scoreB += 10;
 
-    if (
-      nameA.includes("x64") ||
-      nameA.includes("64-bit") ||
-      nameA.includes("x86_64")
-    )
-      scoreA += 6;
+    if (nameA.includes("x64") || nameA.includes("64-bit") || nameA.includes("x86_64")) scoreA += 10;
+    if (nameB.includes("x64") || nameB.includes("64-bit") || nameB.includes("x86_64")) scoreB += 10;
 
-    if (
-      nameB.includes("x64") ||
-      nameB.includes("64-bit") ||
-      nameB.includes("x86_64")
-    )
-      scoreB += 6;
+    // Deprioritize portable standalone exes when looking for setup installers
+    if (nameA.includes("portable")) scoreA -= 50;
+    if (nameB.includes("portable")) scoreB -= 50;
 
-    if (nameA.endsWith(".exe")) scoreA += 5;
+    // Tie-breaker: newest updated_at or created_at timestamp
+    const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+    const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
 
-    if (nameB.endsWith(".exe")) scoreB += 5;
-
-    if (
-      (hint.includes("pulse") || hint.includes("wave")) &&
-      nameA.endsWith(".apk")
-    )
-      scoreA += 500;
-
-    if (
-      (hint.includes("pulse") || hint.includes("wave")) &&
-      nameB.endsWith(".apk")
-    )
-      scoreB += 500;
-
-    if (nameA.endsWith(".msix")) scoreA += 4;
-
-    if (nameB.endsWith(".msix")) scoreB += 4;
-
-    if (nameA.endsWith(".zip")) scoreA += 2;
-
-    if (nameB.endsWith(".zip")) scoreB += 2;
-
-    if (nameA.includes("setup") || nameA.includes("_setup")) scoreA += 50;
-    else if (!nameA.includes("portable") && nameA.endsWith(".exe"))
-      scoreA += 25;
-
-    if (nameB.includes("setup") || nameB.includes("_setup")) scoreB += 50;
-    else if (!nameB.includes("portable") && nameB.endsWith(".exe"))
-      scoreB += 25;
-
-    return scoreB - scoreA;
+    return (scoreB - scoreA) || (timeB - timeA);
   });
 
-  return candidates[0];
+  return candidates[0] || null;
 }
 
 function pickMobileAsset(assets: any[]): any {
@@ -2751,10 +2927,18 @@ async function downloadAssetWithProgress(
 
 // Helper: extract Windows executable ProductVersion or FileVersion
 
+const exeVersionCache = new Map<string, { mtime: number; version: string | null }>();
+
 function getExecutableVersion(filePath: string): string | null {
   if (!filePath || !fs.existsSync(filePath)) return null;
 
   try {
+    const stat = fs.statSync(filePath);
+    const cached = exeVersionCache.get(filePath);
+    if (cached && cached.mtime === stat.mtimeMs) {
+      return cached.version;
+    }
+
     const raw = execFileSync(
       "powershell.exe",
       [
@@ -2765,15 +2949,15 @@ function getExecutableVersion(filePath: string): string | null {
       ],
       {
         encoding: "utf8",
-        timeout: 4000,
+        timeout: 8000,
         stdio: ["ignore", "pipe", "ignore"],
         env: { ...process.env, TARGET_FILE: filePath },
       },
     ).trim();
 
-    if (raw) {
-      return raw.replace(/\.0$/, "");
-    }
+    const ver = raw ? raw.replace(/\.0$/, "") : null;
+    exeVersionCache.set(filePath, { mtime: stat.mtimeMs, version: ver });
+    return ver;
   } catch (err) {}
 
   return null;
@@ -2783,273 +2967,273 @@ function getExecutableVersion(filePath: string): string | null {
 
 function findInstalledExecutable(options: {
   appName?: string;
-
   appId?: string;
-
   currentPath?: string;
-
   executableName?: string;
 }): string | null {
   const { appName, appId, currentPath, executableName } = options;
 
   // 1. If currentPath is given, exists, and is a real installed app (not an installer), keep it!
-
+  // Exclude obsolete legacy "Uni Desk" folder which causes sharp native module crashes
   if (currentPath && fs.existsSync(currentPath)) {
-    if (!isLikelyInstaller(currentPath)) {
+    if (!isLikelyInstaller(currentPath) && !currentPath.toLowerCase().includes("uni desk")) {
       return currentPath;
     }
   }
 
-  // Build candidate app names (e.g. "Tap Studio", "tap-studio", "TapStudio")
+  const normId = (appId || "")
+    .toLowerCase()
+    .replace(/^app-/, "")
+    .replace(/-studio$/, "")
+    .replace(/[^a-z0-9]/g, "");
+  const normName = (appName || "").toLowerCase();
 
-  const candidateNames = new Set<string>();
+  const localAppData = process.env.LOCALAPPDATA || "";
+  const appData = process.env.APPDATA || "";
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const programFilesX86 = process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+  const allUsersProfile = process.env.ALLUSERSPROFILE || "C:\\ProgramData";
+  const installedAppsDir = getInstalledAppsDir();
+  const projectRoot = getProjectRoot();
+  const parentDir = path.resolve(projectRoot, "..");
+  const anythingAppsDir = path.join(parentDir, "Anything Apps");
+  const childAppReleaseDir = path.join(parentDir, "Anything Child app realse");
 
-  if (appName) {
-    const trimmed = appName.trim();
-
-    candidateNames.add(trimmed);
-
-    candidateNames.add(trimmed.replace(/\s+/g, ""));
-
-    candidateNames.add(trimmed.replace(/\s+/g, "-"));
-
-    candidateNames.add(trimmed.replace(/\s+/g, "_"));
-
-    candidateNames.add(trimmed.toLowerCase());
-  }
-
-  if (appId) {
-    const trimmedId = appId.trim().replace(/^app-/, "");
-
-    candidateNames.add(trimmedId);
-
-    candidateNames.add(trimmedId.replace(/[-_]/g, " "));
-
-    candidateNames.add(trimmedId.replace(/[-_]/g, ""));
-
-    const titleCase = trimmedId
-
-      .split(/[-_\s]+/)
-
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-
-      .join(" ");
-
-    candidateNames.add(titleCase);
-
-    candidateNames.add(titleCase.replace(/\s+/g, ""));
-  }
-
-  if (executableName) {
-    const cleanExe = executableName.replace(/\.exe$/i, "").trim();
-
-    candidateNames.add(cleanExe);
-
-    const withoutVer = cleanExe.replace(/[-_]v?\d+(\.\d+)*.*$/i, "").trim();
-
-    if (withoutVer) {
-      candidateNames.add(withoutVer);
-
-      candidateNames.add(
-        withoutVer
-
-          .split(/[-_\s]+/)
-
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-
-          .join(" "),
-      );
+  // A. Priority 1: Known Ecosystem Child Applications (direct, deterministic checks)
+  
+  // 1) One Tap / OneTap PV Separator (Explicitly reject obsolete Uni Desk path)
+  if (normId.includes("onetap") || normName.includes("one tap") || normId === "one-tap") {
+    const candidates = [
+      path.join(localAppData, "Programs", "One Tap", "One Tap.exe"),
+      path.join(localAppData, "Programs", "One Tap PV Separator", "One Tap.exe"),
+      path.join(localAppData, "Programs", "One Tap PV Separator", "One Tap PV Separator.exe"),
+      path.join(installedAppsDir, "one-tap", "One Tap.exe"),
+            path.join(programFiles, "One Tap", "One Tap.exe"),
+      path.join(programFilesX86, "One Tap", "One Tap.exe"),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
     }
   }
 
-  // 1. Priority: Check Anything's installed-apps folder for child apps managed/downloaded by Anything
+  // 2) MediaFlow Studio / DataFlow Studio
+  if (normId.includes("mediaflow") || normName.includes("mediaflow") || normId.includes("dataflow") || normName.includes("dataflow")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "MediaFlow Studio", "MediaFlow Studio.exe"),
+      path.join(localAppData, "Programs", "DataFlow Studio", "DataFlow Studio.exe"),
+      path.join(installedAppsDir, "mediaflow-studio", "MediaFlow Studio.exe"),
+                  path.join(programFiles, "MediaFlow Studio", "MediaFlow Studio.exe"),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
 
+  // 3) AIN53 Data Management / Anything Data Manage
+  if (normId.includes("data-manage") || normName.includes("data manage") || normId.includes("ain53") || normName.includes("ain53")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "AIN53 Data Management", "AIN53 Data Management.exe"),
+      path.join(installedAppsDir, "anything-data-manage", "AIN53_Data_Management_Portable.exe"),
+      path.join(childAppReleaseDir, "anything-data-manage", "V26.10.32", "AIN53_Data_Management_Portable.exe"),
+            path.join(installedAppsDir, "anything-data-manage", "AIN53 Data Management.exe"),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 4) DocuFlow Studio / VectorForge Studio / PDF Master
+  if (
+    normId.includes("docuflow") ||
+    normId.includes("vectorforge") ||
+    normName.includes("docuflow") ||
+    normName.includes("vectorforge") ||
+    normId.includes("pdfmaster") ||
+    normName.includes("pdf master")
+  ) {
+    const candidates = [
+      path.join(localAppData, "Programs", "PDF Master Pro", "PDF Master Pro.exe"),
+      path.join(localAppData, "Programs", "VectorForge Studio", "VectorForge Studio.exe"),
+      path.join(localAppData, "Programs", "DocuFlow Studio", "DocuFlow Studio.exe"),
+                  path.join(installedAppsDir, "docuflow-studio", "PDF Master Pro.exe"),
+      path.join(installedAppsDir, "docuflow-studio", "VectorForge Studio.exe"),
+      path.join(programFiles, "PDF Master Pro", "PDF Master Pro.exe"),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 5) Pixelcharm
+  if (normId.includes("pixelcharm") || normName.includes("pixelcharm")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "Pixelcharm", "Pixelcharm.exe"),
+      path.join(installedAppsDir, "pixelcharm", "Pixelcharm.exe"),
+          ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 6) PDF Master Pro
+  if (normId.includes("pdf-master") || normName.includes("pdf master")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "PDF Master Pro", "PDF Master Pro.exe"),
+      path.join(installedAppsDir, "pdf-master-pro", "PDF Master Pro.exe")
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 7) Auto Copier Pro
+  if (normId.includes("auto-copier") || normName.includes("auto copier") || normId.includes("copier")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "Auto Copier Pro", "Auto Copier Pro.exe"),
+      path.join(installedAppsDir, "auto-copier-pro", "Auto Copier Pro.exe")
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 8) PhotoSuite Pro
+  if (normId.includes("photosuite") || normName.includes("photosuite")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "PhotoSuite Pro", "PhotoSuite Pro.exe"),
+      path.join(installedAppsDir, "photosuite-pro", "PhotoSuite Pro.exe")
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 9) Anything Office
+  if (normId.includes("office") || normName.includes("office")) {
+    const candidates = [
+      path.join(localAppData, "Programs", "Anything Office", "Anything Office.exe"),
+      path.join(installedAppsDir, "anything-office", "Anything Office.exe"),
+          ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 10) Anything File Manager (AFM)
+  if (
+    normId.includes("file-manager") ||
+    normName.includes("file manager") ||
+    normId.includes("anythingfilemanager") ||
+    normId.includes("afm") ||
+    normName.includes("afm") ||
+    normId.includes("media-viewer") ||
+    normName.includes("media viewer")
+  ) {
+    const candidates = [
+      path.join(localAppData, "Programs", "Anything File Manager", "Anything File Manager.exe"),
+      path.join(installedAppsDir, "anything-file-manager", "Anything File Manager.exe"),
+                ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // B. Priority 2: Check Anything's installed-apps folder for child apps
   try {
-    const installedAppsDir = getInstalledAppsDir();
-
     if (appId) {
       const targetDir = path.join(installedAppsDir, appId);
-
       if (fs.existsSync(targetDir)) {
         const files = fs.readdirSync(targetDir, { recursive: true });
-
         const nonInstallerExes = files.filter((f: any) => {
           const l = String(f).toLowerCase();
-
           return l.endsWith(".exe") && !isLikelyInstaller(l);
         });
-
         if (nonInstallerExes.length > 0) {
           if (executableName) {
             const clean = executableName.toLowerCase().replace(/\.exe$/i, "");
-
             const match = nonInstallerExes.find((f: any) =>
               String(f).toLowerCase().includes(clean),
             );
-
             if (match) return path.join(targetDir, String(match));
           }
-
           return path.join(targetDir, String(nonInstallerExes[0]));
         }
       }
     }
   } catch (e) {}
 
-  const isOneTapApp =
-    (appName && appName.toLowerCase().includes("one tap")) ||
-    (appId &&
-      (appId.toLowerCase().includes("one-tap") ||
-        appId.toLowerCase().includes("onetap")));
-
-  if (isOneTapApp) {
-    candidateNames.add("One Tap");
-
-    candidateNames.add("OneTap");
-
-    candidateNames.add("onetap-workstation");
+  // C. Priority 3: Fuzzy Directory Scan in LocalAppData/Programs, ProgramFiles, etc.
+  const candidateTokens = new Set<string>();
+  if (appName) {
+    candidateTokens.add(appName.trim().toLowerCase());
+    appName.trim().toLowerCase().split(/\s+/).forEach((w) => {
+      if (w.length > 2) candidateTokens.add(w);
+    });
   }
-
-  const isDataManageApp =
-    (appName && appName.toLowerCase().includes("data manage")) ||
-    (appId && appId.toLowerCase().includes("data-manage"));
-
-  if (isDataManageApp) {
-    const portablePath = path.join(
-      getProjectRoot(),
-      "releases",
-      "anything-data-manage",
-      "v1.0.60",
-      "AIN53_Data_Management_Portable.exe",
-    );
-
-    if (fs.existsSync(portablePath)) return portablePath;
-
-    const setupPath = path.join(
-      getProjectRoot(),
-      "releases",
-      "anything-data-manage",
-      "v1.0.60",
-      "AIN53_Data_Management_Setup.exe",
-    );
-
-    if (fs.existsSync(setupPath)) return setupPath;
-
-    const projectMain =
-      "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Data Manage\\main.py";
-
-    if (fs.existsSync(projectMain)) return projectMain;
+  if (appId) {
+    const trimmedId = appId.trim().replace(/^app-/, "").toLowerCase();
+    candidateTokens.add(trimmedId);
+    trimmedId.split(/[-_\s]+/).forEach((w) => {
+      if (w.length > 2) candidateTokens.add(w);
+    });
   }
-
-  const localAppData = process.env.LOCALAPPDATA || "";
-
-  const appData = process.env.APPDATA || "";
-
-  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
-
-  const programFilesX86 =
-    process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
-
-  const allUsersProfile = process.env.ALLUSERSPROFILE || "C:\\ProgramData";
-
-  // Candidate roots on Windows
+  if (executableName) {
+    const cleanExe = executableName.replace(/\.exe$/i, "").trim().toLowerCase();
+    candidateTokens.add(cleanExe);
+  }
 
   const searchRoots: string[] = [];
-
   if (localAppData) {
     searchRoots.push(path.join(localAppData, "Programs"));
-
     searchRoots.push(localAppData);
   }
-
   if (programFiles) searchRoots.push(programFiles);
-
   if (programFilesX86) searchRoots.push(programFilesX86);
-
-  // 2. Scan candidate directories in program roots
 
   for (const root of searchRoots) {
     if (!fs.existsSync(root)) continue;
+    try {
+      const dirEntries = fs.readdirSync(root, { withFileTypes: true });
+      for (const entry of dirEntries) {
+        if (!entry.isDirectory()) continue;
+        const entryLower = entry.name.toLowerCase();
+        if (entryLower.includes("uni desk")) continue; // Ignore obsolete broken Uni Desk folder
+        const matchesToken = Array.from(candidateTokens).some(
+          (t) => entryLower.includes(t) || t.includes(entryLower)
+        );
+        if (!matchesToken) continue;
 
-    for (const name of candidateNames) {
-      const appDir = path.join(root, name);
-
-      if (fs.existsSync(appDir)) {
+        const subDir = path.join(root, entry.name);
         try {
-          const stats = fs.statSync(appDir);
-
-          if (stats.isDirectory()) {
-            const files = fs.readdirSync(appDir);
-
-            const exes = files.filter((f) => {
-              const l = f.toLowerCase();
-
-              return (
-                l.endsWith(".exe") &&
-                !l.includes("uninstall") &&
-                !l.includes("setup") &&
-                !l.includes("installer") &&
-                !l.includes("elevate") &&
-                !l.includes("update") &&
-                !l.includes("crashpad")
-              );
-            });
-
-            if (exes.length > 0) {
-              // Priority A: Exact match with candidate name
-
-              const exactMatch = exes.find((f) => {
-                const nameWithoutExt = f.replace(/\.exe$/i, "").toLowerCase();
-
-                return Array.from(candidateNames).some(
-                  (c) => c.toLowerCase() === nameWithoutExt,
-                );
-              });
-
-              if (exactMatch) {
-                return path.join(appDir, exactMatch);
-              }
-
-              // Priority B: Largest binary (main executable vs helper binaries)
-
-              let largestExe = exes[0];
-
-              let largestSize = 0;
-
-              for (const exe of exes) {
-                try {
-                  const s = fs.statSync(path.join(appDir, exe));
-
-                  if (s.size > largestSize) {
-                    largestSize = s.size;
-
-                    largestExe = exe;
-                  }
-                } catch (e) {}
-              }
-
-              return path.join(appDir, largestExe);
-            }
-          } else if (stats.isFile() && appDir.toLowerCase().endsWith(".exe")) {
-            if (!isLikelyInstaller(appDir)) {
-              return appDir;
-            }
+          const subFiles = fs.readdirSync(subDir);
+          const exes = subFiles.filter((f) => {
+            const l = f.toLowerCase();
+            return (
+              l.endsWith(".exe") &&
+              !isLikelyInstaller(l) &&
+              !l.includes("uninstall") &&
+              !l.includes("elevate") &&
+              !l.includes("crashpad")
+            );
+          });
+          if (exes.length > 0) {
+            const matchedExe = exes.find((e) =>
+              Array.from(candidateTokens).some((t) => e.toLowerCase().includes(t))
+            );
+            return path.join(subDir, matchedExe || exes[0]);
           }
         } catch (e) {}
       }
-    }
+    } catch (e) {}
   }
 
-  // 3. Scan Windows Start Menu shortcuts (.lnk files)
-
+  // D. Priority 4: Windows Start Menu Shortcuts (.lnk files)
   const startMenuDirs: string[] = [];
-
   if (appData) {
     startMenuDirs.push(
       path.join(appData, "Microsoft", "Windows", "Start Menu", "Programs"),
     );
   }
-
   if (allUsersProfile) {
     startMenuDirs.push(
       path.join(
@@ -3064,54 +3248,28 @@ function findInstalledExecutable(options: {
 
   for (const smDir of startMenuDirs) {
     if (!fs.existsSync(smDir)) continue;
-
-    // Direct shortcut check
-
-    for (const name of candidateNames) {
-      const directLnk = path.join(smDir, `${name}.lnk`);
-
-      if (fs.existsSync(directLnk)) return directLnk;
-
-      const subLnk = path.join(smDir, name, `${name}.lnk`);
-
-      if (fs.existsSync(subLnk)) return subLnk;
-    }
-
-    // Shallow recursive scan for .lnk
-
     try {
       const entries = fs.readdirSync(smDir, { withFileTypes: true });
-
       for (const entry of entries) {
         if (entry.isFile() && entry.name.toLowerCase().endsWith(".lnk")) {
           const base = entry.name.replace(/\.lnk$/i, "").toLowerCase();
-
           if (
             !base.includes("uninstall") &&
-            Array.from(candidateNames).some((c) =>
-              base.includes(c.toLowerCase()),
-            )
+            Array.from(candidateTokens).some((c) => base.includes(c))
           ) {
             return path.join(smDir, entry.name);
           }
         } else if (entry.isDirectory()) {
           const subDir = path.join(smDir, entry.name);
-
           try {
             const subEntries = fs.readdirSync(subDir);
-
             for (const sub of subEntries) {
               if (
                 sub.toLowerCase().endsWith(".lnk") &&
                 !sub.toLowerCase().includes("uninstall")
               ) {
                 const base = sub.replace(/\.lnk$/i, "").toLowerCase();
-
-                if (
-                  Array.from(candidateNames).some((c) =>
-                    base.includes(c.toLowerCase()),
-                  )
-                ) {
+                if (Array.from(candidateTokens).some((c) => base.includes(c))) {
                   return path.join(subDir, sub);
                 }
               }
@@ -3121,30 +3279,6 @@ function findInstalledExecutable(options: {
       }
     } catch (e) {}
   }
-
-  // 4. Scan getInstalledAppsDir()/<appId> for portable / extracted installations
-
-  try {
-    const installedAppsDir = getInstalledAppsDir();
-
-    if (appId) {
-      const targetDir = path.join(installedAppsDir, appId);
-
-      if (fs.existsSync(targetDir)) {
-        const files = fs.readdirSync(targetDir, { recursive: true });
-
-        const nonInstallerExes = files.filter((f: any) => {
-          const l = String(f).toLowerCase();
-
-          return l.endsWith(".exe") && !isLikelyInstaller(l);
-        });
-
-        if (nonInstallerExes.length > 0) {
-          return path.join(targetDir, String(nonInstallerExes[0]));
-        }
-      }
-    }
-  } catch (e) {}
 
   return null;
 }
@@ -3244,6 +3378,11 @@ async function syncAppsFromSourcesFile(): Promise<{
           if (Array.isArray(items)) {
             for (const it of items) {
               if (it && it.id && !catalogMap.has(it.id)) {
+                const id = (it.id || "").toLowerCase();
+                const name = (it.name || "").toLowerCase();
+                const isHost = id === "anything" || id === "app-anything" || name.includes("anything master hub");
+                const isPulseWave = id === "pulsewave" || name.includes("pulse wave") || (it.targetPlatforms && it.targetPlatforms.includes("mobile"));
+                if (isHost || isPulseWave) continue;
                 catalogMap.set(it.id, it);
               }
             }
@@ -3274,6 +3413,12 @@ async function syncAppsFromSourcesFile(): Promise<{
         if (!rawUrl) continue;
 
         const parsed = parseGitHubRepo(rawUrl);
+        if (parsed && (parsed.repo.toLowerCase() === "anything" || parsed.repo.toLowerCase() === "plusewave")) {
+          continue; // Skip host app and mobile app repositories
+        }
+        if (src.id === "anything" || src.id === "pulsewave") {
+          continue;
+        }
 
         if (!parsed) {
           errors.push(`Invalid GitHub repository link: ${rawUrl}`);
@@ -3379,13 +3524,8 @@ async function syncAppsFromSourcesFile(): Promise<{
 
         const releaseFeatures = bodyLines.slice(0, 5);
 
-        const setupExeName = asset
-          ? asset.name
-          : `${parsed.repo}_${cleanVer}_Setup.exe`;
-
-        const downloadUrl = asset
-          ? asset.browser_download_url
-          : `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${remoteTag}/${setupExeName}`;
+        const setupExeName = asset ? asset.name : undefined;
+        const downloadUrl = asset ? asset.browser_download_url : undefined;
 
         const shader =
           shaderColorPresets[
@@ -3953,12 +4093,93 @@ function createWindow() {
     return { action: "deny" };
   });
 
+    // ================= ECOSYSTEM AUTH & CROSS-APP IDENTITY =================
+  ipcMain.handle("auth:save-ecosystem-session", async (_, sessionData: any) => {
+    try {
+      const raw = JSON.stringify(sessionData, null, 2);
+      const appData =
+        process.env.APPDATA ||
+        (process.env.USERPROFILE
+          ? path.join(process.env.USERPROFILE, "AppData", "Roaming")
+          : "");
+      const localAppData =
+        process.env.LOCALAPPDATA ||
+        (process.env.USERPROFILE
+          ? path.join(process.env.USERPROFILE, "AppData", "Local")
+          : "");
+
+      const targets = [
+        path.join(app.getPath("userData"), "ecosystem_session.json"),
+        appData ? path.join(appData, "Anything", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything", "ecosystem_session.json") : "",
+        localAppData ? path.join(localAppData, "anything", "ecosystem_session.json") : "",
+        path.join(getProjectRoot(), "ecosystem_session.json"),
+      ].filter((p): p is string => Boolean(p && typeof p === "string" && p.length > 0));
+
+      for (const t of targets) {
+        try {
+          const dir = path.dirname(t);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          fs.writeFileSync(t, raw, "utf-8");
+        } catch {}
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("auth:load-ecosystem-session", async () => {
+    try {
+      const sessionPath = path.join(app.getPath("userData"), "ecosystem_session.json");
+      if (fs.existsSync(sessionPath)) {
+        const raw = fs.readFileSync(sessionPath, "utf-8");
+        return { success: true, session: JSON.parse(raw) };
+      }
+      return { success: false, notFound: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("auth:clear-ecosystem-session", async () => {
+    try {
+      const appData =
+        process.env.APPDATA ||
+        (process.env.USERPROFILE
+          ? path.join(process.env.USERPROFILE, "AppData", "Roaming")
+          : "");
+      const localAppData =
+        process.env.LOCALAPPDATA ||
+        (process.env.USERPROFILE
+          ? path.join(process.env.USERPROFILE, "AppData", "Local")
+          : "");
+
+      const targets = [
+        path.join(app.getPath("userData"), "ecosystem_session.json"),
+        appData ? path.join(appData, "Anything", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything", "ecosystem_session.json") : "",
+        localAppData ? path.join(localAppData, "anything", "ecosystem_session.json") : "",
+        path.join(getProjectRoot(), "ecosystem_session.json"),
+      ].filter((p): p is string => Boolean(p && typeof p === "string" && p.length > 0));
+
+      for (const t of targets) {
+        try {
+          if (fs.existsSync(t)) fs.unlinkSync(t);
+        } catch {}
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
   // ================= PUBLISHER INBOX & PUSH ENGINE =================
 
   ipcMain.handle("publisher:open-inbox", async () => {
     const inboxPath = getInboxDir();
 
-    await shell.openPath(inboxPath);
+    await openInEcosystemExplorer(inboxPath);
 
     return inboxPath;
   });
@@ -3982,7 +4203,7 @@ function createWindow() {
   ipcMain.handle("releases:open-folder", async () => {
     const relDir = getReleasesDir();
 
-    await shell.openPath(relDir);
+    await openInEcosystemExplorer(relDir);
 
     return relDir;
   });
@@ -4214,7 +4435,26 @@ function createWindow() {
         }
       }
 
-      const mergedCatalog = Array.from(mergedMap.values());
+      const mergedCatalog = Array.from(mergedMap.values()).filter((it: any) => {
+        const id = (it?.id || "").toLowerCase();
+        const name = (it?.name || "").toLowerCase();
+        const ghRepo = (it?.githubRepo || "").toLowerCase();
+        const isHost =
+          id === "anything" ||
+          id === "app-anything" ||
+          id === "auto-copier" ||
+          id === "autocopier" ||
+          name.includes("anything master hub") ||
+          ghRepo.endsWith("/anything");
+        const isMobile =
+          id === "pulsewave" ||
+          name.includes("pulse wave") ||
+          (it?.targetPlatforms && it.targetPlatforms.includes("mobile")) ||
+          it?.platform === "android" ||
+          it?.packageFormat === ".apk" ||
+          ghRepo.includes("plusewave");
+        return !isHost && !isMobile;
+      });
 
       if (mergedCatalog.length > 0) {
         try {
@@ -4284,7 +4524,39 @@ function createWindow() {
           path.join(getInboxDir(), packageFileName),
 
           path.join(targetAppDir, packageFileName),
+
+          path.join(
+            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
+            "Anything Child app realse",
+            id,
+            packageFileName,
+          ),
+
+          path.join(
+            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
+            "Anything Child app realse",
+            id.replace(/^app-/, ""),
+            packageFileName,
+          ),
         ];
+
+        // Also search versioned directories in Anything Child app realse
+        try {
+          const childBase = path.join(
+            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
+            "Anything Child app realse",
+          );
+          for (const sub of [id, id.replace(/^app-/, "")]) {
+            const appBaseDir = path.join(childBase, sub);
+            if (fs.existsSync(appBaseDir)) {
+              for (const item of fs.readdirSync(appBaseDir, { withFileTypes: true })) {
+                if (item.isDirectory()) {
+                  candidatePaths.push(path.join(appBaseDir, item.name, packageFileName));
+                }
+              }
+            }
+          }
+        } catch {}
 
         for (const p of candidatePaths) {
           if (fs.existsSync(p)) {
@@ -4316,36 +4588,13 @@ function createWindow() {
         let dlAssetName = packageFileName || `${id}_Setup.exe`;
 
         if (!onlineUrl && repo) {
-          const parsed = parseGitHubRepo(repo);
-
-          if (parsed) {
-            try {
-              const res = await fetch(
-                `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases/latest`,
-                {
-                  headers: {
-                    "User-Agent": "CreativeHub-DesktopApp",
-                    Accept: "application/vnd.github.v3+json",
-                  },
-                },
-              );
-
-              if (res.ok) {
-                const data: any = await res.json();
-
-                const best = pickWindowsAsset(
-                  data.assets || [],
-                  appData.name || id || "",
-                );
-
-                if (best) {
-                  onlineUrl = best.browser_download_url;
-
-                  dlAssetName = best.name;
-                }
-              }
-            } catch (e) {}
-          }
+          try {
+            const setupRel = await fetchLatestSetupRelease(repo, appData.name || id);
+            if (setupRel) {
+              onlineUrl = setupRel.downloadUrl;
+              dlAssetName = setupRel.setupExeName;
+            }
+          } catch (e) {}
         }
 
         if (onlineUrl) {
@@ -4589,19 +4838,17 @@ function createWindow() {
           .replace(/'/g, "''");
 
         // Terminate any running process that might lock the files
-
         const candidateNames = [
           targetAppName,
-
           path
             .basename(installerPath)
             .replace(/[-_]?(setup|installer|portable|_setup)/gi, "")
             .replace(/\.exe$/i, ""),
-
+          "One Tap",
+          "One_Tap",
+          "Uni Desk",
           "MediaFlow Studio",
-
           "Tap Studio",
-
           "PV_Separator",
         ].filter(Boolean);
 
@@ -4617,6 +4864,14 @@ function createWindow() {
             );
           } catch {}
         }
+
+        // Clean up legacy broken Uni Desk folder if installing One Tap
+        try {
+          const legacyUniDesk = path.join(process.env.LOCALAPPDATA || "", "Programs", "Uni Desk");
+          if (fs.existsSync(legacyUniDesk)) {
+            fs.rmSync(legacyUniDesk, { recursive: true, force: true });
+          }
+        } catch {}
 
         if (ext === ".msi") {
           execFile(
@@ -4766,16 +5021,79 @@ function createWindow() {
             childArgs.push(`--loader-config=${loaderPath}`);
           }
 
+                    // Inject Ecosystem User Session & Auth into Child App CLI arguments
+          const sessionFile = path.join(app.getPath("userData"), "ecosystem_session.json");
+          let ecosystemUserEmail = "";
+          let ecosystemUserId = "";
+          let ecosystemUserName = "";
+          let ecosystemUserRole = "";
+          let ecosystemUserHandle = "";
+          let ecosystemUserAvatar = "";
+          try {
+            if (fs.existsSync(sessionFile)) {
+              childArgs.push(`--ecosystem-session=${sessionFile}`);
+              const parsedSess = JSON.parse(fs.readFileSync(sessionFile, "utf-8"));
+              ecosystemUserEmail = parsedSess.user?.email || "";
+              ecosystemUserId = parsedSess.user?.id || "";
+              ecosystemUserName = parsedSess.user?.name || "";
+              ecosystemUserRole = parsedSess.user?.role || "";
+              ecosystemUserHandle = parsedSess.user?.username || parsedSess.user?.handle || (ecosystemUserEmail ? ecosystemUserEmail.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "") : "");
+              ecosystemUserAvatar = parsedSess.user?.avatar || "";
+              if (ecosystemUserId) {
+                childArgs.push(`--ecosystem-user-id=${ecosystemUserId}`);
+                childArgs.push(`--user-id=${ecosystemUserId}`);
+              }
+              if (ecosystemUserEmail) {
+                childArgs.push(`--ecosystem-user-email=${ecosystemUserEmail}`);
+                childArgs.push(`--user-email=${ecosystemUserEmail}`);
+              }
+              if (ecosystemUserName) {
+                childArgs.push(`--ecosystem-user-name=${encodeURIComponent(ecosystemUserName)}`);
+                childArgs.push(`--user-name=${encodeURIComponent(ecosystemUserName)}`);
+              }
+              if (ecosystemUserHandle) {
+                childArgs.push(`--ecosystem-user-handle=${ecosystemUserHandle}`);
+                childArgs.push(`--user-handle=${ecosystemUserHandle}`);
+              }
+            }
+          } catch (e) {}
+
+          const childLaunchTime = Date.now();
+          const targetAppId = appId || "app";
+
           const child = spawn(targetPath, childArgs, {
             detached: true,
             stdio: "ignore",
             cwd: path.dirname(targetPath),
             env: {
               ...process.env,
+              BILI_PROXY_URL: "http://127.0.0.1:8787",
+              HTTP_PROXY: process.env.HTTP_PROXY || "http://127.0.0.1:8787",
+              HTTPS_PROXY: process.env.HTTPS_PROXY || "http://127.0.0.1:8787",
+              ALL_PROXY: process.env.ALL_PROXY || "http://127.0.0.1:8787",
               ANYTHING_DIR: projectRoot,
               ANYTHING_ECOSYSTEM_PATH: projectRoot,
               ANYTHING_CATALOG_PATH: path.join(getPublishedDir(), "catalog.json"),
+              ANYTHING_ECOSYSTEM_SESSION_PATH: sessionFile,
+              ANYTHING_USER_ID: ecosystemUserId,
+              ANYTHING_USER_EMAIL: ecosystemUserEmail,
+              ANYTHING_USER_NAME: ecosystemUserName,
+              ANYTHING_USER_ROLE: ecosystemUserRole,
+              ANYTHING_USER_HANDLE: ecosystemUserHandle,
+              ANYTHING_USER_AVATAR: ecosystemUserAvatar,
             },
+          });
+
+          child.on("close", () => {
+            const durationSeconds = Math.round((Date.now() - childLaunchTime) / 1000);
+            if (durationSeconds > 1) {
+              win?.webContents.send("app:closed-duration", {
+                appId: targetAppId,
+                appName: targetAppId,
+                durationSeconds,
+                endedAt: new Date().toISOString(),
+              });
+            }
           });
 
           child.unref();
@@ -4783,10 +5101,10 @@ function createWindow() {
           return { success: true, resolvedPath: targetPath };
         }
 
-        const result = await shell.openPath(targetPath);
+        const ok = await openInEcosystemExplorer(targetPath);
 
-        if (result) {
-          return { success: false, error: result };
+        if (!ok) {
+          return { success: false, error: "Failed to open target in ecosystem explorer" };
         }
 
         return { success: true, resolvedPath: targetPath };
@@ -5973,209 +6291,52 @@ function createWindow() {
           .toLowerCase()
           .replace(/^app-/, "")
           .replace(/[^a-z0-9]/g, "");
-        const verified =
-          VERIFIED_GITHUB_ASSETS[normAppId] ||
-          (appId ? VERIFIED_GITHUB_ASSETS[appId] : undefined);
 
-        const parsed = parseGitHubRepo(repo);
+        const effectiveRepo =
+          repo ||
+          KNOWN_ECOSYSTEM_REPOS[normAppId] ||
+          (appId ? KNOWN_ECOSYSTEM_REPOS[appId] : null);
+
+        const parsed = effectiveRepo ? parseGitHubRepo(effectiveRepo) : null;
 
         if (!parsed) {
-          if (verified) {
-            const vVersion = verified.version || "26.10.30";
-            const hasUpdate = currentVersion
-              ? compareVersions(vVersion, currentVersion) > 0
-              : true;
-            return {
-              success: true,
-              hasUpdate,
-              repo: repo || "verified/release",
-              remoteVersion: vVersion,
-              rawTag: `v${vVersion}`,
-              releaseName: `${appId || "Child App"} v${vVersion}`,
-              releaseNotes: `Verified release v${vVersion} available for download.`,
-              publishedAt: new Date().toLocaleDateString(),
-              asset: {
-                name: verified.fileName,
-                downloadUrl: verified.url,
-                sizeBytes: 100 * 1024 * 1024,
-                sizeFormatted: "Verified Package",
-              },
-            };
-          }
           return {
             success: false,
             error: "Invalid GitHub repository format (use owner/repo)",
           };
         }
 
-        const apiUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases/latest`;
-
-        const res = await fetch(apiUrl, {
-          headers: {
-            "User-Agent": "CreativeHub-DesktopApp",
-
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
-
-        if (res.status === 404) {
-          // Fallback: Check repository tags (for repositories using git tags or pre-releases)
-
-          const tagsRes = await fetch(
-            `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/tags?per_page=10`,
-            {
-              headers: {
-                "User-Agent": "CreativeHub-DesktopApp",
-
-                Accept: "application/vnd.github.v3+json",
-              },
-            },
-          );
-
-          if (tagsRes.ok) {
-            const tagsList: any = await tagsRes.json();
-
-            if (Array.isArray(tagsList) && tagsList.length > 0) {
-              const latestTag = tagsList[0];
-
-              const remoteVersion = (latestTag.name || "").replace(/^[vV]/, "");
-
-              const hasUpdate = currentVersion
-                ? compareVersions(remoteVersion, currentVersion) > 0
-                : true;
-
-              return {
-                success: true,
-
-                hasUpdate,
-
-                repo: `${parsed.owner}/${parsed.repo}`,
-
-                remoteVersion,
-
-                rawTag: latestTag.name,
-
-                releaseName: `Release ${latestTag.name}`,
-
-                releaseNotes: `Latest release ${latestTag.name} on GitHub.`,
-
-                publishedAt: new Date().toLocaleDateString(),
-
-                asset: {
-                  name: `Tapstudio_${remoteVersion}.exe`,
-
-                  downloadUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${latestTag.name}/Tapstudio_${remoteVersion}.exe`,
-
-                  sizeBytes: 162107378,
-
-                  sizeFormatted: "154.6 MB",
-                },
-              };
-            }
-          }
-
-          return {
-            success: false,
-            error: `No releases found for ${parsed.owner}/${parsed.repo}`,
-          };
-        }
-
-        if (!res.ok) {
-          if (verified) {
-            const vVersion = verified.version || "26.10.30";
-            const hasUpdate = currentVersion
-              ? compareVersions(vVersion, currentVersion) > 0
-              : true;
-            return {
-              success: true,
-              hasUpdate,
-              repo: `${parsed.owner}/${parsed.repo}`,
-              remoteVersion: vVersion,
-              rawTag: `v${vVersion}`,
-              releaseName: `${appId || "Child App"} v${vVersion}`,
-              releaseNotes: `Verified release v${vVersion} available for download.`,
-              publishedAt: new Date().toLocaleDateString(),
-              asset: {
-                name: verified.fileName,
-                downloadUrl: verified.url,
-                sizeBytes: 100 * 1024 * 1024,
-                sizeFormatted: "Verified Package",
-              },
-            };
-          }
-          return {
-            success: false,
-            error: `GitHub API error: ${res.statusText} (${res.status})`,
-          };
-        }
-
-        const data: any = await res.json();
-
-        let bestAsset = pickWindowsAsset(
-          data.assets || [],
-          appId || (parsed && parsed.repo) || "",
+        const setupRel = await fetchLatestSetupRelease(
+          `${parsed.owner}/${parsed.repo}`,
+          appId || parsed.repo,
         );
 
-        // If auto-copier was queried against Anything repo and only got Anything host installer, fallback to verified asset
-        if (
-          verified &&
-          (normAppId.includes("copier") || normAppId.includes("auto")) &&
-          bestAsset &&
-          bestAsset.name.toLowerCase().startsWith("anything_")
-        ) {
-          bestAsset = {
-            name: verified.fileName,
-            browser_download_url: verified.url,
-            size: 112052088,
-          };
-        } else if (!bestAsset && verified) {
-          bestAsset = {
-            name: verified.fileName,
-            browser_download_url: verified.url,
-            size: 100 * 1024 * 1024,
+        if (!setupRel) {
+          return {
+            success: false,
+            error: `No Windows setup installer (.exe) found in releases for ${parsed.owner}/${parsed.repo}`,
           };
         }
-
-        const remoteVersion = (data.tag_name || data.name || "").replace(
-          /^[vV]/,
-          "",
-        );
 
         const hasUpdate = currentVersion
-          ? compareVersions(remoteVersion, currentVersion) > 0
+          ? compareVersions(setupRel.version, currentVersion) > 0
           : true;
 
         return {
           success: true,
-
           hasUpdate,
-
           repo: `${parsed.owner}/${parsed.repo}`,
-
-          remoteVersion,
-
-          rawTag: data.tag_name || data.name,
-
-          releaseName: data.name || data.tag_name,
-
-          releaseNotes: data.body || "",
-
-          publishedAt: data.published_at
-            ? new Date(data.published_at).toLocaleDateString()
-            : "",
-
-          asset: bestAsset
-            ? {
-                name: bestAsset.name,
-
-                downloadUrl: bestAsset.browser_download_url,
-
-                sizeBytes: bestAsset.size,
-
-                sizeFormatted:
-                  (bestAsset.size / (1024 * 1024)).toFixed(1) + " MB",
-              }
-            : null,
+          remoteVersion: setupRel.version,
+          rawTag: setupRel.tag,
+          releaseName: `${appId || parsed.repo} ${setupRel.tag}`,
+          releaseNotes: setupRel.releaseNotes || `Latest release ${setupRel.tag} on GitHub.`,
+          publishedAt: setupRel.publishedAt,
+          asset: {
+            name: setupRel.setupExeName,
+            downloadUrl: setupRel.downloadUrl,
+            sizeBytes: setupRel.sizeBytes,
+            sizeFormatted: setupRel.sizeFormatted,
+          },
         };
       } catch (err: any) {
         return { success: false, error: err.message };
@@ -6229,7 +6390,8 @@ function createWindow() {
             error: "Invalid application ID or asset name.",
           };
         }
-        if (!isSafeExternalUrl(downloadUrl)) {
+        const isLocalFile = fs.existsSync(downloadUrl);
+        if (!isLocalFile && !isSafeExternalUrl(downloadUrl)) {
           return {
             success: false,
             error: "Disallowed or invalid download URL.",
@@ -6263,21 +6425,36 @@ function createWindow() {
           }
         } catch {}
 
-        // Download with live progress feedback
-
-        await downloadAssetWithProgress(
-          downloadUrl,
-          tempDownloadPath,
-          (prog) => {
+        // Download or copy package with live progress feedback
+        if (isLocalFile) {
+          if (path.resolve(downloadUrl) !== path.resolve(tempDownloadPath)) {
+            fs.copyFileSync(downloadUrl, tempDownloadPath);
+          }
+          if (win && !win.isDestroyed()) {
             win.webContents.send("catalog:download-progress", {
               appId,
-
-              ...prog,
-
+              percent: 90,
+              transferredBytes: fs.statSync(tempDownloadPath).size,
+              totalBytes: fs.statSync(tempDownloadPath).size,
+              speedBytesPerSec: 0,
               status: "downloading",
             });
-          },
-        );
+          }
+        } else {
+          await downloadAssetWithProgress(
+            downloadUrl,
+            tempDownloadPath,
+            (prog) => {
+              if (win && !win.isDestroyed()) {
+                win.webContents.send("catalog:download-progress", {
+                  appId,
+                  ...prog,
+                  status: "downloading",
+                });
+              }
+            },
+          );
+        }
 
         const isZip = assetName.toLowerCase().endsWith(".zip");
 
@@ -6573,7 +6750,7 @@ function createWindow() {
 
                 rawTag: tag.name,
 
-                name: `Tap Studio ${tag.name}`,
+                name: `${parsed.repo} ${tag.name}`,
 
                 releaseNotes: `GitHub release tag ${tag.name} for ${parsed.owner}/${parsed.repo}`,
 
@@ -6581,15 +6758,7 @@ function createWindow() {
 
                 isPrerelease: false,
 
-                asset: {
-                  name: `Tapstudio_${cleanTag}.exe`,
-
-                  downloadUrl: `https://github.com/${parsed.owner}/${parsed.repo}/releases/download/${tag.name}/Tapstudio_${cleanTag}.exe`,
-
-                  sizeBytes: 162107378,
-
-                  sizeFormatted: "154.6 MB",
-                },
+                asset: null,
               };
             });
 
@@ -7107,7 +7276,36 @@ app.on("before-quit", () => {
   } catch {}
 });
 
+// billion-context (bili) background proxy lifecycle management
+function ensureBillionContextProxy() {
+  try {
+    const net = require("net");
+    const testSocket = new net.Socket();
+    testSocket.setTimeout(400);
+    testSocket.on("connect", () => {
+      testSocket.destroy();
+    });
+    testSocket.on("error", () => {
+      testSocket.destroy();
+      try {
+        const biliProcess = spawn("bili", ["start"], {
+          detached: true,
+          stdio: "ignore",
+          shell: true,
+          windowsHide: true,
+        });
+        biliProcess.unref();
+      } catch (err) {}
+    });
+    testSocket.on("timeout", () => {
+      testSocket.destroy();
+    });
+    testSocket.connect(8787, "127.0.0.1");
+  } catch (e) {}
+}
+
 app.whenReady().then(() => {
+  ensureBillionContextProxy();
   createWindow();
 
   app.on("activate", () => {

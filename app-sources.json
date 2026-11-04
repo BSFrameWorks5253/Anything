@@ -15,7 +15,7 @@
   },
   {
     "id": "docuflow-studio",
-    "name": "DocuFlow Studio Pro",
+    "name": "VectorForge Studio",
     "url": "https://github.com/BSFrameworks5253/DocuFlow-",
     "category": "Productivity & Documents",
     "autoSync": true
@@ -28,21 +28,17 @@
     "autoSync": true
   },
   {
-    "id": "auto-copier",
-    "name": "Auto Copier Pro",
-    "url": "https://github.com/BSFrameWorks5253/Anything",
-    "category": "Productivity & Utilities",
+    "id": "pixelcharm",
+    "name": "Pixelcharm",
+    "url": "https://github.com/BSFrameworks5253/Pixelcharm",
+    "category": "Custom Tools",
     "autoSync": true
   },
   {
-    "id": "pulsewave",
-    "url": "https://github.com/BSFrameWorks5253/Plusewave",
-    "name": "Pulse Wave",
-    "category": "Mobile & Music",
-    "targetPlatforms": [
-      "mobile",
-      "android"
-    ],
+    "id": "anything-office",
+    "name": "Anything Office",
+    "url": "https://github.com/BSFrameWorks5253/Anything-Office",
+    "category": "Custom Tools",
     "autoSync": true
   }
 ]

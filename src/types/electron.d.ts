@@ -101,6 +101,12 @@ export interface ElectronAPI {
   isWindowMaximized: () => Promise<boolean>;
   onWindowStateChanged: (callback: (data: { isMaximized: boolean }) => void) => () => void;
 
+  // Ecosystem Auth & Cross-App Identity Sync
+  saveEcosystemSession?: (session: any) => Promise<{ success: boolean; error?: string }>;
+  loadEcosystemSession?: () => Promise<{ success: boolean; session?: any; notFound?: boolean; error?: string }>;
+  clearEcosystemSession?: () => Promise<{ success: boolean; error?: string }>;
+  onAppClosedDuration?: (callback: (data: { appId: string; appName: string; durationSeconds: number; endedAt: string }) => void) => () => void;
+
   // One Tap Daemon & PNG to JPG Auto-Converter
   oneTapConvertFiles?: (files?: string[]) => Promise<{ success: boolean; converted: number; failed: number; outputDir?: string }>;
   oneTapConvertFolder?: (folder?: string) => Promise<{ success: boolean; converted: number; failed: number; outputDir?: string }>;

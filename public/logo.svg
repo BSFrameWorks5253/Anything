@@ -6,7 +6,7 @@
       <stop offset="25%" stop-color="#FF1341"/>  <!-- Adobe Crimson -->
       <stop offset="55%" stop-color="#FF4F00"/>  <!-- Red-Orange Vermilion -->
       <stop offset="80%" stop-color="#FF8A00"/>  <!-- Amber -->
-      <stop offset="100%" stop-color="#FFBA00"/> <!-- Gold -->
+      <stop offset="100%" stop-color="#ffbb00"/> <!-- Gold -->
     </linearGradient>
 
     <!-- Deep Ambient Glow -->

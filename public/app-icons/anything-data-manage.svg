@@ -1,0 +1,110 @@
+<svg viewBox="0 0 512 512" width="512" height="512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Adobe CC Studio Dark Obsidian Gradient -->
+    <linearGradient id="dmBg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#002236"/>
+      <stop offset="50%" stop-color="#001422"/>
+      <stop offset="100%" stop-color="#000A12"/>
+    </linearGradient>
+
+    <!-- Top Left Specular Sheen -->
+    <radialGradient id="dmSheen" cx="100" cy="80" r="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Vibrant Electric Cyan / Sky Blue Gradient -->
+    <linearGradient id="cyanGrad" x1="120" y1="120" x2="400" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#00B4D8"/>
+    </linearGradient>
+
+    <!-- Soft Luminous Neon Glow -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#00E5FF" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+
+    <!-- Inner Plate Glow -->
+    <filter id="plateGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Adobe Authentic Squircle Container (rx=115 for 512px canvas) -->
+  <rect x="18" y="18" width="476" height="476" rx="115" fill="url(#dmBg)"/>
+  <rect x="18" y="18" width="476" height="476" rx="115" fill="url(#dmSheen)"/>
+
+  <!-- Adobe CC Iconic Colored Border (Neon Electric Cyan) -->
+  <rect x="24" y="24" width="464" height="464" rx="110" stroke="url(#cyanGrad)" stroke-width="12" stroke-opacity="0.95"/>
+
+  <!-- Inner Specular Micro-Bevel -->
+  <rect x="31" y="31" width="450" height="450" rx="104" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="2"/>
+
+  <!-- Subtle Ambient Data Grid in Top Right -->
+  <g opacity="0.18">
+    <circle cx="380" cy="110" r="4" fill="#00E5FF"/>
+    <circle cx="415" cy="110" r="4" fill="#00E5FF"/>
+    <circle cx="380" cy="145" r="4" fill="#00E5FF"/>
+    <circle cx="415" cy="145" r="4" fill="#00E5FF"/>
+    <line x1="380" y1="110" x2="415" y2="110" stroke="#00E5FF" stroke-width="1.5"/>
+    <line x1="380" y1="145" x2="415" y2="145" stroke="#00E5FF" stroke-width="1.5"/>
+    <line x1="380" y1="110" x2="380" y2="145" stroke="#00E5FF" stroke-width="1.5"/>
+    <line x1="415" y1="110" x2="415" y2="145" stroke="#00E5FF" stroke-width="1.5"/>
+  </g>
+
+  <!-- Authentic Adobe CC Mnemonic Typography: "Dm" -->
+  <!-- Capital 'D' -->
+  <g filter="url(#neonGlow)">
+    <!-- Custom Vector Geometry for Optical Adobe 'D' -->
+    <path 
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M 116 138 
+         H 206 
+         C 264 138 300 174 300 236 
+         C 300 298 264 334 206 334 
+         H 116 
+         V 138 Z 
+         M 166 186 
+         V 286 
+         H 202 
+         C 234 286 252 268 252 236 
+         C 252 204 234 186 202 186 
+         H 166 Z" 
+      fill="url(#cyanGrad)"
+    />
+
+    <!-- Lowercase 'm' crafted with Adobe font proportion (baseline=334, x-height=196) -->
+    <path 
+      d="M 324 196 
+         H 364 
+         V 214 
+         C 374 199 392 192 411 192 
+         C 432 192 449 203 454 222 
+         C 466 203 486 192 508 192 
+         C 538 192 556 211 556 248 
+         V 334 
+         H 514 
+         V 256 
+         C 514 238 506 228 493 228 
+         C 478 228 467 239 467 259 
+         V 334 
+         H 425 
+         V 256 
+         C 425 238 417 228 404 228 
+         C 389 228 378 239 378 259 
+         V 334 
+         H 324 
+         V 196 Z" 
+      transform="translate(-20, 0) scale(0.78, 1)"
+      fill="url(#cyanGrad)"
+    />
+  </g>
+
+  <!-- Micro Data Matrix Dot / Accent below 'm' -->
+  <circle cx="410" cy="360" r="5" fill="#00E5FF" opacity="0.8" />
+  <circle cx="430" cy="360" r="5" fill="#38BDF8" opacity="0.9" />
+</svg>

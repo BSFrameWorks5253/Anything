@@ -1,10 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import { syncSessionToEcosystem, clearEcosystemSession } from '../services/ecosystemSession';
+import { analyticsService } from '../services/analyticsService';
 
 export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  role: string;
+  username?: string;
+  role: 'member' | 'pro' | 'admin' | string;
   avatar: string | null;
   uid: string;
   verified: boolean;
@@ -16,7 +20,8 @@ export const DEFAULT_MEMBER_USER: UserProfile = {
   name: 'Creative Member',
   email: 'member@anything.local',
   phone: '',
-  role: 'Member',
+  username: 'creative_member',
+  role: 'member',
   avatar: null,
   uid: 'CREATIVE-MEMBER',
   verified: true,
@@ -25,12 +30,13 @@ export const DEFAULT_MEMBER_USER: UserProfile = {
 };
 
 export const ARCHITECT_USER: UserProfile = {
-  name: 'Creative Pro',
-  email: 'pro@anything.local',
+  name: 'Master Architect',
+  email: 'admin@anything.local',
   phone: '',
-  role: 'Pro Member',
+  username: 'architect_master',
+  role: 'admin',
   avatar: null,
-  uid: 'CREATIVE-PRO',
+  uid: 'CREATIVE-ADMIN-MASTER',
   verified: true,
   provider: 'architect',
   createdAt: '2026-01-01',
@@ -39,6 +45,8 @@ export const ARCHITECT_USER: UserProfile = {
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isSupabaseActive: boolean;
   loginAsArchitect: () => void;
   loginWithCredentials: (
     emailOrPhone: string,
@@ -52,9 +60,15 @@ interface AuthContextType {
     phone?: string,
     rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
-  loginWithSocial: (provider: 'google' | 'github', simulatedEmail?: string) => Promise<{ success: boolean }>;
+  loginWithSocial: (provider: 'google' | 'github', simulatedEmail?: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateUser: (updates: Partial<UserProfile>) => void;
+  toggleAdminRole: () => void;
+  recordVideoRender: (title: string, appName?: string, resolution?: string) => Promise<void>;
+  recordSafarComplete: (safarName: string, datesCount?: number, filesCount?: number) => Promise<void>;
+  trackAppTime: (appId: string, appName: string, durationSeconds: number) => Promise<void>;
   isAuthModalOpen: boolean;
   openAuthModal: () => void;
   closeAuthModal: () => void;
@@ -63,7 +77,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'anything_auth_session_v1';
-const USERS_DB_KEY = 'anything_users_registry_v1';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -77,27 +90,115 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.error('Failed to parse auth session:', e);
     }
-    // Default to free local workspace member - Login is completely optional & non-compulsory
     return DEFAULT_MEMBER_USER;
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Sync avatar updates from localStorage
+  // Determine admin privileges: role === 'admin' OR specific master email
+  const isAdmin = Boolean(
+    user && (
+      user.role?.toLowerCase() === 'admin' ||
+      user.email?.toLowerCase().includes('admin@') ||
+      user.email?.toLowerCase() === 'burhanuddin@anything.local'
+    )
+  );
+
+  // Sync session changes to the ecosystem & analytics service
   useEffect(() => {
-    const handleStorageChange = () => {
-      const currentAvatar = localStorage.getItem('anything_user_avatar');
-      setUser((prev) => (prev ? { ...prev, avatar: currentAvatar } : DEFAULT_MEMBER_USER));
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (user) {
+      analyticsService.ensureUserRecord(user);
+      syncSessionToEcosystem(user);
+    }
+  }, [user]);
+
+  // Listen to Supabase Auth state changes if Supabase is connected
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      // 1. Get initial session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          mapSupabaseUserToProfile(session.user, session.access_token);
+        }
+      });
+
+      // 2. Subscribe to auth changes (e.g. Google OAuth redirect)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+          mapSupabaseUserToProfile(session.user, session.access_token);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(DEFAULT_MEMBER_USER);
+          clearEcosystemSession();
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, []);
+
+  // Listen to Child App close duration from Electron
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onAppClosedDuration) {
+      const unsub = electronAPI.onAppClosedDuration((data: { appId: string; appName: string; durationSeconds: number }) => {
+        if (user && data.durationSeconds > 0) {
+          analyticsService.recordAppStaySession(user.uid, data.appId, data.appName, data.durationSeconds);
+        }
+      });
+      return unsub;
+    }
+  }, [user]);
+
+  // Track time spent in the Anything Master Hub itself (heartbeat every 60s)
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      analyticsService.recordAppStaySession(user.uid, 'anything-hub', 'Anything Hub', 60);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const mapSupabaseUserToProfile = (sbUser: any, token?: string) => {
+    const meta = sbUser.user_metadata || {};
+    const email = sbUser.email || '';
+    const name = meta.full_name || meta.name || email.split('@')[0] || 'Ecosystem User';
+    const avatar = meta.avatar_url || meta.picture || localStorage.getItem('anything_user_avatar') || null;
+    const isAutoAdmin = email === 'admin@anything.com' || email === 'admin@anything.local' || email === 'burhanuddin@anything.local';
+    const role = isAutoAdmin ? 'admin' : (meta.role || 'member');
+
+    const profile: UserProfile = {
+      name,
+      email,
+      phone: sbUser.phone || '',
+      role,
+      avatar,
+      uid: sbUser.id,
+      verified: Boolean(sbUser.email_confirmed_at || sbUser.phone_confirmed_at),
+      provider: sbUser.app_metadata?.provider === 'google' ? 'google' : 'credentials',
+      createdAt: sbUser.created_at,
+    };
+
+    setUser(profile);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+    localStorage.setItem('anything_last_signed_in_account', JSON.stringify({
+      email: profile.email,
+      name: profile.name,
+      username: profile.username || profile.email.split('@')[0],
+      avatar: profile.avatar || null,
+    }));
+    analyticsService.ensureUserRecord(profile);
+    syncSessionToEcosystem(profile, { accessToken: token });
+  };
 
   const loginAsArchitect = () => {
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
     const profile: UserProfile = { ...ARCHITECT_USER, avatar: currentAvatar };
     setUser(profile);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+    analyticsService.ensureUserRecord(profile);
+    syncSessionToEcosystem(profile);
     setIsAuthModalOpen(false);
   };
 
@@ -109,14 +210,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const input = emailOrPhone.trim();
     if (!input) return { success: false, error: 'Please enter your email or phone.' };
 
+    if (!passkey || passkey.trim().length === 0) {
+      return { success: false, error: 'Password is required to sign in.' };
+    }
+
+    // 1. If Supabase is configured and input is email, try Supabase signin
+    if (isSupabaseConfigured && supabase && input.includes('@') && passkey) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: input,
+          password: passkey,
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        if (data.user) {
+          mapSupabaseUserToProfile(data.user, data.session?.access_token);
+          setIsAuthModalOpen(false);
+          return { success: true };
+        }
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Supabase authentication failed.' };
+      }
+    }
+
+    // 2. Local fallback / offline mode
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
+    const isSpecialAdmin = input.toLowerCase() === 'admin@anything.local' || input.toLowerCase() === 'admin@anything.com';
     const profile: UserProfile = {
       name: input.includes('@') ? input.split('@')[0] : 'Workspace Member',
       email: input.includes('@') ? input : `${input}@anything.local`,
       phone: input.includes('@') ? '' : input,
-      role: 'Member',
+      role: isSpecialAdmin ? 'admin' : 'member',
       avatar: currentAvatar,
-      uid: `USR-${Date.now()}`,
+      uid: isSpecialAdmin ? 'USR-ADMIN-001' : `USR-${Date.now()}`,
       verified: true,
       provider: 'credentials',
     };
@@ -124,7 +253,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(profile);
     if (rememberMe) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+      localStorage.setItem('anything_last_signed_in_account', JSON.stringify({
+        email: profile.email,
+        name: profile.name,
+        username: profile.username || profile.email.split('@')[0],
+        avatar: profile.avatar || null,
+      }));
     }
+    analyticsService.ensureUserRecord(profile);
+    syncSessionToEcosystem(profile);
     setIsAuthModalOpen(false);
     return { success: true };
   };
@@ -132,18 +269,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (
     name: string,
     email: string,
-    _password: string,
+    password: string,
     phone?: string,
     rememberMe = true
   ): Promise<{ success: boolean; error?: string }> => {
+    const cleanEmail = email.trim();
+    const cleanName = name.trim() || cleanEmail.split('@')[0];
+
+    // 1. If Supabase is configured, register with Supabase Auth
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const isInitialAdmin = cleanEmail === 'admin@anything.com' || cleanEmail === 'admin@anything.local';
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            data: {
+              full_name: cleanName,
+              role: isInitialAdmin ? 'admin' : 'member',
+              phone: phone || '',
+            },
+          },
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        if (data.user) {
+          mapSupabaseUserToProfile(data.user, data.session?.access_token);
+          setIsAuthModalOpen(false);
+          return { success: true };
+        }
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Supabase sign up failed.' };
+      }
+    }
+
+    // 2. Local fallback / offline registration
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
+    const isSpecialAdmin = cleanEmail.toLowerCase() === 'admin@anything.local' || cleanEmail.toLowerCase() === 'admin@anything.com';
     const profile: UserProfile = {
-      name: name.trim() || 'Workspace Member',
-      email: email.trim(),
+      name: cleanName,
+      email: cleanEmail,
       phone: phone?.trim() || '',
-      role: 'Member',
+      role: isSpecialAdmin ? 'admin' : 'member',
       avatar: currentAvatar,
-      uid: `USR-${Date.now()}`,
+      uid: isSpecialAdmin ? 'USR-ADMIN-001' : `USR-${Date.now()}`,
       verified: true,
       provider: 'credentials',
     };
@@ -152,31 +324,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (rememberMe) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
     }
+    analyticsService.ensureUserRecord(profile);
+    syncSessionToEcosystem(profile);
     setIsAuthModalOpen(false);
     return { success: true };
   };
 
-  const loginWithSocial = async (provider: 'google' | 'github', simulatedEmail?: string) => {
-    const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
+  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
+          },
+        });
+        if (error) return { success: false, error: error.message };
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+
+    // Local / Desktop simulated Google login
+    return loginWithSocial('google', 'creative.master@gmail.com');
+  };
+
+  const loginWithSocial = async (provider: 'google' | 'github', simulatedEmail?: string): Promise<{ success: boolean; error?: string }> => {
+    if (provider === 'google' && isSupabaseConfigured && supabase) {
+      return loginWithGoogle();
+    }
+
+    const currentAvatar = localStorage.getItem('anything_user_avatar') || (
+      provider === 'google'
+        ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+        : null
+    );
+
+    const email = simulatedEmail || (provider === 'google' ? 'creative.pro@gmail.com' : 'developer@github.com');
     const profile: UserProfile = {
-      name: provider === 'google' ? 'Google User' : 'GitHub Developer',
-      email: simulatedEmail || `${provider}@anything.local`,
+      name: provider === 'google' ? 'Google Creative Pro' : 'GitHub Developer',
+      email,
       phone: '',
-      role: 'Member',
+      role: 'member',
       avatar: currentAvatar,
       uid: `${provider.toUpperCase()}-${Date.now()}`,
       verified: true,
       provider,
     };
+
     setUser(profile);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+    analyticsService.ensureUserRecord(profile);
+    syncSessionToEcosystem(profile);
     setIsAuthModalOpen(false);
     return { success: true };
   };
 
-  const logout = () => {
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    if (!email) return { success: false, error: 'Please enter your email.' };
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) return { success: false, error: error.message };
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+    return { success: true };
+  };
+
+  const logout = async () => {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+    }
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    // Reset to free workspace member session rather than forcing an auth wall
+    clearEcosystemSession();
     setUser(DEFAULT_MEMBER_USER);
   };
 
@@ -184,21 +416,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser((prev) => {
       const next = prev ? { ...prev, ...updates } : { ...DEFAULT_MEMBER_USER, ...updates };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
+      analyticsService.ensureUserRecord(next);
+      syncSessionToEcosystem(next);
       return next;
     });
+  };
+
+  const toggleAdminRole = () => {
+    if (!user) return;
+    const newRole = user.role === 'admin' ? 'member' : 'admin';
+    updateUser({ role: newRole });
+  };
+
+  const recordVideoRender = async (title: string, appName = 'MediaFlow Studio', resolution = '1080p') => {
+    if (user) {
+      await analyticsService.recordVideoRendered(user.uid, title, appName, resolution);
+    }
+  };
+
+  const recordSafarComplete = async (safarName: string, datesCount = 1, filesCount = 100) => {
+    if (user) {
+      await analyticsService.recordSafarCompleted(user.uid, safarName, datesCount, filesCount);
+    }
+  };
+
+  const trackAppTime = async (appId: string, appName: string, durationSeconds: number) => {
+    if (user) {
+      await analyticsService.recordAppStaySession(user.uid, appId, appName, durationSeconds);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: true, // Login is optional & non-compulsory
+        isAuthenticated: Boolean(user && user.uid !== DEFAULT_MEMBER_USER.uid),
+        isAdmin,
+        isSupabaseActive: isSupabaseConfigured,
         loginAsArchitect,
         loginWithCredentials,
         signUp,
         loginWithSocial,
+        loginWithGoogle,
+        resetPassword,
         logout,
         updateUser,
+        toggleAdminRole,
+        recordVideoRender,
+        recordSafarComplete,
+        trackAppTime,
         isAuthModalOpen,
         openAuthModal: () => setIsAuthModalOpen(true),
         closeAuthModal: () => setIsAuthModalOpen(false),

@@ -6,6 +6,7 @@ import {
   Sliders,
   BarChart3,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import type { NavigationPage } from '../../../types/app.types';
 import { SidebarLogo } from './SidebarLogo';
@@ -64,6 +65,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'PREFERENCES',
       items: [
+        {
+          id: 'admin' as NavigationPage,
+          label: 'Admin Portal',
+          icon: <ShieldCheck className="w-4 h-4 text-amber-500" />,
+        },
         {
           id: 'settings' as NavigationPage,
           label: 'Settings',

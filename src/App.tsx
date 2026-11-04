@@ -1,6 +1,9 @@
+import { AdminPortalPage } from "./features/admin/AdminPortalPage";
+import { MediaFlowStatsPage } from "./features/stats/MediaFlowStatsPage";
+import { OneTapStudioPage } from "./features/onetap/OneTapStudioPage";
 import React, { useState, useEffect } from "react";
 import type { NavigationPage, CatalogApp } from "./types/app.types";
-import { creativeAppsData } from "./data/apps.data";
+import { creativeAppsData, reconcileWithChildApps } from "./data/apps.data";
 import { AppLayout } from "./components/layout/AppLayout";
 import { HomePage } from "./features/home/HomePage";
 import { AppsPage } from "./features/apps/AppsPage";
@@ -12,6 +15,7 @@ import { loadSplashSettings, type SplashSettings } from "./data/splash.data";
 import {
   MEDIAFLOW_STUDIO_LOGO_BASE64,
   ONE_TAP_LOGO_BASE64,
+  ANYTHING_FILE_MANAGER_LOGO_BASE64,
 } from "./features/apps/components/CrazyAppStudio/AppIconRenderer";
 import { AppDemoModal } from "./features/apps/components/AppDemoModal";
 import { useAuth } from "./context/AuthContext";
@@ -59,13 +63,13 @@ const KNOWN_ECOSYSTEM_REPOS: Record<string, string> = {
 
   "mediaflow-studio": "BSFrameWorks5253/MediaFlow-Studio",
 
-  docuflow: "BSFrameworks5253/DocuFlow-",
+  docuflow: "BSFrameWorks5253/VectorForge",
 
-  "docuflow-studio": "BSFrameworks5253/DocuFlow-",
+  "docuflow-studio": "BSFrameWorks5253/VectorForge",
 
-  pulsewave: "BSFrameWorks5253/Plusewave",
+  vectorforge: "BSFrameWorks5253/VectorForge",
 
-  plusewave: "BSFrameWorks5253/Plusewave",
+  "vectorforge-studio": "BSFrameWorks5253/VectorForge",
 
   "anything-data-manage": "BSFrameWorks5253/AIN53",
 
@@ -73,17 +77,15 @@ const KNOWN_ECOSYSTEM_REPOS: Record<string, string> = {
 
   ain53: "BSFrameWorks5253/AIN53",
 
-  "auto-copier": "BSFrameWorks5253/Anything",
-
-  autocopier: "BSFrameWorks5253/Anything",
-
-  anything: "BSFrameWorks5253/Anything",
-
   "anything-office": "BSFrameworks5253/Anything-Office",
 
   office: "BSFrameworks5253/Anything-Office",
 
   pixelcharm: "BSFrameworks5253/Pixelcharm",
+  "anything-file-manager": "BSFrameWorks5253/Anything-File-Manager",
+  anythingfilemanager: "BSFrameWorks5253/Anything-File-Manager",
+  "media-viewer": "BSFrameWorks5253/Anything-File-Manager",
+  mediaviewer: "BSFrameWorks5253/Anything-File-Manager",
 };
 
 export function App() {
@@ -104,6 +106,19 @@ export function App() {
   const [demoModalApp, setDemoModalApp] = useState<CatalogApp | null>(null);
 
   const [customizeAppId, setCustomizeAppId] = useState<string>("anything");
+  // Shortcut: Ctrl+Shift+A opens Admin Portal
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setCurrentPage('admin');
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
+
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -151,11 +166,28 @@ export function App() {
 
   const [apps, setApps] = useState<CatalogApp[]>(() => {
     const saved = localStorage.getItem("creative_hub_catalog_apps_v4");
+    let initialList = creativeAppsData;
 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
 
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialList = reconcileWithChildApps(parsed);
+          return initialList;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return reconcileWithChildApps(creativeAppsData);
+  });
+
+  const [apps_legacy] = useState<CatalogApp[]>(() => {
+    const saved = null;
+    if (saved) {
+      try {
+        const parsed: any = [];
         if (Array.isArray(parsed)) {
           return parsed
 
@@ -164,11 +196,10 @@ export function App() {
 
               const name = (a?.name || "").toLowerCase();
 
-              return !(
-                id === "tap-studio" ||
-                id === "app-tap-studio" ||
-                name.includes("tap studio")
-              );
+              const isHost = id === "anything" || id === "app-anything" || id === "auto-copier" || id === "autocopier" || name.includes("anything master hub");
+              const isPulseWave = id === "pulsewave" || name.includes("pulse wave") || (remote?.targetPlatforms && remote.targetPlatforms.includes("mobile")) || remote?.packageFormat === ".apk";
+              const isTapStudio = id === "tap-studio" || id === "app-tap-studio" || name.includes("tap studio");
+              return !isHost && !isPulseWave && !isTapStudio;
             })
 
             .map((a: CatalogApp) => {
@@ -178,16 +209,8 @@ export function App() {
                 a.id === "app-one-tap" ||
                 (a.name && a.name.toLowerCase().includes("one tap"))
               ) {
-                const isDevPath =
-                  a.installedPath &&
-                  a.installedPath.toLowerCase().includes("burhanuddin");
-
-                const safePath = isDevPath ? undefined : a.installedPath;
-
-                const safeStatus =
-                  isDevPath || !a.installedPath
-                    ? "not-installed"
-                    : a.status || "not-installed";
+                const safePath = a.installedPath;
+const safeStatus = a.installedPath ? "installed" : "not-installed";
 
                 return {
                   ...a,
@@ -226,11 +249,7 @@ export function App() {
                 a.id === "app-mediaflow-studio" ||
                 (a.name && a.name.toLowerCase().includes("mediaflow"))
               ) {
-                const isDevPath =
-                  a.installedPath &&
-                  a.installedPath.toLowerCase().includes("burhanuddin");
-
-                const targetPath = isDevPath ? undefined : a.installedPath;
+                const targetPath = a.installedPath;
 
                 const localVer = a.localVersion;
 
@@ -311,11 +330,10 @@ export function App() {
 
             const name = (remote?.name || "").toLowerCase();
 
-            return !(
-              id === "tap-studio" ||
-              id === "app-tap-studio" ||
-              name.includes("tap studio")
-            );
+            const isHost = id === "anything" || id === "app-anything" || id === "auto-copier" || id === "autocopier" || name.includes("anything master hub");
+              const isPulseWave = id === "pulsewave" || name.includes("pulse wave") || (remote?.targetPlatforms && remote.targetPlatforms.includes("mobile")) || remote?.packageFormat === ".apk";
+              const isTapStudio = id === "tap-studio" || id === "app-tap-studio" || name.includes("tap studio");
+              return !isHost && !isPulseWave && !isTapStudio;
           });
 
           // Merge with local install state
@@ -377,6 +395,19 @@ export function App() {
                 }
               }
 
+              // Sanitize installed status: an app is only installed if it has a valid, non-setup executable
+              const isActuallyInstalled = Boolean(
+                item.installedPath &&
+                !item.installedPath.toLowerCase().includes("setup") &&
+                !item.installedPath.toLowerCase().includes("uni desk")
+              );
+              if (!isActuallyInstalled) {
+                item.installedPath = "";
+                if (item.status !== "downloading") {
+                  item.status = "not-installed";
+                }
+              }
+
               if (
                 item.id === "mediaflow-studio" ||
                 item.id === "app-mediaflow-studio" ||
@@ -420,13 +451,8 @@ export function App() {
                   item.iconValue = ONE_TAP_LOGO_BASE64;
                 }
 
-                if (
-                  item.installedPath &&
-                  item.installedPath.toLowerCase().includes("burhanuddin")
-                ) {
-                  item.installedPath = undefined;
-
-                  item.status = "not-installed";
+                if (item.installedPath) {
+                  item.status = "installed";
                 }
               }
 
@@ -452,13 +478,46 @@ export function App() {
 
                 item.glowColor = "rgba(0, 102, 238, 0.45)";
 
-                if (
-                  item.installedPath &&
-                  item.installedPath.toLowerCase().includes("burhanuddin")
-                ) {
-                  item.installedPath = undefined;
+                if (item.installedPath) {
+                  item.status = "installed";
+                }
+              }
 
-                  item.status = "not-installed";
+              if (
+                item.id === "anything-file-manager" ||
+                item.id === "media-viewer" ||
+                item.id === "app-anything-file-manager" ||
+                item.id === "app-media-viewer" ||
+                (item.name &&
+                  (item.name.toLowerCase().includes("file manager") ||
+                    item.name.toLowerCase().includes("media viewer")))
+              ) {
+                item.id = "anything-file-manager";
+
+                item.name = "Anything File Manager";
+
+                item.shortName = "FM";
+
+                item.category = "System & Utility";
+
+                item.executableName = "Anything File Manager.exe";
+
+                item.githubRepo = "BSFrameWorks5253/Anything-File-Manager";
+
+                item.gradient = "from-emerald-600 via-teal-600 to-cyan-700";
+
+                item.textColor = "#10b981";
+
+                item.glowColor = "rgba(16, 185, 129, 0.45)";
+
+                if (!item.iconValue || item.iconType !== "image") {
+                  item.iconType = "image";
+
+                  item.iconValue = ANYTHING_FILE_MANAGER_LOGO_BASE64;
+                }
+
+                if (item.installedPath) {
+                  item.status = "installed";
                 }
               }
 
@@ -562,11 +621,10 @@ export function App() {
 
               const name = (remote?.name || "").toLowerCase();
 
-              return !(
-                id === "tap-studio" ||
-                id === "app-tap-studio" ||
-                name.includes("tap studio")
-              );
+              const isHost = id === "anything" || id === "app-anything" || id === "auto-copier" || id === "autocopier" || name.includes("anything master hub");
+              const isPulseWave = id === "pulsewave" || name.includes("pulse wave") || (remote?.targetPlatforms && remote.targetPlatforms.includes("mobile")) || remote?.packageFormat === ".apk";
+              const isTapStudio = id === "tap-studio" || id === "app-tap-studio" || name.includes("tap studio");
+              return !isHost && !isPulseWave && !isTapStudio;
             });
 
             const merged = validCatalog.map((remote: any) => {
@@ -593,6 +651,35 @@ export function App() {
                   target.iconType = "image";
 
                   target.iconValue = MEDIAFLOW_STUDIO_LOGO_BASE64;
+                }
+              }
+
+              if (
+                target.id === "one-tap" ||
+                target.id === "onetap-workstation" ||
+                target.id === "app-one-tap" ||
+                (target.name && target.name.toLowerCase().includes("one tap"))
+              ) {
+                if (!target.iconValue || target.iconType !== "image") {
+                  target.iconType = "image";
+
+                  target.iconValue = ONE_TAP_LOGO_BASE64;
+                }
+              }
+
+              if (
+                target.id === "anything-file-manager" ||
+                target.id === "media-viewer" ||
+                target.id === "app-anything-file-manager" ||
+                target.id === "app-media-viewer" ||
+                (target.name &&
+                  (target.name.toLowerCase().includes("file manager") ||
+                    target.name.toLowerCase().includes("media viewer")))
+              ) {
+                if (!target.iconValue || target.iconType !== "image") {
+                  target.iconType = "image";
+
+                  target.iconValue = ANYTHING_FILE_MANAGER_LOGO_BASE64;
                 }
               }
 
@@ -801,7 +888,7 @@ export function App() {
 
       return cleanup;
     }
-  }, [apps]);
+  }, []);
 
   // Check GitHub Releases for newer versions of child applications
 
@@ -899,6 +986,7 @@ export function App() {
               if (
                 hasNewVersion &&
                 (app.status === "installed" ||
+                  app.status === "ready" ||
                   app.status === "update-available" ||
                   Boolean(app.installedPath))
               ) {
@@ -996,8 +1084,12 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    checkAllGitHubUpdates();
-  }, [apps.length]);
+    // Defer update check so window startup and first interactions are instant and smooth
+    const timer = setTimeout(() => {
+      checkAllGitHubUpdates();
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Verify installed paths on disk upon launch and auto-resolve existing installations
 
@@ -1112,8 +1204,44 @@ export function App() {
       KNOWN_ECOSYSTEM_REPOS[normKey] ||
       KNOWN_ECOSYSTEM_REPOS[targetApp.id];
 
-    // 1. Direct GitHub Release Installation or Update (Takes Setup EXE from GitHub, NOT from computer)
+    // 1. Fast local package installation if available in Anything Child app realse
+    const hasLocalPackage =
+      targetApp.localPackagePath &&
+      typeof targetApp.localPackagePath === "string" &&
+      !targetApp.localPackagePath.startsWith("http");
 
+    if (hasLocalPackage && electronAPI?.installPublishedPackage) {
+      try {
+        const result = await electronAPI.installPublishedPackage({
+          ...targetApp,
+          githubRepo: resolvedRepo,
+        });
+
+        if (result && result.success) {
+          persistApps(
+            apps.map((a) =>
+              a.id === targetApp.id
+                ? {
+                    ...a,
+                    status: "installed",
+                    installedPath: result.installedPath,
+                    localVersion: targetApp.version,
+                    downloadProgress: undefined,
+                  }
+                : a,
+            ),
+          );
+          return;
+        }
+      } catch (err) {
+        console.warn(
+          "Local installation attempt failed, falling back to online release:",
+          err,
+        );
+      }
+    }
+
+    // 2. Direct GitHub Release Installation or Update (takes setup binary from GitHub)
     if (
       electronAPI?.updateAppFromGitHub &&
       (resolvedRepo ||
@@ -1919,6 +2047,9 @@ export function App() {
 
       case "onetap":
         return <OneTapStudioPage searchQuery={searchQuery} />;
+
+            case "admin":
+        return <AdminPortalPage onBack={() => setCurrentPage("apps")} />;
 
       case "settings":
         return (

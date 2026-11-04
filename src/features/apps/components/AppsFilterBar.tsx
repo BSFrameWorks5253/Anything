@@ -34,7 +34,7 @@ export const AppsFilterBar: React.FC<AppsFilterBarProps> = ({
   const tabs: { id: FilterTab; label: string; count?: number; icon?: React.ReactNode }[] = [
     { id: 'all', label: 'All Applications', count: totalCount },
     { id: 'desktop', label: 'Desktop', count: desktopCount, icon: <Monitor className="w-3.5 h-3.5" /> },
-    { id: 'mobile', label: 'Mobile', count: mobileCount, icon: <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> },
+    ...(mobileCount && mobileCount > 0 ? [{ id: 'mobile' as FilterTab, label: 'Mobile', count: mobileCount, icon: <Smartphone className="w-3.5 h-3.5 text-emerald-400" /> }] : []),
     { id: 'installed', label: 'Installed' },
     { id: 'updates', label: 'Updates', count: updateCount },
   ];

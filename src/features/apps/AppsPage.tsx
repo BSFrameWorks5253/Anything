@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PackageOpen } from 'lucide-react';
 import type { CatalogApp } from '../../types/app.types';
-import { appCategoriesList } from '../../data/apps.data';
+import { appCategoriesList, isHostAnythingApp } from '../../data/apps.data';
 import { AppsFilterBar } from './components/AppsFilterBar';
 import { CategoryPills } from './components/CategoryPills';
 import { AppsGrid } from './components/AppsGrid';
@@ -52,11 +52,12 @@ export const AppsPage: React.FC<AppsPageProps> = ({
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
-  const updateCount = apps.filter((a) => a.status === 'update-available').length;
-  const desktopCount = apps.filter((a) => !a.targetPlatforms || a.targetPlatforms.includes('desktop')).length;
-  const mobileCount = apps.filter((a) => a.targetPlatforms?.includes('mobile') || (a.category && a.category.toLowerCase().includes('mobile'))).length;
+  const updateCount = apps.filter((a) => !isHostAnythingApp(a) && a.status === 'update-available').length;
+  const desktopCount = apps.filter((a) => !isHostAnythingApp(a) && (!a.targetPlatforms || a.targetPlatforms.includes('desktop'))).length;
+  const mobileCount = apps.filter((a) => !isHostAnythingApp(a) && (a.targetPlatforms?.includes('mobile') || (a.category && a.category.toLowerCase().includes('mobile')))).length;
 
   const filteredApps = apps.filter((app) => {
+    if (isHostAnythingApp(app)) return false;
     const q = (searchQuery || '').toLowerCase();
     const name = (app?.name || '').toLowerCase();
     const desc = (app?.description || '').toLowerCase();

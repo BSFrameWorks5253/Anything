@@ -1,33 +1,310 @@
 {
   "id": "docuflow-studio",
-  "name": "DocuFlow Studio Pro",
-  "shortName": "Df",
-  "version": "1.0.0",
-  "size": "122.8 MB",
+  "name": "VectorForge Studio",
+  "shortName": "VF",
+  "version": "26.11.05",
   "category": "Productivity & Documents",
-  "author": "Burhanuddin Sounasath",
-  "contact": "8369811201",
-  "description": "## 🚀 DocuFlow Studio Pro 2026\nUniversal Document Fusion, Vector Engineering, and Offline PDF Workstation for the Anything Ecosystem.\n\n### ✨ Core Creative & Conversion Suites:\n- **PDFella-Grade PDF Editor**: In-place text editing, live freehand pen drawings, digital signature pad, whiteout redaction, shapes, stamps, and page manager sidebar.\n- **Heterogeneous Universal Fusion**: Stagger and fuse arbitrary multi-format documents (Word, Excel, AutoCAD DWG/DXF, Images, Text, PDFs) into one unified master publication.\n- **PDF Page Studio & Visual Splitter**: Interactive thumbnail canvas to drag-reorder pages, rotate 90°, exclude unwanted sheets, extract custom page ranges (e.g., 1-3, 5), or split all pages into a ZIP archive.\n- **Office to PDF & 1-to-1 Batch Engine**: Convert Microsoft Word (.docx) and Excel (.xlsx, .xls) files directly into separate individual PDFs with native folder saving or ZIP exports.\n- **AutoCAD CAD-to-Blueprint Studio**: Parse AutoCAD DWG and DXF vector drawings into CAD blueprints with Architectural Blueprint, Monochrome, and Layer Color themes up to A1 sheet size.\n- **Image-to-PDF Gallery Studio**: High-res JPG/PNG/WEBP rearrangement with orientation and margin presets.\n- **PDF Reverse Exporters & Offline OCR Vision**: Deconstruct PDFs into editable Word (.docx), Excel (.xlsx), 300 DPI page images (.zip), plain text, or perform local OCR on scanned documents via Tesseract.\n- **Security, Watermarking & Smart Compressor**: Diagonal copyright stamps, dynamic page numbering, document compression profiles, and user password protection.\n- **In-App Instant PDF Previewer**: Inspect rendered documents on-screen with zoom and rotation before saving.",
-  "executableName": "DocuFlow Studio.exe",
-  "setupExecutableName": "DocuFlow_Studio_1.0.0_Setup.exe",
-  "packageFileName": "DocuFlow_Studio_1.0.0_Setup.exe",
-  "downloadUrl": "https://github.com/BSFrameworks5253/DocuFlow-/releases/download/v1.0.0/DocuFlow_Studio_1.0.0_Setup.exe",
-  "iconType": "image",
-  "iconValue": "logo.png",
+  "description": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+  "executableName": "VectorForge Studio.exe",
+  "setupExecutableName": "VectorForge_Studio_26.11.5_Setup.exe",
   "gradient": "from-cyan-500 via-sky-600 to-blue-700",
   "textColor": "#38bdf8",
   "glowColor": "rgba(56, 189, 248, 0.45)",
   "githubRepo": "BSFrameworks5253/DocuFlow-",
+  "iconType": "image",
+  "packageFileName": "VectorForge_Studio_26.11.5_Setup.exe",
+  "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
   "systemRequirements": {
     "os": "Windows 10 / Windows 11 (64-bit)",
     "ram": "4 GB RAM (8 GB Recommended)",
     "gpu": "DirectX 11 / Direct3D 11 Compatible GPU",
     "storage": "200 MB Available Storage"
   },
+  "size": "122.8 MB",
+  "author": "Burhanuddin Sounasath",
+  "contact": "8369811201",
+  "iconValue": "./app-icons/docuflow-studio.png",
   "endpoints": {
     "repository": "https://github.com/BSFrameworks5253/DocuFlow-",
     "releasesDashboard": "https://github.com/BSFrameworks5253/DocuFlow-/releases",
     "latestReleaseApi": "https://api.github.com/repos/BSFrameworks5253/DocuFlow-/releases/latest",
     "binaryDownloadPattern": "https://github.com/BSFrameworks5253/DocuFlow-/releases/download/v{version}/DocuFlow_Studio_{version}_Setup.exe"
-  }
+  },
+  "packageSize": "118.2 MB",
+  "packageFormat": ".exe",
+  "localPackagePath": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
+  "status": "not-installed",
+  "publishedAt": 1793813020396,
+  "releaseInfo": {
+    "version": "26.11.05",
+    "executableName": "VectorForge_Studio_26.11.5_Setup.exe",
+    "releaseDate": "2026-10-29",
+    "releaseType": "major",
+    "tagline": "Precision Vector PDF & Document Engineering Studio",
+    "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+    "newFeatures": [
+      "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+      "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+      "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+      "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+      "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+      "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+      "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+      "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+    ],
+    "improvements": [
+      "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+      "Native Anything ecosystem integration with customized startup loader and auto-update support",
+      "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+      "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+    ],
+    "fixes": [
+      "Fixed EBUSY resource locking during watch mode",
+      "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+      "Fixed drag-and-drop file detection and multi-document ordering"
+    ],
+    "sizeFormatted": "118.2 MB",
+    "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
+  },
+  "history": [
+    {
+      "version": "26.11.05",
+      "executableName": "VectorForge_Studio_26.11.5_Setup.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Precision Vector PDF & Document Engineering Studio",
+      "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+      "newFeatures": [
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+        "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+        "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+        "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+        "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+      ],
+      "improvements": [
+        "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+        "Native Anything ecosystem integration with customized startup loader and auto-update support",
+        "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+        "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+      ],
+      "fixes": [
+        "Fixed EBUSY resource locking during watch mode",
+        "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+        "Fixed drag-and-drop file detection and multi-document ordering"
+      ],
+      "sizeFormatted": "118.2 MB",
+      "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
+    },
+    {
+      "version": "26.11.02",
+      "executableName": "VectorForge_Studio_26.11.2.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Precision Vector PDF & Document Engineering Studio",
+      "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+      "newFeatures": [
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+        "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+        "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+        "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+        "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+      ],
+      "improvements": [
+        "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+        "Native Anything ecosystem integration with customized startup loader and auto-update support",
+        "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+        "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+      ],
+      "fixes": [
+        "Fixed EBUSY resource locking during watch mode",
+        "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+        "Fixed drag-and-drop file detection and multi-document ordering"
+      ],
+      "sizeFormatted": "117.9 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.02\\VectorForge_Studio_26.11.2.exe"
+    },
+    {
+      "version": "26.11.1",
+      "executableName": "VectorForge_Studio_26.11.1_Setup.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Precision Vector PDF & Document Engineering Studio",
+      "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+      "newFeatures": [
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+        "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+        "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+        "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+        "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+      ],
+      "improvements": [
+        "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+        "Native Anything ecosystem integration with customized startup loader and auto-update support",
+        "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+        "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+      ],
+      "fixes": [
+        "Fixed EBUSY resource locking during watch mode",
+        "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+        "Fixed drag-and-drop file detection and multi-document ordering"
+      ],
+      "sizeFormatted": "118.2 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.1\\VectorForge_Studio_26.11.1_Setup.exe"
+    },
+    {
+      "version": "26.10.30",
+      "executableName": "DocuFlow_Studio_26.10.30.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Precision Vector PDF & Document Engineering Studio",
+      "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+      "newFeatures": [
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+        "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+        "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+        "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+        "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+      ],
+      "improvements": [
+        "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+        "Native Anything ecosystem integration with customized startup loader and auto-update support",
+        "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+        "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+      ],
+      "fixes": [
+        "Fixed EBUSY resource locking during watch mode",
+        "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+        "Fixed drag-and-drop file detection and multi-document ordering"
+      ],
+      "sizeFormatted": "122.5 MB",
+      "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow\\V26.10.30\\DocuFlow_Studio_26.10.30.exe"
+    },
+    {
+      "version": "1.0.0",
+      "executableName": "VectorForge_Studio_26.11.1_Setup.exe",
+      "releaseDate": "2026-10-29",
+      "releaseType": "major",
+      "tagline": "Precision Vector PDF & Document Engineering Studio",
+      "summary": "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+      "newFeatures": [
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP",
+        "Offline OCR Vision Extractor: Client-side optical character recognition via Tesseract for scanned and flattened PDFs",
+        "1-to-1 Batch Office Converter: Convert dozens of Word and Excel documents to individual PDFs with direct folder saving or ZIP export",
+        "Security & Optimization Suite: Watermark stamps, page numbering, multi-tier document compression, and user password protection",
+        "In-App Instant PDF Previewer: Built-in high-DPI canvas viewer with page navigation, zoom, and rotation"
+      ],
+      "improvements": [
+        "Sub-second boot engine (under 600 ms) with optimized dependency pre-bundling",
+        "Native Anything ecosystem integration with customized startup loader and auto-update support",
+        "100% Client-side sandbox execution with zero cloud uploads and local PDF.js worker",
+        "Refined light studio theme with spacious padding and Apple/Linear-grade typography"
+      ],
+      "fixes": [
+        "Fixed EBUSY resource locking during watch mode",
+        "Resolved AutoCAD DWG file ingestion and parsing across all workspace modes",
+        "Fixed drag-and-drop file detection and multi-document ordering"
+      ],
+      "emailNotification": {
+        "subject": "🚀 DocuFlow Studio Pro v1.0.0 is Live in Anything!",
+        "preview": "PDFella-grade PDF editing, AutoCAD DWG conversions, and universal document fusion.",
+        "ctaText": "Launch DocuFlow Studio",
+        "heroGradient": "from-cyan-500 via-sky-600 to-blue-700"
+      },
+      "sizeFormatted": "118.2 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.1\\VectorForge_Studio_26.11.1_Setup.exe"
+    },
+    {
+      "appId": "docuflow-studio",
+      "appName": "VectorForge Studio",
+      "version": "26.10.31",
+      "executableName": "VectorForge_Studio_26.10.31_Setup.exe",
+      "releaseDate": "2026-10-30",
+      "releaseType": "minor",
+      "tagline": "VectorForge Studio v26.10.31 from GitHub Releases",
+      "summary": "VectorForge Studio v26.10.31",
+      "newFeatures": [
+        "VectorForge Studio v1.0.0 delivers in-place vector PDF editing, freehand drawings, digital signatures, AutoCAD DWG & DXF blueprint conversions, universal multi-document fusion, offline OCR vision, and 1-to-1 batch office conversion.",
+        "PDFella-Grade PDF Editor: In-place text editing with instant font replacement, live freehand pen drawings, digital signature pad (draw, type, upload), whiteout redaction, shapes, stamps, and page manager sidebar",
+        "AutoCAD DWG & DXF Vector Blueprint Engine: Direct client-side parsing of AutoCAD drawings (R14 to 2026) via LibreDWG WebAssembly with Blueprint and Monochrome themes up to A1 paper size",
+        "Universal Heterogeneous Multi-Document Fusion: Combine arbitrary combinations of Word, Excel, AutoCAD DWG/DXF, Images, Text, and PDFs into one master PDF",
+        "PDF Page Studio & Visual Splitter: Thumbnail grid to reorder, rotate 90°, delete pages, extract ranges (e.g., 1-3, 5), or split all to ZIP"
+      ],
+      "improvements": [
+        "Ecosystem loader integration",
+        "Performance optimizations"
+      ],
+      "fixes": [
+        "Stability and compatibility updates"
+      ],
+      "emailNotification": {
+        "subject": "🚀 VectorForge Studio v26.10.31 is Live!",
+        "preview": "Discover all the updates in v26.10.31.",
+        "ctaText": "Open in Anything",
+        "heroGradient": "from-violet-700 via-purple-600 to-indigo-500"
+      }
+    }
+  ],
+  "changelog": [
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB"
+  ],
+  "addedByCreator": true,
+  "versionText": "V26.11.05"
 }

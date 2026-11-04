@@ -30,6 +30,18 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
   const [showMenu, setShowMenu] = React.useState(false);
   const { theme } = useTheme();
   const isLight = theme === 'light';
+  const isInstalled =
+    (app.status === 'installed' || app.status === 'ready') &&
+    Boolean(app.installedPath) &&
+    !app.installedPath.toLowerCase().includes('setup');
+  const isUpdate = app.status === 'update-available';
+  const isTrial = app.status === 'trial';
+  const isPathBroken = app.status === 'path-broken';
+  const isBusy =
+    app.status === 'downloading' ||
+    app.status === 'extracting' ||
+    (app as any).status === 'installing';
+  const needsInstall = !isInstalled && !isUpdate && !isTrial && !isPathBroken && !isBusy;
 
   return (
     <div
@@ -72,128 +84,149 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
       )}
 
       <div className="flex items-center justify-between gap-2">
+        {/* Status indicator and actions */}
         <span
-          className={`text-[10px] font-mono truncate ${
-            isLight ? 'text-zinc-500 font-medium' : 'text-zinc-400'
-          }`}
-        >
-          {app.status === 'installed'
-            ? `v${app.localVersion || app.version} · Installed`
-            : app.status === 'update-available'
-            ? `v${app.localVersion || 'old'} → v${app.version}`
-            : app.status === 'path-broken'
-            ? 'Path Missing'
-            : app.status === 'trial'
-            ? 'Demo Active'
-            : app.size || 'Ready'}
-        </span>
-
-        <div className="flex items-center gap-1.5">
-          {/* Action Buttons with Tactile Feedback */}
-          {app.status === 'installed' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onLaunch(app);
-              }}
-              className={`text-xs px-3.5 py-1 rounded-full border font-semibold transition-all duration-150 ease-out active:scale-[0.97] flex items-center gap-1.5 cursor-pointer select-none ${
-                isLight
-                  ? 'border-zinc-300 text-zinc-900 hover:bg-zinc-100 hover:border-zinc-400 shadow-xs'
-                  : 'border-zinc-600 text-white hover:bg-white/10 hover:border-zinc-500 shadow-xs'
-              }`}
-            >
-              <Play className="w-3 h-3 fill-current" />
-              <span>Open</span>
-            </button>
-          )}
-
-          {app.status === 'trial' && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onTryDemo) onTryDemo(app);
-                  else onLaunch(app);
-                }}
-                className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 dark:text-emerald-300 font-semibold hover:bg-emerald-500/30 active:scale-[0.97] transition-all duration-150 flex items-center gap-1 cursor-pointer select-none"
-                title="Launch Software Demo"
+                className={`text-[10px] font-mono truncate ${
+                  isLight ? 'text-zinc-500 font-medium' : 'text-zinc-400'
+                }`}
               >
-                <Play className="w-3 h-3 fill-current" />
-                <span>Demo</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInstall(app);
-                }}
-                className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
-                title="Install Full Version"
-              >
-                <Download className="w-3 h-3" />
-                <span>Install</span>
-              </button>
-            </div>
-          )}
+                {isInstalled
+                  ? `v${app.localVersion || app.version} · Installed`
+                  : isUpdate
+                  ? `v${app.localVersion || 'old'} → v${app.version}`
+                  : isPathBroken
+                  ? 'Path Missing'
+                  : isTrial
+                  ? 'Demo Active'
+                  : isBusy
+                  ? 'Installing...'
+                  : app.size || 'Ready to Install'}
+              </span>
 
-          {app.status === 'update-available' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdate(app);
-              }}
-              className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>Update</span>
-            </button>
-          )}
+              <div className="flex items-center gap-1.5">
+                {/* 1. Open Button (When installed) */}
+                {isInstalled && !isUpdate && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLaunch(app);
+                    }}
+                    className={`text-xs px-3.5 py-1 rounded-full border font-semibold transition-all duration-150 ease-out active:scale-[0.97] flex items-center gap-1.5 cursor-pointer select-none ${
+                      isLight
+                        ? 'border-zinc-300 text-zinc-900 hover:bg-zinc-100 hover:border-zinc-400 shadow-xs'
+                        : 'border-zinc-600 text-white hover:bg-white/10 hover:border-zinc-500 shadow-xs'
+                    }`}
+                  >
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Open</span>
+                  </button>
+                )}
 
-          {app.status === 'not-installed' && (
-            <div className="flex items-center gap-1.5">
-              {onTryDemo && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTryDemo(app);
-                  }}
-                  className={`text-xs px-3 py-1 rounded-full border font-medium active:scale-[0.97] transition-all duration-150 flex items-center gap-1 cursor-pointer select-none ${
-                    isLight
-                      ? 'border-cyan-600/30 hover:border-cyan-600 text-cyan-700 hover:bg-cyan-500/10'
-                      : 'border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:bg-cyan-500/10'
-                  }`}
-                  title="Try Software Demo / Sandbox"
-                >
-                  <Sparkles className="w-3 h-3 text-cyan-500" />
-                  <span>Try</span>
-                </button>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInstall(app);
-                }}
-                className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
-              >
-                <Download className="w-3 h-3" />
-                <span>Install</span>
-              </button>
-            </div>
-          )}
+                {/* 2. Update Button */}
+                {isUpdate && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdate(app);
+                    }}
+                    className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Update</span>
+                  </button>
+                )}
 
-          {app.status === 'path-broken' && (
-            <GlassButton
-              variant="danger"
-              size="sm"
-              icon={<AlertTriangle className="w-3.5 h-3.5" />}
-              onClick={(e) => {
-                e.stopPropagation();
-                onFixPath(app);
-              }}
-              className="text-xs px-3 border-amber-500/40 text-amber-500 dark:text-amber-300 bg-amber-500/15"
-            >
-              Fix Path
-            </GlassButton>
-          )}
+                {/* 3. Trial / Demo Buttons */}
+                {isTrial && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onTryDemo) onTryDemo(app);
+                        else onLaunch(app);
+                      }}
+                      className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 dark:text-emerald-300 font-semibold hover:bg-emerald-500/30 active:scale-[0.97] transition-all duration-150 flex items-center gap-1 cursor-pointer select-none"
+                      title="Launch Software Demo"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>Demo</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onInstall(app);
+                      }}
+                      className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
+                      title="Install Full Version"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Install</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 4. Install / Try Buttons (Available for all non-installed apps) */}
+                {needsInstall && (
+                  <div className="flex items-center gap-1.5">
+                    {onTryDemo && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTryDemo(app);
+                        }}
+                        className={`text-xs px-3 py-1 rounded-full border font-medium active:scale-[0.97] transition-all duration-150 flex items-center gap-1 cursor-pointer select-none ${
+                          isLight
+                            ? 'border-cyan-600/30 hover:border-cyan-600 text-cyan-700 hover:bg-cyan-500/10'
+                            : 'border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:bg-cyan-500/10'
+                        }`}
+                        title="Try Software Demo / Sandbox"
+                      >
+                        <Sparkles className="w-3 h-3 text-cyan-500" />
+                        <span>Try</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onInstall(app);
+                      }}
+                      className="text-xs px-3.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs active:scale-[0.97] transition-all duration-150 flex items-center gap-1.5 cursor-pointer select-none"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Install</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 5. Path Missing */}
+                {isPathBroken && (
+                  <div className="flex items-center gap-1.5">
+                    <GlassButton
+                      variant="danger"
+                      size="sm"
+                      icon={<AlertTriangle className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFixPath(app);
+                      }}
+                      className="text-xs px-3 border-amber-500/40 text-amber-500 dark:text-amber-300 bg-amber-500/15"
+                    >
+                      Fix Path
+                    </GlassButton>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onInstall(app);
+                      }}
+                      className="text-xs px-2.5 py-1 rounded-full bg-[#1473E6] hover:bg-[#0d66d0] text-white font-semibold shadow-xs"
+                      title="Reinstall Application"
+                    >
+                      <Download className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
 
           {/* Options Dropdown Menu */}
           <div className="relative">
@@ -221,6 +254,23 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
                     : 'bg-zinc-900/95 border-zinc-700 text-zinc-100 shadow-black/80'
                 }`}
               >
+                {/* Explicit Download / Install Option */}
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    onInstall(app);
+                  }}
+                  className={`w-full px-3 py-2 text-left flex items-center gap-2 transition-colors font-medium border-b mb-1 ${
+                    isLight
+                      ? 'border-zinc-100 hover:bg-cyan-50 text-cyan-700'
+                      : 'border-zinc-800 hover:bg-cyan-500/15 text-cyan-300'
+                  }`}
+                  title="Download and install application package"
+                >
+                  <Download className="w-3.5 h-3.5 text-cyan-500" />
+                  <span>{isInstalled ? 'Download / Reinstall App' : 'Download & Install'}</span>
+                </button>
+
                 {onTryDemo && (
                   <button
                     onClick={() => {
@@ -287,7 +337,6 @@ export const AppCardActions: React.FC<AppCardActionsProps> = ({
               </div>
             )}
           </div>
-        </div>
       </div>
     </div>
   );

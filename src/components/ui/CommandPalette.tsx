@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Command, Search, Sparkles, Zap, Package, Settings, FileText, User, Home, CornerDownLeft, ArrowDown, ArrowUp, Folder } from 'lucide-react';
+import { Command, Search, Sparkles, Zap, Package, Settings, FileText, User, Home, CornerDownLeft, ArrowDown, ArrowUp, Folder, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import type { CatalogApp, NavigationPage } from '../../types/app.types';
 
 interface CommandItem {
@@ -28,6 +29,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onLaunchApp,
   onCheckUpdates,
 }) => {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +39,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     { id: 'nav-apps', label: 'Go to Apps Hub', category: 'Navigation', icon: <Package className="w-4 h-4" />, action: () => onNavigate('apps') },
     { id: 'nav-files', label: 'Go to Files & Assets', category: 'Navigation', icon: <FileText className="w-4 h-4" />, action: () => onNavigate('files') },
     { id: 'nav-settings', label: 'Go to Settings', category: 'Navigation', icon: <Settings className="w-4 h-4" />, action: () => onNavigate('settings') },
+    { id: 'nav-admin', label: 'Go to Admin Portal (2-Step Verification: 515253)', category: 'Navigation' as const, icon: <ShieldCheck className="w-4 h-4 text-amber-500" />, action: () => onNavigate('admin') },
   ];
 
   const actionCommands: CommandItem[] = [

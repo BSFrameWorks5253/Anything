@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Deep Obsidian Canvas Background -->
+    <linearGradient id="adobeBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a101d" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+
+    <!-- Adobe Signature App Border (Electric Cyan / Royal Blue) -->
+    <linearGradient id="adobeBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Adobe Monogram Fill (Iconic Adobe Cyan) -->
+    <linearGradient id="adobeText" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0ea5e9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Adobe Signature Squircle (22% radius) -->
+  <rect
+    x="32"
+    y="32"
+    width="448"
+    height="448"
+    rx="108"
+    ry="108"
+    fill="url(#adobeBg)"
+    stroke="url(#adobeBorder)"
+    stroke-width="20"
+  />
+
+  <!-- Authentic Centered Adobe Two-Letter Monogram "Ao" (Anything Office) -->
+  <text
+    x="256"
+    y="272"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="224"
+    font-weight="900"
+    letter-spacing="-6"
+    fill="url(#adobeText)"
+  >Ao</text>
+</svg>

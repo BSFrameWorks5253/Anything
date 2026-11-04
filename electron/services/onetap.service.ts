@@ -173,32 +173,52 @@ export function resolveOneTapSettingsWatchDir(): { watchDir: string; outDir: str
  * Searches filesystem for a valid One Tap standalone executable.
  */
 export function resolveOneTapExecutable(): string | null {
-  const directCandidates = [
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.28.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.28.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.27.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\One Tap\\V-26.10.30\\OneTap-V-26.10.30.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\One Tap\\V-26.10.28\\OneTap-V-26.10.28.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release\\One Tap\\V-26.10.27\\OneTap-V-26.10.27.exe',
-  ];
+  const localAppData = process.env.LOCALAPPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Local') : '');
+  const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
 
-  for (const c of directCandidates) {
+  // 1. Check clean Windows installed path first
+  const installedCandidates = [
+    localAppData ? path.join(localAppData, 'Programs', 'One Tap', 'One Tap.exe') : '',
+    path.join(programFiles, 'One Tap', 'One Tap.exe'),
+  ].filter(Boolean);
+
+  for (const c of installedCandidates) {
     if (fs.existsSync(c)) return c;
   }
 
-  const relDir = 'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps\\One Tap\\release';
-  if (fs.existsSync(relDir)) {
-    try {
-      const files = fs.readdirSync(relDir);
-      const exes = files
-        .filter((f) => f.toLowerCase().endsWith('.exe') && !f.toLowerCase().includes('setup'))
-        .map((f) => path.join(relDir, f));
-      if (exes.length > 0) return exes[0];
-    } catch {}
+  // 2. Dynamic workspace & release candidates
+  const appRoot = app.getAppPath();
+  const parentRoot = path.resolve(appRoot, '..');
+  const projectCandidates = [
+    path.join(parentRoot, 'Anything Apps', 'One Tap', 'release', 'win-unpacked', 'One Tap.exe'),
+    path.join(parentRoot, 'Anything Child app realse', 'One Tap', 'One Tap.exe'),
+    path.join(parentRoot, 'Anything Apps', 'One Tap', 'release'),
+  ];
+
+  for (const c of projectCandidates) {
+    if (!c) continue;
+    if (fs.existsSync(c)) {
+      if (c.toLowerCase().endsWith('.exe')) return c;
+      if (fs.statSync(c).isDirectory()) {
+        try {
+          const files = fs.readdirSync(c);
+          const nonSetupExes = files
+            .filter((f) => f.toLowerCase().endsWith('.exe') && !f.toLowerCase().includes('setup') && !f.toLowerCase().includes('uni desk'))
+            .map((f) => path.join(c, f));
+          if (nonSetupExes.length > 0) return nonSetupExes[0];
+        } catch {}
+      }
+    }
+  }
+
+  const directCandidates = [
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.11.6.exe',
+    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
+  ];
+
+  for (const c of directCandidates) {
+    if (fs.existsSync(c) && !c.toLowerCase().includes('uni desk')) return c;
   }
 
   return null;

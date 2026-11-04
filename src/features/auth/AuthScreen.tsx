@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Globe,
   GitBranch,
+  UserCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AnythingBrandEmblem } from '../../components/ui/AdobeSplashScreen';
@@ -60,10 +61,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
   const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const targetEmail = (!useAnotherAccount && rememberedAccount) ? rememberedAccount.email : identifier;
+    if (!targetEmail.trim()) {
+      setError('Please enter your email or phone.');
+      return;
+    }
+
+    if (!password || password.trim().length === 0) {
+      setError('Password is required. Please enter your password to sign in.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const res = await loginWithCredentials(identifier, password, rememberMe);
+      const res = await loginWithCredentials(targetEmail, password, rememberMe);
       if (!res.success) {
         setError(res.error || 'Invalid credentials.');
       } else if (onClose) {
@@ -114,6 +127,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
     } finally {
       setIsLoading(false);
     }
+  };
+
+    const handleAdminSignIn = () => {
+    loginWithCredentials('admin@anything.local', 'admin123');
+    if (onClose) onClose();
   };
 
   const handleQuickArchitect = () => {
@@ -224,29 +242,75 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
           {/* SIGN IN FORM */}
           {mode === 'signin' && (
             <form onSubmit={handleSignInSubmit} className="space-y-3.5">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold">
-                    Email or Phone
-                  </label>
-                  {identifier.includes('@') && (
-                    <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400 font-bold">
-                      Profile Letter: [{liveInitial}]
+              {rememberedAccount && !useAnotherAccount ? (
+                /* Only the previously signed-in account is shown */
+                <div className="p-3.5 rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-indigo-500/10 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-600 dark:text-cyan-400 font-bold flex items-center gap-1">
+                      <UserCheck className="w-3 h-3" />
+                      Previously Signed In Account
                     </span>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUseAnotherAccount(true);
+                        setIdentifier('');
+                        setPassword('');
+                      }}
+                      className="text-[10px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 underline font-mono cursor-pointer"
+                    >
+                      Switch Account
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm flex items-center justify-center font-bold text-sm bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shrink-0">
+                      {rememberedAccount.avatar ? (
+                        <img src={rememberedAccount.avatar} alt={rememberedAccount.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{rememberedAccount.name.slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-zinc-900 dark:text-white truncate">
+                        {rememberedAccount.name}
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
+                        {rememberedAccount.email}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="zeninfosys@gmail.com or 8369811201"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium transition-colors"
-                  />
-                  <Mail className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
+              ) : (
+                /* Standard email / phone input when signing in for the first time or switching */
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold">
+                      Email or Phone
+                    </label>
+                    {rememberedAccount && useAnotherAccount && (
+                      <button
+                        type="button"
+                        onClick={() => setUseAnotherAccount(false)}
+                        className="text-[10px] text-cyan-600 dark:text-cyan-400 underline font-mono cursor-pointer"
+                      >
+                        Back to {rememberedAccount.name.split(' ')[0]}
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="zeninfosys@gmail.com or 8369811201"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium transition-colors"
+                    />
+                    <Mail className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -437,43 +501,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
             </button>
           </div>
 
-          {/* Quick Architect Sign In Capsule */}
-          <div className="p-3.5 rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-indigo-500/10 relative group">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-600 dark:text-cyan-400 font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Architect Fast Track
-              </span>
-              <span className="text-[10px] text-zinc-400 font-mono">UID: 8369811201</span>
-            </div>
 
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 via-sky-400 to-indigo-600 flex items-center justify-center font-black text-slate-950 text-xs shadow-md">
-                BS
-              </div>
-              <div className="text-left leading-tight">
-                <div className="flex items-center gap-1">
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-white">
-                    Burhanuddin Sounasath
-                  </h4>
-                  <ShieldCheck className="w-3 h-3 text-cyan-500" />
-                </div>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
-                  +91 8369811201 · Lead Architect
-                </p>
-              </div>
-            </div>
-
-            <GlassButton
-              variant="glass"
-              size="sm"
-              className="w-full justify-center text-xs font-semibold py-1.5 hover:border-cyan-500/50"
-              icon={<ArrowRight className="w-3 h-3 text-cyan-500" />}
-              onClick={handleQuickArchitect}
-            >
-              Sign In as Burhanuddin
-            </GlassButton>
-          </div>
 
           {/* Close/Cancel Modal button */}
           {isModal && onClose && (

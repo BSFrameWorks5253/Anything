@@ -4,7 +4,8 @@ export type NavigationPage =
   | 'files' 
   | 'stats' 
   | 'onetap' 
-  | 'settings';
+  | 'settings'
+  | 'admin';
 
 export type AppCategory = 
   | 'All' 
