@@ -1,7 +1,7 @@
 {
   "name": "anything",
   "private": true,
-  "version": "26.10.30",
+  "version": "26.11.08",
   "description": "Anything — Professional Creative & Productivity Ecosystem Desktop Suite",
   "author": "Burhanuddin",
   "type": "module",
@@ -72,6 +72,7 @@
     }
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
     "electron-updater": "^6.3.9",
