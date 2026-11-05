@@ -58,7 +58,8 @@ interface AuthContextType {
     email: string,
     password: string,
     phone?: string,
-    rememberMe?: boolean
+    rememberMe?: boolean,
+    username?: string
   ) => Promise<{ success: boolean; error?: string }>;
   loginWithSocial: (provider: 'google' | 'github', simulatedEmail?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
@@ -164,12 +165,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const meta = sbUser.user_metadata || {};
     const email = sbUser.email || '';
     const name = meta.full_name || meta.name || email.split('@')[0] || 'Ecosystem User';
+    const username = meta.username || meta.user_name || (email ? email.split('@')[0].replace(/[^a-zA-Z0-9_.-]/g, '') : 'creator');
     const avatar = meta.avatar_url || meta.picture || localStorage.getItem('anything_user_avatar') || null;
-    const isAutoAdmin = email === 'admin@anything.com' || email === 'admin@anything.local' || email === 'burhanuddin@anything.local';
+    const isAutoAdmin = email === 'admin@anything.com' || email === 'admin@anything.local' || email === 'burhanuddin@anything.local' || username.toLowerCase() === 'admin';
     const role = isAutoAdmin ? 'admin' : (meta.role || 'member');
 
     const profile: UserProfile = {
       name,
+      username,
       email,
       phone: sbUser.phone || '',
       role,
@@ -203,52 +206,153 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithCredentials = async (
-    emailOrPhone: string,
+    identifier: string,
     passkey?: string,
     rememberMe = true
   ): Promise<{ success: boolean; error?: string }> => {
-    const input = emailOrPhone.trim();
-    if (!input) return { success: false, error: 'Please enter your email or phone.' };
+    const rawInput = (identifier || '').trim();
+    if (!rawInput) return { success: false, error: 'Please enter your username or email.' };
+    const cleanInput = rawInput.replace(/^@/, '');
 
     if (!passkey || passkey.trim().length === 0) {
       return { success: false, error: 'Password is required to sign in.' };
     }
 
-    // 1. If Supabase is configured and input is email, try Supabase signin
-    if (isSupabaseConfigured && supabase && input.includes('@') && passkey) {
+    // 1. Supabase Authentication (Online Mode)
+    if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: input,
-          password: passkey,
-        });
+        let authEmail = cleanInput;
 
-        if (error) {
-          return { success: false, error: error.message };
+        // If user typed a username (no @), look up their email in public.profiles table
+        if (!cleanInput.includes('@')) {
+          const { data: profileRecord } = await supabase
+            .from('profiles')
+            .select('email, username')
+            .ilike('username', cleanInput)
+            .maybeSingle();
+
+          if (profileRecord && profileRecord.email) {
+            authEmail = profileRecord.email;
+          }
         }
 
-        if (data.user) {
-          mapSupabaseUserToProfile(data.user, data.session?.access_token);
-          setIsAuthModalOpen(false);
-          return { success: true };
+        // Call Supabase auth if we have a valid email format
+        if (authEmail.includes('@')) {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: authEmail,
+            password: passkey,
+          });
+
+          if (!error && data.user) {
+            mapSupabaseUserToProfile(data.user, data.session?.access_token);
+            setIsAuthModalOpen(false);
+            return { success: true };
+          } else if (error && cleanInput.includes('@')) {
+            return { success: false, error: error.message };
+          }
         }
       } catch (err: any) {
-        return { success: false, error: err.message || 'Supabase authentication failed.' };
+        console.warn('[Auth] Supabase sign-in lookup error:', err);
       }
     }
 
-    // 2. Local fallback / offline mode
+    // 2. Ecosystem Session / App-Provided Username / Local Offline Fallback
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
-    const isSpecialAdmin = input.toLowerCase() === 'admin@anything.local' || input.toLowerCase() === 'admin@anything.com';
-    const profile: UserProfile = {
-      name: input.includes('@') ? input.split('@')[0] : 'Workspace Member',
-      email: input.includes('@') ? input : `${input}@anything.local`,
-      phone: input.includes('@') ? '' : input,
-      role: isSpecialAdmin ? 'admin' : 'member',
-      avatar: currentAvatar,
-      uid: isSpecialAdmin ? 'USR-ADMIN-001' : `USR-${Date.now()}`,
-      verified: true,
-      provider: 'credentials',
+    const lowerInput = cleanInput.toLowerCase();
+
+    // Check if matching an ecosystem session stored in localStorage
+    let ecoMatchedUser: any = null;
+    try {
+      const ecoRaw = localStorage.getItem('anything_ecosystem_session_v1');
+      if (ecoRaw) {
+        const parsedEco = JSON.parse(ecoRaw);
+        if (parsedEco?.user) {
+          const uHandle = (parsedEco.user.username || (parsedEco.user.email ? parsedEco.user.email.split('@')[0] : '')).toLowerCase();
+          if (uHandle === lowerInput || parsedEco.user.email?.toLowerCase() === lowerInput) {
+            ecoMatchedUser = parsedEco.user;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Check built-in ecosystem usernames (e.g. admin, architect, zaid, fatima)
+    const KNOWN_ECOSYSTEM_USERS: Record<string, Partial<UserProfile>> = {
+      admin: {
+        name: 'Master Architect',
+        username: 'admin',
+        email: 'admin@anything.local',
+        role: 'admin',
+        uid: 'CREATIVE-ADMIN-MASTER',
+        avatar: currentAvatar || ARCHITECT_USER.avatar,
+      },
+      architect: {
+        name: 'Master Architect',
+        username: 'architect',
+        email: 'admin@anything.local',
+        role: 'admin',
+        uid: 'CREATIVE-ADMIN-MASTER',
+        avatar: currentAvatar || ARCHITECT_USER.avatar,
+      },
+      zaid: {
+        name: 'Zaid Editor',
+        username: 'zaid',
+        email: 'zaid@anything.local',
+        role: 'member',
+        uid: 'user_zaid_editor',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
+      },
+      fatima: {
+        name: 'Fatima Lead',
+        username: 'fatima',
+        email: 'fatima@anything.local',
+        role: 'member',
+        uid: 'user_fatima_lead',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+      },
     };
+
+    let profile: UserProfile;
+
+    if (ecoMatchedUser) {
+      profile = {
+        name: ecoMatchedUser.name || cleanInput,
+        username: ecoMatchedUser.username || cleanInput,
+        email: ecoMatchedUser.email || `${cleanInput}@anything.local`,
+        phone: '',
+        role: (ecoMatchedUser.role as any) || 'member',
+        avatar: ecoMatchedUser.avatar || currentAvatar,
+        uid: ecoMatchedUser.id || `USR-${Date.now()}`,
+        verified: true,
+        provider: 'credentials',
+      };
+    } else if (KNOWN_ECOSYSTEM_USERS[lowerInput]) {
+      const known = KNOWN_ECOSYSTEM_USERS[lowerInput];
+      profile = {
+        name: known.name || cleanInput,
+        username: known.username || cleanInput,
+        email: known.email || `${cleanInput}@anything.local`,
+        phone: '',
+        role: known.role || 'member',
+        avatar: known.avatar || currentAvatar,
+        uid: known.uid || `USR-${Date.now()}`,
+        verified: true,
+        provider: 'credentials',
+      };
+    } else {
+      const isSpecialAdmin = lowerInput === 'admin' || lowerInput === 'admin@anything.local' || lowerInput === 'admin@anything.com';
+      const userHandle = cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput;
+      profile = {
+        name: cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput,
+        username: userHandle,
+        email: cleanInput.includes('@') ? cleanInput : `${cleanInput.toLowerCase().replace(/[^a-z0-9_.-]/g, '')}@anything.local`,
+        phone: '',
+        role: isSpecialAdmin ? 'admin' : 'member',
+        avatar: currentAvatar,
+        uid: isSpecialAdmin ? 'CREATIVE-ADMIN-MASTER' : `USR-${Date.now()}`,
+        verified: true,
+        provider: 'credentials',
+      };
+    }
 
     setUser(profile);
     if (rememberMe) {
@@ -256,7 +360,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('anything_last_signed_in_account', JSON.stringify({
         email: profile.email,
         name: profile.name,
-        username: profile.username || profile.email.split('@')[0],
+        username: profile.username || (profile.email ? profile.email.split('@')[0] : 'creator'),
         avatar: profile.avatar || null,
       }));
     }
@@ -271,21 +375,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     phone?: string,
-    rememberMe = true
+    rememberMe = true,
+    username?: string
   ): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.trim();
     const cleanName = name.trim() || cleanEmail.split('@')[0];
+    const cleanUsername = (username || cleanEmail.split('@')[0] || cleanName.toLowerCase().replace(/\s+/g, '_')).trim().replace(/^@/, '');
 
     // 1. If Supabase is configured, register with Supabase Auth
     if (isSupabaseConfigured && supabase) {
       try {
-        const isInitialAdmin = cleanEmail === 'admin@anything.com' || cleanEmail === 'admin@anything.local';
+        const isInitialAdmin = cleanEmail === 'admin@anything.com' || cleanEmail === 'admin@anything.local' || cleanUsername.toLowerCase() === 'admin';
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
           options: {
             data: {
               full_name: cleanName,
+              username: cleanUsername,
               role: isInitialAdmin ? 'admin' : 'member',
               phone: phone || '',
             },
@@ -297,6 +404,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (data.user) {
+          // Upsert into public.profiles so username lookups succeed immediately
+          try {
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              email: cleanEmail,
+              full_name: cleanName,
+              username: cleanUsername,
+              role: isInitialAdmin ? 'admin' : 'member',
+              phone: phone || '',
+            }, { onConflict: 'id' });
+          } catch (e) {}
+
           mapSupabaseUserToProfile(data.user, data.session?.access_token);
           setIsAuthModalOpen(false);
           return { success: true };
@@ -308,14 +427,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. Local fallback / offline registration
     const currentAvatar = localStorage.getItem('anything_user_avatar') || null;
-    const isSpecialAdmin = cleanEmail.toLowerCase() === 'admin@anything.local' || cleanEmail.toLowerCase() === 'admin@anything.com';
+    const isSpecialAdmin = cleanEmail.toLowerCase() === 'admin@anything.local' || cleanEmail.toLowerCase() === 'admin@anything.com' || cleanUsername.toLowerCase() === 'admin';
     const profile: UserProfile = {
       name: cleanName,
+      username: cleanUsername,
       email: cleanEmail,
       phone: phone?.trim() || '',
       role: isSpecialAdmin ? 'admin' : 'member',
       avatar: currentAvatar,
-      uid: isSpecialAdmin ? 'USR-ADMIN-001' : `USR-${Date.now()}`,
+      uid: isSpecialAdmin ? 'CREATIVE-ADMIN-MASTER' : `USR-${Date.now()}`,
       verified: true,
       provider: 'credentials',
     };
@@ -323,6 +443,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(profile);
     if (rememberMe) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+      localStorage.setItem('anything_last_signed_in_account', JSON.stringify({
+        email: profile.email,
+        name: profile.name,
+        username: cleanUsername,
+        avatar: profile.avatar || null,
+      }));
     }
     analyticsService.ensureUserRecord(profile);
     syncSessionToEcosystem(profile);

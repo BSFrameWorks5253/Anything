@@ -2,18 +2,18 @@
   "id": "mediaflow-studio",
   "name": "MediaFlow Studio",
   "shortName": "MS",
-  "version": "26.11.07",
+  "version": "26.11.11",
   "category": "Media & Video",
   "description": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
   "executableName": "Mediaflow_studio_26.10.30.exe",
-  "setupExecutableName": "Mediaflow_studio_26.11.7_Setup.exe",
+  "setupExecutableName": "Mediaflow_studio_26.11.11_Setup.exe",
   "gradient": "from-violet-700 via-purple-600 to-indigo-500",
   "textColor": "#c084fc",
   "glowColor": "rgba(192, 132, 252, 0.45)",
   "githubRepo": "BSFrameWorks5253/MediaFlow-Studio",
   "iconType": "monogram",
-  "packageFileName": "Mediaflow_studio_26.11.7_Setup.exe",
-  "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.07\\Mediaflow_studio_26.11.7_Setup.exe",
+  "packageFileName": "Mediaflow_studio_26.11.11_Setup.exe",
+  "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.11\\Mediaflow_studio_26.11.11_Setup.exe",
   "systemRequirements": {
     "os": "Windows 10 / Windows 11 (64-bit)",
     "processor": "Intel Core i5 / AMD Ryzen 5 or higher",
@@ -21,16 +21,16 @@
     "graphics": "DirectX 11 compatible",
     "storage": "500 MB available space"
   },
-  "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.07\\Mediaflow_studio_26.11.7_Setup.exe",
+  "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.11\\Mediaflow_studio_26.11.11_Setup.exe",
   "status": "not-installed",
   "packageSize": "82.2 MB",
   "packageFormat": ".exe",
   "releasesUrl": "https://github.com/BSFrameWorks5253/MediaFlow-Studio/releases",
-  "publishedAt": 1793861119586,
+  "publishedAt": 1793900306877,
   "history": [
     {
-      "version": "26.11.07",
-      "executableName": "Mediaflow_studio_26.11.7_Setup.exe",
+      "version": "26.11.11",
+      "executableName": "Mediaflow_studio_26.11.11_Setup.exe",
       "releaseDate": "2026-11-05",
       "releaseType": "minor",
       "tagline": "MediaFlow Studio v26.10.30 Update",
@@ -39,46 +39,7 @@
       "improvements": [],
       "fixes": [],
       "sizeFormatted": "82.2 MB",
-      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.07\\Mediaflow_studio_26.11.7_Setup.exe"
-    },
-    {
-      "version": "26.11.05",
-      "executableName": "Mediaflow_studio_26.11.5_Setup.exe",
-      "releaseDate": "2026-11-03",
-      "releaseType": "minor",
-      "tagline": "MediaFlow Studio v26.10.30 Update",
-      "summary": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
-      "newFeatures": [],
-      "improvements": [],
-      "fixes": [],
-      "sizeFormatted": "82.2 MB",
-      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.05\\Mediaflow_studio_26.11.5_Setup.exe"
-    },
-    {
-      "version": "26.11.03",
-      "executableName": "Mediaflow_studio_26.11.3_Setup.exe",
-      "releaseDate": "2026-11-03",
-      "releaseType": "minor",
-      "tagline": "MediaFlow Studio v26.10.30 Update",
-      "summary": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
-      "newFeatures": [],
-      "improvements": [],
-      "fixes": [],
-      "sizeFormatted": "82.2 MB",
-      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.03\\Mediaflow_studio_26.11.3_Setup.exe"
-    },
-    {
-      "version": "26.11.02",
-      "executableName": "Mediaflow_studio_26.11.2_Setup.exe",
-      "releaseDate": "2026-11-01",
-      "releaseType": "minor",
-      "tagline": "MediaFlow Studio v26.10.30 Update",
-      "summary": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
-      "newFeatures": [],
-      "improvements": [],
-      "fixes": [],
-      "sizeFormatted": "82.2 MB",
-      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.02\\Mediaflow_studio_26.11.2_Setup.exe"
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.11\\Mediaflow_studio_26.11.11_Setup.exe"
     },
     {
       "version": "26.10.30",
@@ -94,54 +55,32 @@
       "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow\\V26.10.30\\Mediaflow_studio_26.10.30_Setup.exe"
     },
     {
-      "version": "26.11.01",
-      "executableName": "Mediaflow_studio_26.10.30_Setup.exe",
-      "releaseDate": "2026-10-31",
+      "appId": "mediaflow-studio",
+      "appName": "MediaFlow Studio",
+      "version": "26.11.07",
+      "executableName": "Mediaflow_studio_26.11.7_Setup.exe",
+      "releaseDate": "2026-11-05",
       "releaseType": "minor",
-      "tagline": "MediaFlow Studio v26.11.01 Update",
+      "tagline": "MediaFlow Studio v26.10.30 Update",
       "summary": "## MediaFlow Studio v26.10.30 Release\n\nAutomated production executable package built by Anything Exe Builder Studio.\n\n### Deliverables\n- **Binary**: `Mediaflow_studio_26.10.30_Setup.exe` (82.2 MB)\n- **Target Platform**: Windows x64 (NSIS St",
       "newFeatures": [],
       "improvements": [],
       "fixes": [],
-      "sizeFormatted": "82.2 MB",
-      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow\\V26.10.30\\Mediaflow_studio_26.10.30_Setup.exe"
-    },
-    {
-      "appId": "mediaflow-studio",
-      "appName": "MediaFlow Studio",
-      "version": "26.10.31",
-      "executableName": "Mediaflow_studio_26.10.31_Setup.exe",
-      "releaseDate": "2026-10-30",
-      "releaseType": "minor",
-      "tagline": "MediaFlow Studio v26.10.31 from GitHub Releases",
-      "summary": "MediaFlow Studio v26.10.31",
-      "newFeatures": [
-        "Automated production executable package built by Anything Exe Builder Studio.",
-        "**Binary**: `Mediaflow_studio_26.10.31_Setup.exe` (82.2 MB)",
-        "**Target Platform**: Windows x64 (NSIS Standalone Installer)",
-        "**Build Timestamp**: Fri, 30 Oct 2026 04:35:51 GMT",
-        "**Release Hub**: [Anything Ecosystem](https://github.com/BSFrameWorks5253/Anything)"
-      ],
-      "improvements": [
-        "Ecosystem loader integration",
-        "Performance optimizations"
-      ],
-      "fixes": [
-        "Stability and compatibility updates"
-      ],
       "emailNotification": {
-        "subject": "🚀 MediaFlow Studio v26.10.31 is Live!",
-        "preview": "Discover all the updates in v26.10.31.",
+        "subject": "🚀 MediaFlow Studio v26.11.07 is Live!",
+        "preview": "Discover all the updates in v26.11.07.",
         "ctaText": "Open in Anything",
         "heroGradient": "from-violet-700 via-purple-600 to-indigo-500"
-      }
+      },
+      "sizeFormatted": "82.2 MB",
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.07\\Mediaflow_studio_26.11.7_Setup.exe"
     }
   ],
-  "versionText": "V26.11.07",
+  "versionText": "V26.11.11",
   "iconValue": "./app-icons/mediaflow-studio.png",
   "releaseInfo": {
-    "version": "26.11.07",
-    "executableName": "Mediaflow_studio_26.11.7_Setup.exe",
+    "version": "26.11.11",
+    "executableName": "Mediaflow_studio_26.11.11_Setup.exe",
     "releaseDate": "2026-11-05",
     "releaseType": "minor",
     "tagline": "MediaFlow Studio v26.10.30 Update",
@@ -150,9 +89,21 @@
     "improvements": [],
     "fixes": [],
     "sizeFormatted": "82.2 MB",
-    "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.07\\Mediaflow_studio_26.11.7_Setup.exe"
+    "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\mediaflow-studio\\V26.11.11\\Mediaflow_studio_26.11.11_Setup.exe"
   },
   "changelog": [
+    "Release v26.11.11 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
+    "Release v26.11.07 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
+    "Release v26.11.07 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 82.2 MB",
     "Release v26.11.07 canonical setup in Anything Child app realse",
     "Format: .EXE · Size: 82.2 MB",
     "Release v26.10.30 canonical setup in Anything Child app realse",

@@ -27,6 +27,8 @@ import {
   nativeImage,
 } from "electron";
 import path from "path";
+import { pathToFileURL } from "url";
+import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import https from "https";
@@ -126,6 +128,10 @@ const KNOWN_ECOSYSTEM_REPOS: Record<string, string> = {
   "file-manager": "BSFrameWorks5253/Anything-File-Manager",
   afm: "BSFrameWorks5253/Anything-File-Manager",
   "media-viewer": "BSFrameWorks5253/Anything-File-Manager",
+  "anything-share": "BSFrameworks5253/Anyshare",
+  anyshare: "BSFrameworks5253/Anyshare",
+  share: "BSFrameworks5253/Anyshare",
+  "anything share": "BSFrameworks5253/Anyshare",
 };
 
 interface DynamicGitHubRelease {
@@ -334,10 +340,13 @@ const getReleasesDir = () => {
 };
 
 const getAllReleaseDirs = (): string[] => {
+  const parent = path.resolve(getProjectRoot(), "..");
   const dirs = [
     path.join(getProjectRoot(), "releases"),
-
     path.join(getProjectRoot(), "release"),
+    path.join(parent, "Anything Child app realse"),
+    path.join(parent, "releases"),
+    path.join(parent, "release"),
   ];
 
   return dirs.filter(
@@ -428,7 +437,7 @@ function isSafeExecutablePath(targetPath: string): boolean {
     getInstalledAppsDir(),
     getPublishedDir(),
     getInboxDir(),
-    "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything Apps",
+    path.resolve(getProjectRoot(), "..", "Anything Apps"),
     path.resolve(getProjectRoot(), ".."),
   ]
     .filter(Boolean)
@@ -575,9 +584,8 @@ async function findAppLogoImage(
 
         path.join(dirPath, "app-logo.png"),
 
-        "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Tap Studio\\public\\logo.png",
-
-        "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\public\\tap-studio-logo.png",
+        path.join(getProjectRoot(), "public", "tap-studio-logo.png"),
+path.resolve(getProjectRoot(), "..", "Tap Studio", "public", "logo.png"),
       ];
 
       for (const c of candidates) {
@@ -599,9 +607,8 @@ async function findAppLogoImage(
 
         path.join(dirPath, "app-logo.png"),
 
-        "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\MediaFlow-Studio\\public\\assets\\logo.png",
-
-        "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\New folder (2)\\Anything\\public\\mediaflow-studio-logo.png",
+        path.join(getProjectRoot(), "public", "mediaflow-studio-logo.png"),
+path.resolve(getProjectRoot(), "..", "MediaFlow-Studio", "public", "assets", "logo.png"),
       ];
 
       for (const c of candidates) {
@@ -1045,7 +1052,7 @@ function syncCatalogToEcosystem(catalog: any[]): void {
       appData ? path.join(appData, "Anything", "ecosystem_catalog.json") : "",
       appData ? path.join(appData, "anything", "published-apps", "catalog.json") : "",
       appData ? path.join(appData, "anything", "ecosystem_catalog.json") : "",
-      "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json",
+      path.join(getPublishedDir(), "catalog.json"),
     ].filter((p): p is string => Boolean(p && typeof p === "string" && p.length > 0));
 
     for (const t of targets) {
@@ -1505,15 +1512,9 @@ async function scanAndCollectReleases(): Promise<{
 
             packageFormat: ext,
 
-            // When app tracks GitHub repo or has remote download URL, do not hardcode machine local path
+            localPackagePath: latest.exeFullPath || primaryDestPath,
 
-            localPackagePath:
-              githubRepo ||
-              (remoteDownloadUrl && remoteDownloadUrl.startsWith("http"))
-                ? undefined
-                : primaryDestPath,
-
-            downloadUrl: remoteDownloadUrl,
+            downloadUrl: remoteDownloadUrl || latest.exeFullPath || primaryDestPath,
 
             releasesUrl,
 
@@ -1648,9 +1649,11 @@ async function scanAndCollectReleases(): Promise<{
                 localPackagePath: catalogEntry.localPackagePath,
 
                 status:
-                  existing.status === "ready"
+                  hasNewer
                     ? "update-available"
-                    : existing.status,
+                    : existing.status === "ready"
+                      ? "update-available"
+                      : existing.status,
               };
 
               updatedCount++;
@@ -2807,18 +2810,47 @@ function pickMobileAsset(assets: any[]): any {
   return candidates[0];
 }
 
+
+// Security: Verify executable or archive magic header before executing or extracting
+function verifyBinaryIntegrity(filePath: string): { ok: boolean; reason?: string } {
+  try {
+    if (!fs.existsSync(filePath)) return { ok: false, reason: 'File does not exist' };
+    const stat = fs.statSync(filePath);
+    if (stat.size < 512) return { ok: false, reason: 'File is abnormally small' };
+    const fd = fs.openSync(filePath, 'r');
+    const header = Buffer.alloc(4);
+    fs.readSync(fd, header, 0, 4, 0);
+    fs.closeSync(fd);
+
+    const lower = filePath.toLowerCase();
+    if (lower.endsWith('.exe')) {
+      // Must start with 'MZ' (0x4D 0x5A)
+      if (header[0] !== 0x4D || header[1] !== 0x5A) {
+        return { ok: false, reason: 'Invalid executable signature (missing MZ header)' };
+      }
+    } else if (lower.endsWith('.zip') || lower.endsWith('.msix') || lower.endsWith('.appx')) {
+      // Must start with 'PK' (0x50 0x4B)
+      if (header[0] !== 0x50 || header[1] !== 0x4B) {
+        return { ok: false, reason: 'Invalid archive signature (missing PK header)' };
+      }
+    }
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, reason: err.message };
+  }
+}
+
 async function downloadAssetWithProgress(
   url: string,
-
   destPath: string,
-
   onProgress: (prog: {
     percent: number;
     transferredBytes: number;
     totalBytes: number;
     speedBytesPerSec: number;
   }) => void,
-) {
+  expectedSha256?: string
+): Promise<{ computedSha256: string; totalBytes: number }> {
   const response = await fetch(url, {
     headers: {
       "User-Agent": "CreativeHub-DesktopApp",
@@ -2850,6 +2882,7 @@ async function downloadAssetWithProgress(
   }
 
   const fileStream = fs.createWriteStream(destPath);
+  const sha256Hash = crypto.createHash('sha256');
 
   let writeError: any = null;
 
@@ -2873,7 +2906,9 @@ async function downloadAssetWithProgress(
 
       if (done) break;
 
-      fileStream.write(Buffer.from(value));
+      const chunkBuf = Buffer.from(value);
+      fileStream.write(chunkBuf);
+      sha256Hash.update(chunkBuf);
 
       transferredBytes += value.length;
 
@@ -2918,13 +2953,20 @@ async function downloadAssetWithProgress(
 
   onProgress({
     percent: 100,
-
     transferredBytes,
-
     totalBytes: totalBytes || transferredBytes,
-
     speedBytesPerSec: 0,
   });
+
+  const computedSha256 = sha256Hash.digest('hex');
+  if (expectedSha256 && typeof expectedSha256 === 'string' && expectedSha256.trim().length === 64) {
+    if (computedSha256.toLowerCase() !== expectedSha256.trim().toLowerCase()) {
+      try { if (fs.existsSync(destPath)) fs.unlinkSync(destPath); } catch {}
+      throw new Error(`SHA-256 integrity verification failed: expected ${expectedSha256}, got ${computedSha256}`);
+    }
+  }
+
+  return { computedSha256, totalBytes: transferredBytes };
 }
 
 // Helper: extract Windows executable ProductVersion or FileVersion
@@ -3134,7 +3176,29 @@ function findInstalledExecutable(options: {
     const candidates = [
       path.join(localAppData, "Programs", "Anything File Manager", "Anything File Manager.exe"),
       path.join(installedAppsDir, "anything-file-manager", "Anything File Manager.exe"),
-                ];
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+  }
+
+  // 11) Anything Share / AnyShare
+  if (
+    normId.includes("share") ||
+    normName.includes("share") ||
+    normId === "anything-share" ||
+    normId === "anyshare"
+  ) {
+    const candidates = [
+      path.join(anythingAppsDir, "Anything Share", "release", "win-unpacked", "Anything Share.exe"),
+      path.join(anythingAppsDir, "Anything Share", "release", "win-unpacked", "AnyShare.exe"),
+      path.join(localAppData, "Programs", "Anything Share", "Anything Share.exe"),
+      path.join(localAppData, "Programs", "AnyShare", "AnyShare.exe"),
+      path.join(installedAppsDir, "anything-share", "Anything Share.exe"),
+      path.join(installedAppsDir, "anything-share", "AnyShare.exe"),
+      path.join(anythingAppsDir, "Anything Share", "dist", "index.html"),
+      path.join(anythingAppsDir, "Anything Share", "index.html"),
+    ];
     for (const c of candidates) {
       if (fs.existsSync(c)) return c;
     }
@@ -3971,8 +4035,13 @@ function createWindow() {
               !navigationUrl.startsWith("http://localhost")
             ) {
               event.preventDefault();
-
               shell.openExternal(navigationUrl);
+            }
+          } else if (parsed.protocol === "file:") {
+            const allowedDist = pathToFileURL(path.join(getProjectRoot(), "dist", "index.html")).toString().toLowerCase();
+            const lowerNav = navigationUrl.toLowerCase();
+            if (lowerNav !== allowedDist && !lowerNav.startsWith(allowedDist + "#") && !lowerNav.startsWith(allowedDist + "?")) {
+              event.preventDefault();
             }
           }
         } catch {}
@@ -4112,6 +4181,10 @@ function createWindow() {
     // ================= ECOSYSTEM AUTH & CROSS-APP IDENTITY =================
   ipcMain.handle("auth:save-ecosystem-session", async (_, sessionData: any) => {
     try {
+      // Security: Strip long-lived refresh tokens so credentials are not stored in plaintext across disk
+      if (sessionData && sessionData.auth) {
+        delete sessionData.auth.refreshToken;
+      }
       const raw = JSON.stringify(sessionData, null, 2);
       const appData =
         process.env.APPDATA ||
@@ -4424,6 +4497,10 @@ function createWindow() {
 
   ipcMain.handle("publisher:load-catalog", async () => {
     try {
+      try {
+        await scanAndCollectReleases();
+      } catch {}
+
       const candidatePaths = [
         path.join(getPublishedDir(), "catalog.json"),
 
@@ -4571,16 +4648,12 @@ function createWindow() {
 
           path.join(targetAppDir, packageFileName),
 
-          path.join(
-            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
-            "Anything Child app realse",
+          path.join(path.resolve(getProjectRoot(), ".."), "Anything Child app realse",
             id,
             packageFileName,
           ),
 
-          path.join(
-            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
-            "Anything Child app realse",
+          path.join(path.resolve(getProjectRoot(), ".."), "Anything Child app realse",
             id.replace(/^app-/, ""),
             packageFileName,
           ),
@@ -4588,9 +4661,7 @@ function createWindow() {
 
         // Also search versioned directories in Anything Child app realse
         try {
-          const childBase = path.join(
-            "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything",
-            "Anything Child app realse",
+          const childBase = path.join(path.resolve(getProjectRoot(), ".."), "Anything Child app realse",
           );
           for (const sub of [id, id.replace(/^app-/, "")]) {
             const appBaseDir = path.join(childBase, sub);
@@ -4679,8 +4750,16 @@ function createWindow() {
       if (!resolvedPkgPath || !fs.existsSync(resolvedPkgPath)) {
         return {
           success: false,
-
           error: `Installer package not found on this machine and no online release could be reached. Please check internet connection.`,
+        };
+      }
+
+      // Verify artifact authenticity & binary structure before execution
+      const integrity = verifyBinaryIntegrity(resolvedPkgPath);
+      if (!integrity.ok) {
+        return {
+          success: false,
+          error: `Artifact security verification failed for "${path.basename(resolvedPkgPath)}": ${integrity.reason}`,
         };
       }
 
@@ -4804,7 +4883,7 @@ function createWindow() {
 
         // Run installer completely silently in the background (no popup)
 
-        await runInstallerSilently(targetExe);
+        await runInstallerSilently(targetExe, appData.name);
 
         // Auto-detect installed binary
 
@@ -4842,6 +4921,26 @@ function createWindow() {
               }
             } catch (e) {}
           }
+
+          exeVersionCache.delete(found);
+          exeVersionCache.clear();
+
+          const targetVer = appData.version || getExecutableVersion(found) || "installed";
+          try {
+            const catFile = path.join(getPublishedDir(), "catalog.json");
+            if (fs.existsSync(catFile)) {
+              const catalog = JSON.parse(fs.readFileSync(catFile, "utf-8"));
+              if (Array.isArray(catalog)) {
+                const idx = catalog.findIndex((a: any) => a.id === id);
+                if (idx >= 0) {
+                  catalog[idx].installedPath = found;
+                  catalog[idx].localVersion = targetVer;
+                  catalog[idx].status = "installed";
+                  syncCatalogToEcosystem(catalog);
+                }
+              }
+            }
+          } catch {}
 
           sendWindowsNotification(
             "Installation Complete",
@@ -4998,7 +5097,11 @@ function createWindow() {
             targetPath.startsWith("https://"))
         ) {
           await shell.openExternal(targetPath);
+          return { success: true };
+        }
 
+        if (typeof targetPath === "string" && targetPath.toLowerCase().endsWith(".html")) {
+          await shell.openPath(targetPath);
           return { success: true };
         }
 
@@ -5077,33 +5180,12 @@ function createWindow() {
           let ecosystemUserAvatar = "";
           try {
             if (fs.existsSync(sessionFile)) {
+              // Pass secure session pointer; do NOT leak user PII (email, name, avatar) in process CLI arguments
               childArgs.push(`--ecosystem-session=${sessionFile}`);
               const parsedSess = JSON.parse(fs.readFileSync(sessionFile, "utf-8"));
-              ecosystemUserEmail = parsedSess.user?.email || "";
               ecosystemUserId = parsedSess.user?.id || "";
-              ecosystemUserName = parsedSess.user?.name || "";
-              ecosystemUserRole = parsedSess.user?.role || "";
-              ecosystemUserHandle = parsedSess.user?.username || parsedSess.user?.handle || (ecosystemUserEmail ? ecosystemUserEmail.split("@")[0].replace(/[^a-zA-Z0-9_.-]/g, "") : "");
-              ecosystemUserAvatar = parsedSess.user?.avatar || "";
               if (ecosystemUserId) {
-                childArgs.push(`--ecosystem-user-id=${ecosystemUserId}`);
                 childArgs.push(`--user-id=${ecosystemUserId}`);
-              }
-              if (ecosystemUserEmail) {
-                childArgs.push(`--ecosystem-user-email=${ecosystemUserEmail}`);
-                childArgs.push(`--user-email=${ecosystemUserEmail}`);
-              }
-              if (ecosystemUserName) {
-                childArgs.push(`--ecosystem-user-name=${encodeURIComponent(ecosystemUserName)}`);
-                childArgs.push(`--user-name=${encodeURIComponent(ecosystemUserName)}`);
-              }
-              if (ecosystemUserHandle) {
-                childArgs.push(`--ecosystem-user-handle=${ecosystemUserHandle}`);
-                childArgs.push(`--user-handle=${ecosystemUserHandle}`);
-              }
-              if (ecosystemUserAvatar) {
-                childArgs.push(`--ecosystem-user-avatar=${encodeURIComponent(ecosystemUserAvatar)}`);
-                childArgs.push(`--user-avatar=${encodeURIComponent(ecosystemUserAvatar)}`);
               }
             }
           } catch (e) {}
@@ -6700,11 +6782,10 @@ function createWindow() {
 
               catalog[idx].installedPath = resolvedExePath;
 
-              fs.writeFileSync(
-                catalogFile,
-                JSON.stringify(catalog, null, 2),
-                "utf-8",
-              );
+              syncCatalogToEcosystem(catalog);
+
+              exeVersionCache.delete(resolvedExePath);
+              exeVersionCache.clear();
 
               const allWindows = BrowserWindow.getAllWindows();
 
@@ -6972,8 +7053,7 @@ function createWindow() {
 
   ipcMain.handle("builder:launch", async () => {
     try {
-      const builderDir =
-        "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Exe Builder Anything";
+      const builderDir = path.resolve(getProjectRoot(), "..", "Exe Builder Anything");
 
       const isWindows = process.platform === "win32";
 

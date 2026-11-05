@@ -18,7 +18,6 @@ export interface EcosystemSessionPayload {
   };
   auth: {
     accessToken?: string;
-    refreshToken?: string;
     expiresAt?: number;
   };
   syncedAt: string;
@@ -30,7 +29,7 @@ export const ECOSYSTEM_SESSION_STORAGE_KEY = 'anything_ecosystem_session_v1';
  * Broadcasts user session across the Anything desktop ecosystem so that all child apps
  * (MediaFlow Studio, One Tap, DocuFlow, etc.) automatically recognize and share the same login!
  */
-export async function syncSessionToEcosystem(user: UserProfile, tokenData?: { accessToken?: string; refreshToken?: string; expiresAt?: number }) {
+export async function syncSessionToEcosystem(user: UserProfile, tokenData?: { accessToken?: string; expiresAt?: number }) {
   const payload: EcosystemSessionPayload = {
     version: '1.0.0',
     user: {
@@ -48,7 +47,6 @@ export async function syncSessionToEcosystem(user: UserProfile, tokenData?: { ac
     },
     auth: {
       accessToken: tokenData?.accessToken,
-      refreshToken: tokenData?.refreshToken,
       expiresAt: tokenData?.expiresAt,
     },
     syncedAt: new Date().toISOString(),

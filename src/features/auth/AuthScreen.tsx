@@ -65,6 +65,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
 
   // Sign Up form state
   const [signupName, setSignupName] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -87,9 +88,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
     e.preventDefault();
     setError(null);
 
-    const targetEmail = (!useAnotherAccount && rememberedAccount) ? rememberedAccount.email : identifier;
-    if (!targetEmail.trim()) {
-      setError('Please enter your email or phone.');
+    const targetIdentifier = (!useAnotherAccount && rememberedAccount) ? (rememberedAccount.username || rememberedAccount.email) : identifier;
+    if (!targetIdentifier.trim()) {
+      setError('Please enter your username or email.');
       return;
     }
 
@@ -101,7 +102,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
     setIsLoading(true);
 
     try {
-      const res = await loginWithCredentials(targetEmail, password, rememberMe);
+      const res = await loginWithCredentials(targetIdentifier, password, rememberMe);
       if (!res.success) {
         setError(res.error || 'Invalid credentials.');
       } else if (onClose) {
@@ -125,7 +126,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
 
     setIsLoading(true);
     try {
-      const res = await signUp(signupName, signupEmail, signupPassword, signupPhone, rememberMe);
+      const res = await signUp(signupName, signupEmail, signupPassword, signupPhone, rememberMe, signupUsername);
       if (!res.success) {
         setError(res.error || 'Failed to create account.');
       } else {
@@ -297,9 +298,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-zinc-900 dark:text-white truncate">
-                        {rememberedAccount.name || rememberedAccount.email || 'User'}
-                      </h4>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <h4 className="text-xs font-bold text-zinc-900 dark:text-white truncate">
+                          {rememberedAccount.name || 'User'}
+                        </h4>
+                        {rememberedAccount.username && (
+                          <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono font-bold bg-cyan-500/10 px-1.5 py-0.2 rounded">
+                            @{rememberedAccount.username}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
                         {rememberedAccount.email}
                       </p>
@@ -311,7 +319,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold">
-                      Email or Phone
+                      Username or Email
                     </label>
                     {rememberedAccount && useAnotherAccount && (
                       <button
@@ -329,7 +337,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                       required
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="zeninfosys@gmail.com or 8369811201"
+                      placeholder="Username (e.g. admin, zaid, creator) or email"
                       className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium transition-colors"
                     />
                     <Mail className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
@@ -413,6 +421,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                     className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-medium"
                   />
                   <User className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold">
+                    Username / Login Handle
+                  </label>
+                  <span className="text-[10px] text-zinc-400 font-mono">Used to log in</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))}
+                    placeholder="e.g. zaid_editor or creator_pro"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-white/[0.05] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 outline-none focus:border-cyan-500 font-mono font-medium"
+                  />
+                  <UserCheck className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-2.5" />
                 </div>
               </div>
 

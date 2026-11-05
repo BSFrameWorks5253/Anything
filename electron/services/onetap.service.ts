@@ -212,9 +212,9 @@ export function resolveOneTapExecutable(): string | null {
   }
 
   const directCandidates = [
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\win-unpacked\\One Tap.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.11.6.exe',
-    'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Apps\\One Tap\\release\\OneTap-V-26.10.30.exe',
+    path.resolve(__dirname, '..', '..', '..', 'Anything Apps', 'One Tap', 'release', 'win-unpacked', 'One Tap.exe'),
+    path.resolve(__dirname, '..', '..', '..', 'Anything Apps', 'One Tap', 'release', 'OneTap-V-26.11.6.exe'),
+    path.resolve(__dirname, '..', '..', '..', 'Anything Apps', 'One Tap', 'release', 'OneTap-V-26.10.30.exe'),
   ];
 
   for (const c of directCandidates) {

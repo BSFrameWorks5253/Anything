@@ -14,6 +14,14 @@
     "autoSync": true
   },
   {
+    "id": "anything-share",
+    "url": "https://github.com/BSFrameworks5253/Anyshare.git",
+    "name": "Anything Share",
+    "category": "Media & Production",
+    "autoSync": true,
+    "folder": "Anything Share"
+  },
+  {
     "id": "docuflow-studio",
     "name": "VectorForge Studio",
     "url": "https://github.com/BSFrameworks5253/DocuFlow-",

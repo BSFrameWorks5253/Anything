@@ -702,7 +702,7 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
           path.join(appData, 'Anything', 'ecosystem_catalog.json'),
           path.join(appData, 'anything', 'published-apps', 'catalog.json'),
           path.join(appData, 'anything', 'ecosystem_catalog.json'),
-          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json')
         ];
         let catalogData: any[] = [];
         for (const c of catCandidates) {
@@ -728,7 +728,7 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
           path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json'),
           path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
           path.join(appData, 'Anything', 'ecosystem_catalog.json'),
-          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json')
         ];
         let matched: any = null;
         for (const c of catCandidates) {
@@ -768,16 +768,37 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
           return fs.createReadStream(shelfItem.filePath).pipe(res);
         }
 
-        // Search local packages-inbox and release folders
+        // Search local packages-inbox, release folders, and Anything Child app realse
         const root = path.resolve(__dirname, '..', '..');
+        const parentRoot = path.resolve(root, '..');
+        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
         const searchDirs = [
+          path.join(parentRoot, 'Anything Child app realse', appId),
+          path.join(parentRoot, 'Anything Child app realse', appId.replace(/^app-/, '')),
           path.join(root, 'packages-inbox'),
           path.join(root, 'releases', appId),
           path.join(root, 'published-apps', appId),
-          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\packages-inbox',
-          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\releases\\${appId}`,
-          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\${appId}`
-        ];
+          path.resolve(__dirname, '..', '..', 'packages-inbox'),
+          path.resolve(__dirname, '..', '..', 'releases', appId),
+          path.resolve(__dirname, '..', '..', 'published-apps', appId),
+          appData ? path.join(appData, 'Anything', 'packages-inbox') : '',
+          appData ? path.join(appData, 'Anything', 'published-apps', appId) : '',
+        ].filter(Boolean);
+
+        // Also add version subdirectories in Anything Child app realse
+        try {
+          const childBase = path.join(parentRoot, 'Anything Child app realse');
+          for (const sub of [appId, appId.replace(/^app-/, '')]) {
+            const appBaseDir = path.join(childBase, sub);
+            if (fs.existsSync(appBaseDir)) {
+              for (const item of fs.readdirSync(appBaseDir, { withFileTypes: true })) {
+                if (item.isDirectory()) {
+                  searchDirs.unshift(path.join(appBaseDir, item.name));
+                }
+              }
+            }
+          }
+        } catch {}
 
         let foundExe: string | null = null;
         for (const d of searchDirs) {
@@ -808,11 +829,10 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
         }
 
         // If not on local disk, check catalog for remote GitHub download URL and redirect
-        const appData = process.env.APPDATA || (process.env.USERPROFILE ? path.join(process.env.USERPROFILE, 'AppData', 'Roaming') : '');
         const catCandidates = [
           path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json'),
           path.join(appData, 'Anything', 'published-apps', 'catalog.json'),
-          'C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\published-apps\\catalog.json'
+          path.resolve(__dirname, '..', '..', 'published-apps', 'catalog.json')
         ];
         for (const c of catCandidates) {
           if (fs.existsSync(c)) {
@@ -839,7 +859,7 @@ export function startDropShelfServer(onItemUploaded?: (item: ShelfItem) => void)
           path.join(appData, 'Anything', 'loaders', `${appId}.json`),
           path.join(appData, 'anything', 'loaders', `${appId}.json`),
           path.resolve(__dirname, '..', '..', 'releases', appId, 'loader-config.json'),
-          `C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything\\releases\\${appId}\\loader-config.json`
+          path.resolve(__dirname, '..', '..', 'releases', appId, 'loader-config.json')
         ];
         for (const p of loaderCandidates) {
           if (fs.existsSync(p)) {
@@ -982,6 +1002,18 @@ export interface FileShelfIpcContext {
 }
 
 export function registerFileShelfIpc(ctx: FileShelfIpcContext): void {
+  // Automatically start the Drop Shelf & Ecosystem API server (port 49153) on launch
+  startDropShelfServer((newItem) => {
+    const win = ctx.getMainWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('fileshelf:item-received-from-mobile', newItem);
+      win.webContents.send('fileshelf:items-updated', shelfItems);
+    }
+    if (ctx.notify) {
+      ctx.notify('Photo Received from Phone', `Saved "${newItem.name}" to Drop Shelf`);
+    }
+  }).catch(() => {});
+
   // 1. Get All Shelf Items
   ipcMain.handle('fileshelf:get-items', async () => {
     return loadShelfManifest();
