@@ -14,8 +14,10 @@ import {
   Phone,
   Layers,
   ChevronDown,
+  QrCode,
 } from 'lucide-react';
 import { GlassInput } from '../../ui/GlassInput';
+import { OneTimeQRModal } from '../../ui/OneTimeQRModal';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import type { NavigationPage } from '../../../types/app.types';
@@ -41,6 +43,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -174,6 +177,16 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         )}
       </div>
 
+      {/* AnyShare One-Time Login QR Action */}
+      <button
+        onClick={() => setShowQRModal(true)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 shadow-xs transition-transform hover:scale-105"
+        title="Generate AnyShare One-Time Login QR Code"
+      >
+        <QrCode className="w-3.5 h-3.5 text-amber-500" />
+        <span className="hidden sm:inline">AnyShare QR Login</span>
+      </button>
+
       {/* Admin Golden Shield Action (Only visible to Admin) */}
       {isAdmin && (
         <button
@@ -240,6 +253,16 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
               </div>
 
               <div className="pt-2 space-y-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    setShowQRModal(true);
+                  }}
+                  className="w-full px-2.5 py-1.5 text-xs text-left rounded-lg text-amber-500 hover:bg-amber-500/10 flex items-center gap-2 transition-colors font-bold"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-amber-500" />
+                  <span>One-Time QR Login</span>
+                </button>
                 
                 {isAdmin && (
                   <button
@@ -280,6 +303,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
           <span>Sign In</span>
         </button>
       )}
+      <OneTimeQRModal isOpen={showQRModal} onClose={() => setShowQRModal(false)} />
     </div>
   );
 };
