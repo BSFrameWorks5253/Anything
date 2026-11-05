@@ -83,7 +83,7 @@ export const defaultSplashSettings: SplashSettings = {
   artistName: 'Anything Creation',
   artworkTitle: '-Designed by Burhanuddin',
   productName: 'Anything',
-  versionText: '2026.1 Release · v26.11.0',
+  versionText: '2026.1 Release · v26.11.11',
   tagline: 'Creative & Productivity Master Hub',
   durationMs: 2800,
   logoText: 'An',
