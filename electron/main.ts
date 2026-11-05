@@ -35,10 +35,12 @@ import { exec, spawn, execSync, execFile, execFileSync } from "child_process";
 
 app.name = "Anything";
 
-// Hardware acceleration & GPU rasterization optimizations for high frame rate
+// Hardware acceleration & GPU rasterization optimizations for high frame rate & instant launch
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-accelerated-2d-canvas');
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 // Load environment variables (.env)
 try {
@@ -3978,6 +3980,21 @@ function createWindow() {
     );
   }
 
+  // Fast launch: show main window as soon as content is ready in dev mode, or seamless reveal in prod
+  mainWindow.once("ready-to-show", () => {
+    const isDevMode = !app.isPackaged && (process.env.NODE_ENV === "development" || process.argv.includes("--dev"));
+    if (isDevMode) {
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.destroy();
+        splashWindow = null;
+      }
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    }
+  });
+
   splashWindow.on("closed", () => {
     splashWindow = null;
 
@@ -4016,8 +4033,7 @@ function createWindow() {
     return true;
   });
 
-  // Fallback safety timeout (6 seconds) to guarantee the main window appears
-
+  // Fallback safety timeout (2 seconds max) to guarantee the main window appears smoothly
   setTimeout(() => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
       if (splashWindow && !splashWindow.isDestroyed()) {
@@ -4114,6 +4130,21 @@ function createWindow() {
         appData ? path.join(appData, "anything", "ecosystem_session.json") : "",
         localAppData ? path.join(localAppData, "anything", "ecosystem_session.json") : "",
         path.join(getProjectRoot(), "ecosystem_session.json"),
+        path.join(getProjectRoot(), "..", "ecosystem_session.json"),
+        path.join(getProjectRoot(), "..", "Anything Apps", "ecosystem_session.json"),
+        appData ? path.join(appData, "one-tap", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "One Tap", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "mediaflow-studio", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "MediaFlow Studio", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-file-manager", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "media-viewer", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "Media Viewer", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "docuflow", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "DocuFlow", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "pixelcharm", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "pdf-master", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-office", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-data-manage", "ecosystem_session.json") : "",
       ].filter((p): p is string => Boolean(p && typeof p === "string" && p.length > 0));
 
       for (const t of targets) {
@@ -4161,6 +4192,21 @@ function createWindow() {
         appData ? path.join(appData, "anything", "ecosystem_session.json") : "",
         localAppData ? path.join(localAppData, "anything", "ecosystem_session.json") : "",
         path.join(getProjectRoot(), "ecosystem_session.json"),
+        path.join(getProjectRoot(), "..", "ecosystem_session.json"),
+        path.join(getProjectRoot(), "..", "Anything Apps", "ecosystem_session.json"),
+        appData ? path.join(appData, "one-tap", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "One Tap", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "mediaflow-studio", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "MediaFlow Studio", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-file-manager", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "media-viewer", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "Media Viewer", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "docuflow", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "DocuFlow", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "pixelcharm", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "pdf-master", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-office", "ecosystem_session.json") : "",
+        appData ? path.join(appData, "anything-data-manage", "ecosystem_session.json") : "",
       ].filter((p): p is string => Boolean(p && typeof p === "string" && p.length > 0));
 
       for (const t of targets) {
@@ -5054,6 +5100,10 @@ function createWindow() {
               if (ecosystemUserHandle) {
                 childArgs.push(`--ecosystem-user-handle=${ecosystemUserHandle}`);
                 childArgs.push(`--user-handle=${ecosystemUserHandle}`);
+              }
+              if (ecosystemUserAvatar) {
+                childArgs.push(`--ecosystem-user-avatar=${encodeURIComponent(ecosystemUserAvatar)}`);
+                childArgs.push(`--user-avatar=${encodeURIComponent(ecosystemUserAvatar)}`);
               }
             }
           } catch (e) {}

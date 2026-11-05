@@ -13,7 +13,7 @@
   "githubRepo": "BSFrameworks5253/DocuFlow-",
   "iconType": "image",
   "packageFileName": "VectorForge_Studio_26.11.5_Setup.exe",
-  "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
+  "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
   "systemRequirements": {
     "os": "Windows 10 / Windows 11 (64-bit)",
     "ram": "4 GB RAM (8 GB Recommended)",
@@ -32,9 +32,9 @@
   },
   "packageSize": "118.2 MB",
   "packageFormat": ".exe",
-  "localPackagePath": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
+  "localPackagePath": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe",
   "status": "not-installed",
-  "publishedAt": 1793813020396,
+  "publishedAt": 1793861119568,
   "releaseInfo": {
     "version": "26.11.05",
     "executableName": "VectorForge_Studio_26.11.5_Setup.exe",
@@ -64,7 +64,7 @@
       "Fixed drag-and-drop file detection and multi-document ordering"
     ],
     "sizeFormatted": "118.2 MB",
-    "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
+    "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
   },
   "history": [
     {
@@ -96,7 +96,7 @@
         "Fixed drag-and-drop file detection and multi-document ordering"
       ],
       "sizeFormatted": "118.2 MB",
-      "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow-studio\\V26.11.05\\VectorForge_Studio_26.11.5_Setup.exe"
     },
     {
       "version": "26.11.02",
@@ -189,7 +189,7 @@
         "Fixed drag-and-drop file detection and multi-document ordering"
       ],
       "sizeFormatted": "122.5 MB",
-      "downloadUrl": "c:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow\\V26.10.30\\DocuFlow_Studio_26.10.30.exe"
+      "downloadUrl": "C:\\Users\\Burhanuddin\\OneDrive\\Desktop\\Anything\\Anything Child app realse\\docuflow\\V26.10.30\\DocuFlow_Studio_26.10.30.exe"
     },
     {
       "version": "1.0.0",
@@ -260,6 +260,14 @@
     }
   ],
   "changelog": [
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
+    "Release v26.11.05 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 118.2 MB",
+    "Release v26.10.30 canonical setup in Anything Child app realse",
+    "Format: .EXE · Size: 122.5 MB",
     "Release v26.11.05 canonical setup in Anything Child app realse",
     "Format: .EXE · Size: 118.2 MB",
     "Release v26.10.30 canonical setup in Anything Child app realse",

@@ -704,9 +704,14 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
       return;
     }
 
-    const duration = Math.max(1600, settings.durationMs || 3200);
-    const intervalTime = 25;
-    const totalSteps = duration / intervalTime;
+    const isDev = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.port === '5173'
+    );
+    const duration = isDev ? 450 : (settings.durationMs ? Math.min(settings.durationMs, 1000) : 850);
+    const intervalTime = 20;
+    const totalSteps = Math.max(10, duration / intervalTime);
     const increment = 100 / totalSteps;
     const stepsList = getInitializationSteps(settings.productName);
 
@@ -724,8 +729,8 @@ export const AdobeSplashScreen: React.FC<AdobeSplashScreenProps> = ({
           setIsFadingOut(true);
           setTimeout(() => {
             onCompleteRef.current?.();
-          }, 360);
-        }, 260);
+          }, isDev ? 80 : 180);
+        }, isDev ? 60 : 120);
       } else {
         setProgress(currentProgress);
         const step = Math.min(

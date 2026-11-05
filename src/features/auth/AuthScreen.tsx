@@ -38,6 +38,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Remembered previous account state
+  const [rememberedAccount] = useState<{
+    email: string;
+    name: string;
+    username?: string;
+    avatar?: string | null;
+  } | null>(() => {
+    try {
+      const saved = localStorage.getItem('anything_last_signed_in_account');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && (parsed.email || parsed.name)) {
+          return {
+            email: parsed.email || '',
+            name: parsed.name || parsed.username || parsed.email || 'User',
+            username: parsed.username || '',
+            avatar: parsed.avatar || null,
+          };
+        }
+      }
+    } catch (e) {}
+    return null;
+  });
+  const [useAnotherAccount, setUseAnotherAccount] = useState(false);
+
   // Sign Up form state
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -266,14 +291,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm flex items-center justify-center font-bold text-sm bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shrink-0">
                       {rememberedAccount.avatar ? (
-                        <img src={rememberedAccount.avatar} alt={rememberedAccount.name} className="w-full h-full object-cover" />
+                        <img src={rememberedAccount.avatar} alt={rememberedAccount.name || 'User'} className="w-full h-full object-cover" />
                       ) : (
-                        <span>{rememberedAccount.name.slice(0, 2).toUpperCase()}</span>
+                        <span>{((rememberedAccount.name || rememberedAccount.email || 'User')).slice(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="text-xs font-bold text-zinc-900 dark:text-white truncate">
-                        {rememberedAccount.name}
+                        {rememberedAccount.name || rememberedAccount.email || 'User'}
                       </h4>
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
                         {rememberedAccount.email}
@@ -294,7 +319,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ isModal = false, onClose
                         onClick={() => setUseAnotherAccount(false)}
                         className="text-[10px] text-cyan-600 dark:text-cyan-400 underline font-mono cursor-pointer"
                       >
-                        Back to {rememberedAccount.name.split(' ')[0]}
+                        Back to {(rememberedAccount.name || 'User').split(' ')[0]}
                       </button>
                     )}
                   </div>

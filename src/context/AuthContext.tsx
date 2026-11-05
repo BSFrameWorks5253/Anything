@@ -416,6 +416,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser((prev) => {
       const next = prev ? { ...prev, ...updates } : { ...DEFAULT_MEMBER_USER, ...updates };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
+      if (next.avatar) {
+        localStorage.setItem('anything_user_avatar', next.avatar);
+      } else if (updates.avatar === null) {
+        localStorage.removeItem('anything_user_avatar');
+      }
+      localStorage.setItem('anything_last_signed_in_account', JSON.stringify({
+        email: next.email,
+        name: next.name,
+        username: next.username || (next.email ? next.email.split('@')[0] : ''),
+        avatar: next.avatar || null,
+      }));
       analyticsService.ensureUserRecord(next);
       syncSessionToEcosystem(next);
       return next;
